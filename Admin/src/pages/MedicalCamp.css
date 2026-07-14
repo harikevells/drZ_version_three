@@ -1,0 +1,387 @@
+.medical-camp-container {
+    /* padding: 30px; */
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #ffffff;
+    min-height: 100vh;
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin: 0;
+    margin-right: 15px;
+}
+
+.icon-box {
+    background-color: #6B7AFF;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.form-container {
+    margin-bottom: 40px;
+}
+
+.form-row {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 25px;
+}
+
+.input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 12px;
+}
+
+.text-input {
+    border: 1px solid #e0e0e0;
+    border-radius: 25px;
+    padding: 15px 20px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.text-input:focus {
+    border-color: #6B7AFF;
+}
+
+.date-group {
+    display: flex;
+    gap: 15px;
+}
+
+.date-input {
+    flex: 1;
+    border: 1px solid #e0e0e0;
+    border-radius: 25px;
+    padding: 15px 40px 15px 20px; /* Extra padding on right for the icon */
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.date-input:focus {
+    border-color: #6B7AFF;
+}
+
+.custom-date-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.custom-date-input-wrapper .calendar-icon {
+    position: absolute;
+    right: 15px;
+    pointer-events: none; /* Let clicks pass through to the input */
+    color: #555;
+}
+
+.react-datepicker-wrapper {
+    width: 100%;
+}
+
+.upload-group {
+    flex: 1;
+}
+
+.upload-box {
+    border: 1.5px dashed #e0e0e0;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    background-color: #fafafa;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+}
+
+.upload-icon-container {
+    margin-bottom: 10px;
+}
+
+.upload-text {
+    font-size: 13px;
+    color: #888;
+    margin: 0 0 15px 0;
+    line-height: 1.5;
+}
+
+.choose-file-btn {
+    background-color: #6B7AFF;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 25px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.file-name {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #27ae60;
+}
+
+.status-row {
+    margin-top: -100px; /* To pull it up next to the date group since upload box is tall */
+    width: 50%;
+}
+
+.toggle-group {
+    flex-direction: row;
+    align-items: center;
+}
+
+.toggle-group label {
+    margin-bottom: 0;
+    margin-right: 20px;
+}
+
+/* Switch Styles */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #34C759;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.slider.round {
+    border-radius: 24px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.submit-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 40px;
+    margin-bottom: 50px;
+}
+
+.submit-btn {
+    background-color: #D3D9FF;
+    color: #5F76FE;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 0; /* Let width dictate size */
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 200px;
+    flex: none;
+    text-align: center;
+}
+
+.cancel-btn {
+    background-color: #f1f1f1;
+    color: #333;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 0;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 200px;
+    flex: none;
+    text-align: center;
+}
+
+.list-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.list-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.add-btn {
+    background-color: #e0e7ff;
+    color: #6B7AFF;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 25px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.plus-icon {
+    font-size: 18px;
+    margin-right: 5px;
+    font-weight: bold;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.custom-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.custom-table th {
+    background-color: #F6F8FF;
+    color: #121313;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 20px 15px;
+    text-align: center;
+}
+
+.custom-table th:first-child {
+    border-top-left-radius: 16px;
+    border-bottom-left-radius: 16px;
+}
+
+.custom-table th:last-child {
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.custom-table td {
+    padding: 20px 15px;
+    font-size: 14px;
+    color: #555;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    text-align: left;
+}
+
+.custom-table th:nth-child(3),
+.custom-table td:nth-child(3) {
+    white-space: nowrap;
+}
+
+.custom-table th:nth-child(4),
+.custom-table td:nth-child(4),
+.custom-table th:nth-child(5),
+.custom-table td:nth-child(5) {
+    white-space: nowrap;
+}
+
+.status-active {
+    color: #27ae60 !important;
+    font-weight: 600;
+}
+
+.status-inactive {
+    color: #e74c3c !important;
+    font-weight: 600;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.edit-btn, .delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.edit-btn svg, .delete-btn svg {
+    transition: stroke 0.3s;
+}
+
+.edit-btn:hover svg {
+    stroke: #6B7AFF;
+}
+
+.delete-btn:hover svg {
+    stroke: #e74c3c;
+}
+
+.empty-message {
+    text-align: center;
+    color: #888;
+    padding: 30px !important;
+}
+
+/* Adjust layout for smaller screens if necessary, though Admin panels usually have wide displays */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+    }
+    .status-row {
+        margin-top: 0;
+        width: 100%;
+    }
+}

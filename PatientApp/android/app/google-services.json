@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "765441560039",
+    "project_id": "drzapp-61e27",
+    "storage_bucket": "drzapp-61e27.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:765441560039:android:164321bacfdbe530864142",
+        "android_client_info": {
+          "package_name": "com.drz.pitee"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLmCTMC_OzP9u-8NVPGdYrey93d4F6vH8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

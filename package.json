@@ -1,0 +1,10 @@
+{
+  "name": "drz-monorepo",
+  "version": "1.0.0",
+  "description": "Root configuration for running Backend on Render",
+  "scripts": {
+    "postinstall": "cd Backend && npm install",
+    "build": "cd Backend && npm install",
+    "start": "cd Backend && node index.js"
+  }
+}

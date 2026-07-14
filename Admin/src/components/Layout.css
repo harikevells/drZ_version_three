@@ -1,0 +1,260 @@
+.layout-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-logo {
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-bottom: 1px solid transparent;
+  /* Keeps spacing consistent */
+}
+
+.sidebar-logo .logo-icon {
+  width: 24px;
+  height: 24px;
+  background-color: #1a2530;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 5px;
+}
+
+.sidebar-logo .logo-icon .cross {
+  width: 10px;
+  height: 3px;
+  background-color: #1173ba;
+  position: absolute;
+}
+
+.sidebar-logo .logo-icon .cross::after {
+  content: '';
+  width: 3px;
+  height: 10px;
+  background-color: #1173ba;
+  position: absolute;
+  top: -3.5px;
+  left: 3.5px;
+}
+
+.sidebar-logo .logo-text {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1173ba;
+  letter-spacing: -1px;
+}
+
+.sidebar-logo .logo-subtext {
+  font-size: 8px;
+  color: #1173ba;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.sidebar-nav {
+  padding: 40px 0 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #586ff5;
+  /* Match mockup blue */
+  flex: 1;
+  border-top-right-radius: 50px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  margin: 0 20px;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  border-radius: 12px;
+  /* For hover/active pill effect */
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.nav-item.active {
+  background-color: #ffffff;
+  color: #586ff5;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.nav-icon {
+  margin-right: 15px;
+  font-size: 18px;
+  color: #ffffff;
+}
+
+.nav-item.active .nav-icon {
+  color: #586ff5;
+}
+
+/* Main Area */
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Topbar */
+.topbar {
+  background-color: #ffffff;
+  padding: 30px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* subtle shadow matching mockup */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.topbar-welcome h2 {
+  font-size: 20px;
+  color: #1f2937;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.topbar-welcome p {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: #f3f4f6;
+  border: none;
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background-color: #e5e7eb;
+  color: #1f2937;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+  flex: 1;
+  padding: 15px 30px;
+  overflow-y: auto;
+  background-color: #ffffff;
+}
+
+/* Logout Modal */
+.logout-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.logout-modal-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 90%;
+}
+
+.logout-modal-content p {
+  font-size: 16px;
+  color: #374151;
+  margin-bottom: 25px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.logout-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  width: 100%;
+}
+
+.cancel-btn {
+  flex: 1;
+  padding: 10px 0;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-btn:hover {
+  background-color: #e5e7eb;
+}
+
+.confirm-logout-btn {
+  /* flex: 1; */
+  padding: 10px 0;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.confirm-logout-btn:hover {
+  background-color: #dc2626;
+}
+
+/* Standardized Page Titles */
+.page-title,
+.header-section h2,
+.notifications-title-container h2 {
+  color: #030303 !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+}
