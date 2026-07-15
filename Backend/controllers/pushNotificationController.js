@@ -22,9 +22,10 @@ const createPushNotification = async (req, res) => {
 
         await pushNotification.save();
 
-        // If active, broadcast to all patients
+        // If active, broadcast to all patients and doctors
         if (activeStatus) {
             await broadcastToPatients(title, description);
+            await broadcastToDoctors(title, description);
         }
 
         // Notify Admin if created by a Doctor
@@ -43,7 +44,7 @@ const createPushNotification = async (req, res) => {
             const doctors = await Doctor.find({});
             for (const doc of doctors) {
                 if (role === 'doctor' && (doc.doctorName === doctorName || doc.email === doctorName)) continue;
-                
+
                 const identifier = doc.email || doc.doctorName;
                 if (!identifier) continue;
 
@@ -93,12 +94,12 @@ const updatePushNotification = async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
-        
+
         // Prevent changing id
         delete updateData.id;
 
         const updated = await PushNotification.findByIdAndUpdate(id, updateData, { new: true });
-        
+
         if (!updated) {
             return res.status(404).json({ message: "Push notification not found" });
         }
@@ -137,7 +138,6 @@ const broadcastToPatients = async (title, body) => {
         }
 
         // Send multicast message
-        // Firebase admin.messaging().sendMulticast accepts max 500 tokens at a time
         const chunkSize = 500;
         for (let i = 0; i < tokens.length; i += chunkSize) {
             const chunk = tokens.slice(i, i + chunkSize);
@@ -159,10 +159,49 @@ const broadcastToPatients = async (title, body) => {
             };
 
             const response = await admin.messaging().sendEachForMulticast(message);
-            console.log(`Broadcast chunk sent. Success: ${response.successCount}, Failure: ${response.failureCount}`);
+            console.log(`Patient Broadcast chunk sent. Success: ${response.successCount}, Failure: ${response.failureCount}`);
         }
     } catch (error) {
         console.error("Error broadcasting to patients:", error);
+    }
+};
+
+// Helper function to broadcast to all doctors
+const broadcastToDoctors = async (title, body) => {
+    try {
+        const doctors = await Doctor.find({});
+        const tokens = doctors.map(d => d.fcmToken).filter(token => token && typeof token === 'string' && token.trim() !== '');
+
+        if (tokens.length === 0) {
+            console.log("No doctor FCM tokens found for broadcast.");
+            return;
+        }
+
+        const chunkSize = 500;
+        for (let i = 0; i < tokens.length; i += chunkSize) {
+            const chunk = tokens.slice(i, i + chunkSize);
+            const message = {
+                tokens: chunk,
+                notification: {
+                    title: title,
+                    body: body
+                },
+                android: {
+                    priority: 'high',
+                    notification: {
+                        sound: 'default'
+                    }
+                },
+                data: {
+                    type: 'push_notification'
+                }
+            };
+
+            const response = await admin.messaging().sendEachForMulticast(message);
+            console.log(`Doctor Broadcast chunk sent. Success: ${response.successCount}, Failure: ${response.failureCount}`);
+        }
+    } catch (error) {
+        console.error("Error broadcasting to doctors:", error);
     }
 };
 

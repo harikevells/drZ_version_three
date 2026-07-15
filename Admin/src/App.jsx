@@ -7,6 +7,7 @@ import Schedule from './pages/Schedule';
 import PatientAppointments from './pages/PatientAppointments';
 import Notification from './pages/Notification';
 import MedicalCamp from './pages/MedicalCamp';
+import Dashboard from './Dashboard/Dashboard';
 
 const ProtectedRoute = ({ element }) => {
   const token = sessionStorage.getItem('token');
@@ -52,7 +53,8 @@ function App() {
 
         <Route path="/" element={<ProtectedRoute element={<Layout />} />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DoctorManagement />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dr-management" element={<DoctorManagement />} />
           <Route path="schedule" element={<Schedule />} />
           <Route path="patient" element={<PatientAppointments />} />
           <Route path="notifications" element={<Notification />} />

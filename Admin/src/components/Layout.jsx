@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured } from 'react-icons/fa';
+import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt } from 'react-icons/fa';
 import './Layout.css';
 import logoImage from '../assets/DoctorlogoApp1.png';
 import adminImage from '../assets/adminimage.png';
@@ -57,6 +57,10 @@ const Layout = () => {
         
         <nav className="sidebar-nav">
           <NavLink to="/dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+            <FaTachometerAlt className="nav-icon" />
+            <span>Dashboard</span>
+          </NavLink>
+          <NavLink to="/dr-management" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
             <FaUserMd className="nav-icon" />
             <span>DR Management</span>
           </NavLink>

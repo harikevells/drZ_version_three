@@ -1,4 +1,6 @@
 const Appointment = require('../models/Appointment');
+const Patient = require('../models/Patient');
+const Doctor = require('../models/Doctor');
 const { createNotification } = require('./notificationController');
 
 const getDoctorDashboard = async (req, res) => {
@@ -192,4 +194,92 @@ const exportDoctorAppointments = async (req, res) => {
     }
 };
 
-module.exports = { getDoctorDashboard, updateAppointmentStatus, getAllDoctorAppointments, getBookedTimingsByDate, exportDoctorAppointments };
+const getAdminDashboard = async (req, res) => {
+    try {
+        const totalPatients = await Patient.countDocuments();
+        const totalDoctors = await Doctor.countDocuments();
+        const totalAppointments = await Appointment.countDocuments();
+        
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const todayDateStr = `${dd}/${mm}/${yyyy}`;
+        
+        const todaysAppointments = await Appointment.countDocuments({ appointment_date: todayDateStr });
+        
+        const doctors = await Doctor.find({});
+        const deptCounts = {};
+        doctors.forEach(doc => {
+            const spec = doc.specialization || 'General';
+            deptCounts[spec] = (deptCounts[spec] || 0) + 1;
+        });
+        const departmentStats = Object.keys(deptCounts).map(name => ({
+            name,
+            count: deptCounts[name]
+        })).sort((a, b) => b.count - a.count).slice(0, 3);
+        
+        const canceled = await Appointment.countDocuments({ status: { $in: ['Cancelled', 'cancelled', 'Canceled', 'canceled'] } });
+        const rescheduled = await Appointment.countDocuments({ status: { $in: ['Rescheduled', 'rescheduled'] } });
+        const completed = await Appointment.countDocuments({ status: { $in: ['Completed', 'completed'] } });
+        const appointmentSummary = { canceled, rescheduled, completed };
+        
+        const allAppointments = await Appointment.find({});
+        const monthlyStats = new Array(12).fill(0);
+        allAppointments.forEach(app => {
+            if (app.appointment_date) {
+                const parts = app.appointment_date.split('/');
+                if (parts.length === 3) {
+                    const month = parseInt(parts[1], 10) - 1;
+                    const year = parseInt(parts[2], 10);
+                    if (year === yyyy && month >= 0 && month < 12) {
+                        monthlyStats[month]++;
+                    }
+                }
+            }
+        });
+        
+        const upcoming = allAppointments
+            .filter(app => {
+                if (app.status === 'Confirm' || app.status === 'Pending' || app.status === 'Approved') {
+                    if (!app.appointment_date) return false;
+                    const parts = app.appointment_date.split('/');
+                    if (parts.length === 3) {
+                        const appDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                        const todayStart = new Date(yyyy, mm - 1, dd);
+                        return appDate >= todayStart;
+                    }
+                }
+                return false;
+            })
+            .sort((a, b) => {
+                const partsA = a.appointment_date.split('/');
+                const dateA = new Date(partsA[2], partsA[1] - 1, partsA[0]);
+                const partsB = b.appointment_date.split('/');
+                const dateB = new Date(partsB[2], partsB[1] - 1, partsB[0]);
+                return dateA - dateB;
+            })
+            .slice(0, 5)
+            .map(app => ({
+                patientName: app.patient_name || 'Unknown',
+                doctorName: app.doctor_name || 'Unknown',
+                dateTime: `${app.appointment_date} ${app.appointment_time}`,
+                status: app.status
+            }));
+            
+        res.json({
+            totalPatients,
+            totalDoctors,
+            totalAppointments,
+            todaysAppointments,
+            departmentStats,
+            appointmentSummary,
+            monthlyStats,
+            upcoming
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+module.exports = { getDoctorDashboard, updateAppointmentStatus, getAllDoctorAppointments, getBookedTimingsByDate, exportDoctorAppointments, getAdminDashboard };

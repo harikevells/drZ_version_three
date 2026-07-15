@@ -1,0 +1,39 @@
+.appointment-summary-card {
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.summary-list-item {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: 12px;
+}
+
+.summary-icon {
+  margin-right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-item-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+.summary-item-count {
+  font-size: 16px;
+  font-weight: 700;
+}

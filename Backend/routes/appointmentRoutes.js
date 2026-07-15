@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getDoctorDashboard, updateAppointmentStatus, getAllDoctorAppointments, getBookedTimingsByDate, exportDoctorAppointments } = require('../controllers/appointmentController');
+const { getDoctorDashboard, updateAppointmentStatus, getAllDoctorAppointments, getBookedTimingsByDate, exportDoctorAppointments, getAdminDashboard } = require('../controllers/appointmentController');
 
+router.get('/admin-dashboard', getAdminDashboard);
 router.get('/dashboard/:doctorName', getDoctorDashboard);
 router.get('/all/:doctorName', getAllDoctorAppointments);
 router.get('/export/:doctorName', exportDoctorAppointments);

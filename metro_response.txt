@@ -123871,7 +123871,7 @@ __d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, e
     value: true
   });
   exports.API_BASE_URL = void 0;
-  var API_BASE_URL = exports.API_BASE_URL = 'https://drz-versiontwo.onrender.com';
+  var API_BASE_URL = exports.API_BASE_URL = 'https://drz-version-three.onrender.com';
 },713,[],"src/config.js");
 __d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {
   var _interopRequireDefault = _$$_REQUIRE(_dependencyMap[0], "@babel/runtime/helpers/interopRequireDefault");
