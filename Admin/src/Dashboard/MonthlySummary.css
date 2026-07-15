@@ -72,3 +72,37 @@
   font-weight: 500;
   padding-top: 10px;
 }
+
+.chart-tooltip {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #e3ecff;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  z-index: 10;
+  min-width: 140px;
+  font-size: 13px;
+  color: #333;
+}
+
+.chart-tooltip .tooltip-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
+  text-align: center;
+  color: #6a82fb;
+}
+
+.chart-tooltip .tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.chart-tooltip .tooltip-row:last-child {
+  margin-bottom: 0;
+}

@@ -76,6 +76,10 @@ const Layout = () => {
             <FaBell className="nav-icon" />
             <span>Medical Camp</span>
           </NavLink>
+          <NavLink to="/medi" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+            <FaBell className="nav-icon" />
+            <span>Medicine Management</span>
+          </NavLink>
         </nav>
       </aside>
 

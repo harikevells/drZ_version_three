@@ -1,6 +1,6 @@
 .page-container {
   /* padding: 20px; */
-  min-height: 100vh;
+  min-height: 75vh;
 }
 
 .page-title {
@@ -204,7 +204,8 @@ input:checked + .slider:before {
 }
 
 .add-btn:hover {
-  background-color: #c93559;
+  background-color: #6B7AFF;
+  color: #e0e7ff;
 }
 
 .table-container {

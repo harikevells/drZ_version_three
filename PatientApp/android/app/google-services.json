@@ -1,21 +1,22 @@
 {
   "project_info": {
-    "project_number": "765441560039",
-    "project_id": "drzapp-61e27",
-    "storage_bucket": "drzapp-61e27.firebasestorage.app"
+    "project_number": "969313239838",
+    "firebase_url": "https://drzapp-v3-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "drzapp-v3",
+    "storage_bucket": "drzapp-v3.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:765441560039:android:164321bacfdbe530864142",
+        "mobilesdk_app_id": "1:969313239838:android:46a61e6b1dae985120ff0f",
         "android_client_info": {
-          "package_name": "com.drz.pitee"
+          "package_name": "com.drz.patientss"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBLmCTMC_OzP9u-8NVPGdYrey93d4F6vH8"
+          "current_key": "AIzaSyCF5hTKQDAto1LMqNePribAWejfNrmEO1Q"
         }
       ],
       "services": {
