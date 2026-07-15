@@ -1,0 +1,143 @@
+.notifications-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 80px);
+}
+
+.notifications-loading {
+  text-align: center;
+  font-size: 18px;
+  color: #666;
+  margin-top: 50px;
+}
+
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.notifications-title-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notifications-title-container h2 {
+  color: #1a4d80;
+  margin: 0;
+  font-size: 24px;
+}
+
+.notifications-icon {
+  font-size: 24px;
+  color: #1a4d80;
+}
+
+.unread-badge {
+  background-color: #e74c3c;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.mark-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1px solid #1a4d80;
+  color: #1a4d80;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.mark-all-btn:hover:not(:disabled) {
+  background-color: #1a4d80;
+  color: white;
+}
+
+.mark-all-btn:disabled {
+  border-color: #ccc;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.no-notifications {
+  text-align: center;
+  color: #888;
+  padding: 40px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.notification-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-left: 5px solid transparent;
+}
+
+.notification-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.notification-card.unread {
+  background-color: #f0f7ff;
+  border-left-color: #1a4d80;
+}
+
+.notification-card.read {
+  border-left-color: #e0e0e0;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.notification-message {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.unread-indicator {
+  width: 10px;
+  height: 10px;
+  background-color: #1a4d80;
+  border-radius: 50%;
+  margin-left: 15px;
+}

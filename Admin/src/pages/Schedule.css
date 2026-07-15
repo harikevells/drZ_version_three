@@ -1,0 +1,287 @@
+/* Schedule Specific Styles */
+
+.date-time-inputs {
+  display: flex;
+  gap: 15px;
+}
+
+.input-with-icon {
+  position: relative;
+  flex: 1;
+}
+
+.input-with-icon .input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding: 14px 16px 14px 40px !important;
+}
+
+.date-time-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px !important;
+}
+
+.slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.slot-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #f3f4f6;
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.slot-text {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.slot-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.slot-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot-action-btn:hover {
+  color: #4b5563;
+}
+
+.info-icon {
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.date-time-group {
+  grid-column: span 1; /* Match the mockups */
+}
+
+@media (min-width: 900px) {
+  .date-time-group {
+    grid-column: span 1;
+  }
+}
+
+.combined-date-time-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: #ffffff;
+  padding: 0 16px;
+  height: 48px; /* matching other input heights roughly */
+}
+
+.combined-date-time-input:focus-within {
+  border-color: #1173ba;
+}
+
+.combined-date-time-input .date-section,
+.combined-date-time-input .time-section {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.combined-date-time-input .date-section {
+  margin-right: 20px;
+}
+
+.combined-date-time-input .input-icon {
+  color: #9ca3af;
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.form-group .combined-date-time-input input[type="date"],
+.form-group .combined-date-time-input input[type="time"] {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  color: #374151;
+  font-size: 14px;
+  height: auto;
+  width: auto;
+}
+
+.combined-date-time-input .time-separator {
+  margin: 0 10px;
+  color: #6b7280;
+}
+
+.form-group select {
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #374151;
+  outline: none;
+  background-color: #ffffff;
+  width: 100%;
+}
+
+.form-group select:focus {
+  border-color: #1173ba;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"] {
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #374151;
+  outline: none;
+  background-color: #ffffff;
+  width: 100%;
+}
+
+.form-group input:focus {
+  border-color: #1173ba;
+}
+
+.readonly-input {
+  background-color: #f3f4f6 !important;
+  color: #6b7280 !important;
+  cursor: not-allowed;
+}
+
+.data-table th {
+  background-color: #f9fafb;
+  color: #374151;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table td {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: #4b5563;
+  border-bottom: 1px solid #f3f4f6;
+  text-align: center;
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+}
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-approved {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.approval-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.approve-btn, .reject-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  transition: opacity 0.2s;
+}
+
+.approve-btn {
+  background-color: #10b981;
+}
+
+.reject-btn {
+  background-color: #ef4444;
+}
+
+.approve-btn:hover, .reject-btn:hover {
+  opacity: 0.9;
+}
+
+.filters-container {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.search-input, .date-input {
+  padding: 10px 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-input {
+  flex: 1;
+  max-width: 400px;
+}
+
+.clear-filter-btn {
+  padding: 10px 15px;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #374151;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.clear-filter-btn:hover {
+  background-color: #e5e7eb;
+}

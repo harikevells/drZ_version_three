@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "871266832436",
+    "project_id": "drz-project-53e74",
+    "storage_bucket": "drz-project-53e74.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:871266832436:android:111dabaf79a762467f3a61",
+        "android_client_info": {
+          "package_name": "com.doctorapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEpxqPxkdPo4-RVT0yFIoZJuJAet0Gu40"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:871266832436:android:d3816723995b5a1b7f3a61",
+        "android_client_info": {
+          "package_name": "com.kevell.drzapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEpxqPxkdPo4-RVT0yFIoZJuJAet0Gu40"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
