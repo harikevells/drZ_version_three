@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 const serviceAccountPath = path.join(__dirname, '../serviceAccountKey.json');
-const databaseURL = 'https://drzapp-61e27-default-rtdb.firebaseio.com';
+const databaseURL = 'https://drzapp-v3-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 const privateKeyEnv = process.env.private_key || process.env.PRIVATE_KEY;
 const clientEmailEnv = process.env.client_email || process.env.CLIENT_EMAIL;
@@ -24,7 +24,19 @@ function cleanEnvVar(val) {
     return cleaned.replace(/\\n/g, '\n').trim();
 }
 
-if (privateKeyEnv && clientEmailEnv && projectIdEnv) {
+if (fs.existsSync(serviceAccountPath)) {
+    try {
+        const serviceAccount = require(serviceAccountPath);
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            databaseURL
+        });
+        console.log("Firebase Admin initialized using serviceAccountKey.json");
+    } catch (err) {
+        console.error("Error parsing serviceAccountKey.json:", err.message);
+        process.exit(1);
+    }
+} else if (privateKeyEnv && clientEmailEnv && projectIdEnv) {
     try {
         const privateKey = cleanEnvVar(privateKeyEnv);
         const clientEmail = cleanEnvVar(clientEmailEnv);
@@ -59,22 +71,10 @@ if (privateKeyEnv && clientEmailEnv && projectIdEnv) {
         console.error("Error parsing FIREBASE_SERVICE_ACCOUNT environment variable:", err.message);
         process.exit(1);
     }
-} else if (fs.existsSync(serviceAccountPath)) {
-    try {
-        const serviceAccount = require(serviceAccountPath);
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-            databaseURL
-        });
-        console.log("Firebase Admin initialized using serviceAccountKey.json");
-    } catch (err) {
-        console.error("Error parsing serviceAccountKey.json:", err.message);
-        process.exit(1);
-    }
 } else {
     try {
         admin.initializeApp({
-            projectId: 'drzapp-61e27',
+            projectId: 'drzapp-v3',
             databaseURL
         });
         console.log("Firebase Admin initialized with default project ID");
