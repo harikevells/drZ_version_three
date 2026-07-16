@@ -498,9 +498,23 @@ export default function AppointmentScreen({ route }: any) {
                   <Animated.View style={cardStyle}>
                     <View style={styles.cardHeader}>
                       <Text style={styles.patientName}>{item.patient_name}</Text>
-                      <View style={styles.statusBadge}>
-                        <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
-                      </View>
+                      {activeTab === 'Approved' ? (
+                        <TouchableOpacity 
+                          style={styles.joinBtn} 
+                          onPress={() => navigation.navigate('VideoCall', { 
+                            patientName: item.patient_name, 
+                            patientId: item.id || item._id,
+                            appointmentId: item.booking_id || item.id || item._id
+                          })}
+                        >
+                          <Ionicons name="videocam" size={14} color="#FFF" />
+                          <Text style={styles.joinBtnText}> Join</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <View style={styles.statusBadge}>
+                          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
+                        </View>
+                      )}
                     </View>
 
                     <View style={styles.detailRow}>
@@ -551,6 +565,21 @@ export default function AppointmentScreen({ route }: any) {
                         >
                           <Text style={styles.btnText}>Cancel</Text>
                         </TouchableOpacity>
+                      </View>
+                    )}
+                    
+                    {activeTab === 'Completed' && item.prescription && item.prescription.length > 0 && (
+                      <View style={styles.prescriptionContainer}>
+                        <Text style={styles.prescriptionTitle}>Prescription Details:</Text>
+                        {item.prescription.map((med: any, index: number) => (
+                          <View key={med.id || index.toString()} style={styles.medRow}>
+                            <View style={styles.medBullet} />
+                            <View style={styles.medInfo}>
+                              <Text style={styles.medName}>{med.name}</Text>
+                              <Text style={styles.medDetails}>{med.timing} | {med.intake}</Text>
+                            </View>
+                          </View>
+                        ))}
                       </View>
                     )}
                   </Animated.View>
@@ -810,6 +839,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+  joinBtn: {
+    backgroundColor: '#0D6EFD',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  joinBtnText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -878,5 +921,43 @@ const styles = StyleSheet.create({
   closeCalendarText: {
     fontWeight: 'bold',
     color: '#333',
+  },
+  prescriptionContainer: {
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  prescriptionTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#0D6EFD',
+    marginBottom: 8,
+  },
+  medRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+  },
+  medBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#0D6EFD',
+    marginTop: 6,
+    marginRight: 8,
+  },
+  medInfo: {
+    flex: 1,
+  },
+  medName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+  },
+  medDetails: {
+    fontSize: 11,
+    color: '#666',
+    marginTop: 2,
   }
 });

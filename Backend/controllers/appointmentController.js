@@ -83,6 +83,35 @@ const updateAppointmentStatus = async (req, res) => {
     }
 };
 
+const updateAppointmentPrescription = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { prescription } = req.body;
+        
+        const appointment = await Appointment.findByIdAndUpdate(id, {
+            prescription,
+            status: 'Completed'
+        }, { new: true });
+        
+        if (!appointment) return res.status(404).json({ error: 'Appointment not found' });
+        
+        // Notify Patient
+        if (appointment.login_mobile) {
+            await createNotification(
+                'patient',
+                appointment.login_mobile,
+                'Prescription Added',
+                `Dr. ${appointment.doctor_name} has provided a prescription for your appointment.`,
+                'prescription_added'
+            );
+        }
+        
+        res.json(appointment);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 const getAllDoctorAppointments = async (req, res) => {
     try {
         const { doctorName } = req.params;
@@ -282,4 +311,4 @@ const getAdminDashboard = async (req, res) => {
     }
 };
 
-module.exports = { getDoctorDashboard, updateAppointmentStatus, getAllDoctorAppointments, getBookedTimingsByDate, exportDoctorAppointments, getAdminDashboard };
+module.exports = { getDoctorDashboard, updateAppointmentStatus, updateAppointmentPrescription, getAllDoctorAppointments, getBookedTimingsByDate, exportDoctorAppointments, getAdminDashboard };

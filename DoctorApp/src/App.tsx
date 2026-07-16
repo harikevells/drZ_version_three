@@ -8,6 +8,8 @@ import LoginScreen from './screens/LoginScreen';
 import MainTabs from './navigation/MainTabs';
 import NotificationsScreen from './screens/NotificationsScreen';
 import MedicalCampNotification from './screens/MedicalCampNotification';
+import VideoCallScreen from './screens/VideoCallScreen';
+import PrescriptionScreen from './screens/PrescriptionScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -49,6 +51,8 @@ export default function App() {
         <Stack.Screen name="MainTabs" component={MainTabs} />
         <Stack.Screen name="Notifications" component={NotificationsScreen} />
         <Stack.Screen name="MedicalCampNotification" component={MedicalCampNotification} />
+        <Stack.Screen name="VideoCall" component={VideoCallScreen} />
+        <Stack.Screen name="Prescription" component={PrescriptionScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

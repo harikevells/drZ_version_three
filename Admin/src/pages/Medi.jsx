@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { API_BASE_URL, API_LOCAL_URL } from '../config';
-import { FaEdit, FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaArrowLeft, FaEye, FaTint } from 'react-icons/fa';
+import * as XLSX from 'xlsx';
 import Pagination from '../components/Pagination';
 import './DoctorManagement.css'; // Importing DoctorManagement CSS to match exact design
 import './Medi.css';
@@ -19,6 +20,8 @@ const Medi = () => {
   const [filterCategory, setFilterCategory] = useState('All Categories');
   const [filterStatus, setFilterStatus] = useState('All Status');
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [viewingMed, setViewingMed] = useState(null);
+  const fileInputRef = useRef(null);
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,7 +37,7 @@ const Medi = () => {
 
   const fetchMedicines = async () => {
     try {
-      const response = await axios.get(`${API_LOCAL_URL}/medicines`);
+      const response = await axios.get(`${API_BASE_URL}/medicines`);
       setMedicines(response.data);
     } catch (err) {
       console.error('Error fetching medicines:', err);
@@ -64,10 +67,10 @@ const Medi = () => {
     e.preventDefault();
     try {
       if (editingId) {
-        await axios.put(`${API_LOCAL_URL}/medicines/${editingId}`, formData);
+        await axios.put(`${API_BASE_URL}/medicines/${editingId}`, formData);
         alert('Medicine updated successfully!');
       } else {
-        await axios.post(`${API_LOCAL_URL}/medicines`, formData);
+        await axios.post(`${API_BASE_URL}/medicines`, formData);
         alert('Medicine created successfully!');
       }
       fetchMedicines();
@@ -78,8 +81,93 @@ const Medi = () => {
     }
   };
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const data = new Uint8Array(event.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      try {
+        const promises = jsonData.map(item => {
+          const mappedData = {
+            medicineName: item['Medicine Name'] || item.medicineName || '',
+            brandName: item['Brand Name'] || item.brandName || '',
+            medicineId: item['Medicine ID'] || item.medicineId || '',
+            category: item['Category'] || item.category || '',
+            medicineType: item['Medicine Type'] || item.medicineType || '',
+            manufacturer: item['Manufacturer'] || item.manufacturer || '',
+            purchasePrice: item['Purchase Price'] || item['Purchase Price (₹)'] || item.purchasePrice || '',
+            sellingPrice: item['Selling Price'] || item['Selling Price (₹)'] || item.sellingPrice || '',
+            currentStock: item['Current Stock'] || item.currentStock || '',
+            minimumStock: item['Minimum Stock'] || item.minimumStock || '',
+            mfgDate: item['Mfg. Date'] || item.mfgDate || '',
+            expiryDate: item['Expiry Date'] || item.expiryDate || '',
+            description: item['Description'] || item.description || '',
+            activeStatus: item['Active Status'] !== undefined ? item['Active Status'] : true,
+          };
+          return axios.post(`${API_BASE_URL}/medicines`, mappedData);
+        });
+
+        await Promise.all(promises);
+        alert('Bulk upload successful!');
+        fetchMedicines();
+      } catch (err) {
+        console.error('Error during bulk upload:', err);
+        alert('Error during bulk upload');
+      }
+      
+      e.target.value = null;
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   const handleEdit = (med) => {
-    setFormData({ ...med });
+    const formatDate = (dateValue) => {
+      if (!dateValue) return '';
+      try {
+        if (!isNaN(dateValue) && Number(dateValue) > 20000) {
+          const d = new Date((Number(dateValue) - 25569) * 86400 * 1000);
+          return d.toISOString().split('T')[0];
+        }
+
+        let dateString = String(dateValue).trim();
+        if (dateString.match(/^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/)) {
+           const parts = dateString.split(/[\/\-]/);
+           dateString = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        } else if (dateString.match(/^\d{4}[\/\-]\d{2}[\/\-]\d{2}T/)) {
+           return dateString.split('T')[0];
+        }
+
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return '';
+        return d.toISOString().split('T')[0];
+      } catch (e) {
+        return '';
+      }
+    };
+
+    setFormData({
+      medicineName: med.medicineName || '',
+      brandName: med.brandName || '',
+      medicineId: med.medicineId || '',
+      category: med.category || '',
+      medicineType: med.medicineType || '',
+      manufacturer: med.manufacturer || '',
+      purchasePrice: med.purchasePrice || '',
+      sellingPrice: med.sellingPrice || '',
+      currentStock: med.currentStock || '',
+      minimumStock: med.minimumStock || '',
+      description: med.description || '',
+      activeStatus: med.activeStatus !== undefined ? med.activeStatus : true,
+      mfgDate: formatDate(med.mfgDate),
+      expiryDate: formatDate(med.expiryDate)
+    });
     setEditingId(med._id || med.id);
     setIsFormVisible(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -88,7 +176,7 @@ const Medi = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this medicine?')) {
       try {
-        await axios.delete(`${API_LOCAL_URL}/medicines/${id}`);
+        await axios.delete(`${API_BASE_URL}/medicines/${id}`);
         fetchMedicines();
       } catch (err) {
         console.error('Error deleting medicine:', err);
@@ -126,7 +214,33 @@ const Medi = () => {
     <div className="page-container">
       {isFormVisible ? (
         <>
-          <h1 className="page-title">{editingId ? 'Edit Medicine' : 'Create Medicine'}</h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <button 
+                type="button" 
+                onClick={handleReset} 
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', color: '#4b5563', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, marginTop: '-11px' }}
+                title="Go Back"
+              >
+                <FaArrowLeft />
+              </button>
+              <h1 className="page-title" style={{ margin: 0, lineHeight: 1, display: 'flex', alignItems: 'center', marginBottom: '0px' }}>{editingId ? 'Edit Medicine' : 'Create Medicine'}</h1>
+            </div>
+            {!editingId && (
+              <div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  style={{ display: 'none' }} 
+                  accept=".xlsx, .xls" 
+                  onChange={handleFileUpload} 
+                />
+                <button type="button" className="add-btn" style={{ backgroundColor: '#10b981',color:'white' }} onClick={() => fileInputRef.current.click()}>
+                   Bulk Upload
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="form-card">
             <form onSubmit={handleSubmit} autoComplete="off">
@@ -228,7 +342,7 @@ const Medi = () => {
         </>
       ) : (
         <>
-          <h1 className="page-title">Medicine Management</h1>
+          <h1 style={{marginBottom:'20px'}} className="page-title">Medicine Management</h1>
           
           <div className="list-header" style={{ display: 'flex', justifyItems: 'flex-start', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
             {/* <h2 className="list-title">List:</h2> */}
@@ -268,11 +382,11 @@ const Medi = () => {
                   <th>Medicine Name</th>
                   <th>Category</th>
                   <th>Brand</th>
-                  <th>Manufacturer</th>
                   <th>Stock</th>
                   <th>Price (₹)</th>
                   <th>Status</th>
-                  <th>Action</th>
+                  <th style={{textAlign: 'center'}}>View</th>
+                  <th style={{textAlign: 'center'}}>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -285,15 +399,19 @@ const Medi = () => {
                         <td>{med.medicineName}</td>
                         <td>{med.category}</td>
                         <td>{med.brandName}</td>
-                        <td>{med.manufacturer}</td>
                         <td className={`stock-${stockStatus.color}`} style={{fontWeight: 600, color: stockStatus.color}}>{stockStatus.label}</td>
                         <td>{parseFloat(med.sellingPrice).toFixed(2)}</td>
                         <td className={med.activeStatus ? 'status-active' : 'status-inactive'}>
                           {med.activeStatus ? 'Active' : 'Inactive'}
                         </td>
-                        <td className="actions-cell">
-                          <button className="action-btn" onClick={() => handleEdit(med)}><FaEdit /></button>
-                          <button className="action-btn" onClick={() => handleDelete(med._id || med.id)}><FaTrash /></button>
+                        <td style={{textAlign: 'center'}}>
+                          <button className="action-btn" title="View Details" onClick={() => setViewingMed(med)}><FaEye /></button>
+                        </td>
+                        <td style={{textAlign: 'center', verticalAlign: 'middle'}}>
+                          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                            <button className="action-btn" title="Edit" onClick={() => handleEdit(med)}><FaEdit /></button>
+                            <button className="action-btn" title="Delete" onClick={() => handleDelete(med._id || med.id)}><FaTrash /></button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -317,6 +435,82 @@ const Medi = () => {
             />
           )}
         </>
+      )}
+
+      {/* View Modal */}
+      {viewingMed && (
+        <div className="modal-overlay" style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000}}>
+          <div className="modal-content" style={{backgroundColor: '#ffffff', borderRadius: '12px', width: '750px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', fontFamily: 'sans-serif'}}>
+            
+            {/* Header */}
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid #e5e7eb'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                <span style={{width: '8px', height: '8px', backgroundColor: '#10b981', borderRadius: '50%'}}></span>
+                <span style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', letterSpacing: '0.05em'}}>ACTIVE RECORD</span>
+              </div>
+              <button onClick={() => setViewingMed(null)} style={{background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '6px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#374151', fontSize: '18px'}}>&times;</button>
+            </div>
+
+            {/* Body */}
+            <div style={{display: 'flex', flex: 1}}>
+              
+              {/* Left Panel */}
+              <div style={{width: '35%', padding: '24px', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column'}}>
+                <div style={{width: '48px', height: '48px', backgroundColor: '#fcfcfc', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', border: '1px solid #e5e7eb'}}>
+                  <FaTint style={{color: '#d97706', fontSize: '20px'}} />
+                </div>
+                <h2 style={{margin: '0 0 4px 0', fontSize: '20px', color: '#111827', fontWeight: '600'}}>{viewingMed.medicineName}</h2>
+                <span style={{fontSize: '13px', color: '#6b7280', marginBottom: '32px'}}>{viewingMed.medicineId}</span>
+
+                <div style={{marginBottom: '20px'}}>
+                  <div style={{fontSize: '12px', color: '#6b7280', marginBottom: '4px'}}>Stock</div>
+                  <div style={{fontSize: '24px', color: '#111827', fontWeight: '600'}}>{viewingMed.currentStock}</div>
+                </div>
+
+                <div>
+                  <div style={{fontSize: '12px', color: '#6b7280', marginBottom: '4px'}}>Price</div>
+                  <div style={{fontSize: '24px', color: '#111827', fontWeight: '600'}}>₹{parseFloat(viewingMed.sellingPrice || 0).toFixed(2)}</div>
+                </div>
+              </div>
+
+              {/* Right Panel */}
+              <div style={{width: '65%', padding: '20px 20px', display: 'flex', flexDirection: 'column'}}>
+                
+                <div style={{display: 'flex', flexDirection: 'column'}}>
+                  {[
+                    { label: 'Brand', value: viewingMed.brandName },
+                    { label: 'Category', value: viewingMed.category },
+                    { label: 'Type', value: viewingMed.medicineType },
+                    { label: 'Manufacturer', value: viewingMed.manufacturer },
+                    { label: 'Purchase price', value: `₹${parseFloat(viewingMed.purchasePrice || 0).toFixed(2)}` },
+                    { label: 'Selling price', value: `₹${parseFloat(viewingMed.sellingPrice || 0).toFixed(2)}` },
+                    { label: 'Minimum stock', value: viewingMed.minimumStock },
+                    { label: 'Mfg date', value: viewingMed.mfgDate ? (isNaN(new Date(viewingMed.mfgDate).getTime()) ? viewingMed.mfgDate : new Date(viewingMed.mfgDate).toLocaleDateString()) : 'N/A' },
+                    { label: 'Expiry date', value: viewingMed.expiryDate ? (isNaN(new Date(viewingMed.expiryDate).getTime()) ? viewingMed.expiryDate : new Date(viewingMed.expiryDate).toLocaleDateString()) : 'Invalid date', color: !viewingMed.expiryDate ? '#dc2626' : '#111827' }
+                  ].map((row, i) => (
+                    <div key={i} style={{display: 'flex', padding: '12px 0', borderBottom: '1px solid #e5e7eb'}}>
+                      <span style={{width: '40%', color: '#6b7280', fontSize: '14px'}}>{row.label}</span>
+                      <span style={{width: '60%', color: row.color || '#111827', fontSize: '14px', fontWeight: '500'}}>{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{marginTop: '10px'}}>
+                  <div style={{fontSize: '12px', color: '#6b7280', marginBottom: '8px'}}>Description</div>
+                  <div style={{fontSize: '14px', color: '#111827', fontWeight: '500', lineHeight: '1.5'}}>{viewingMed.description || 'No description available.'}</div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{padding: '16px 24px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', alignItems: 'center'}}>
+              <button style={{padding: '8px 24px', backgroundColor: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '6px', color: '#111827', fontWeight: '500', cursor: 'pointer', fontSize: '14px'}} onClick={() => setViewingMed(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
