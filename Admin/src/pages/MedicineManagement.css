@@ -1,0 +1,281 @@
+.medicine-container {
+    padding: 20px;
+    background-color: #fff;
+    min-height: 80vh;
+}
+
+.medicine-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.medicine-header h2 {
+    color: #111827;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.medicine-icon-container {
+    background-color: #5F76FE;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.medicine-subtitle {
+    color: #9CA3AF;
+    font-size: 14px;
+    margin-bottom: 30px;
+}
+
+.medicine-form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    max-width: 900px;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #4B5563;
+    font-size: 14px;
+}
+
+.form-group input {
+    padding: 12px 15px;
+    border: 1px solid #E5E7EB;
+    border-radius: 20px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    border-color: #5F76FE;
+}
+
+.toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.toggle-group label {
+    font-weight: 600;
+    color: #4B5563;
+    font-size: 14px;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #D1D5DB;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #10B981;
+}
+
+input:focus + .toggle-slider {
+    box-shadow: 0 0 1px #10B981;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
+
+.submit-btn-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    margin-bottom: 40px;
+}
+
+.submit-btn {
+    background-color: #0A2558;
+    color: white;
+    font-weight: 600;
+    padding: 12px 40px;
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+.submit-btn:hover {
+    background-color: #06183c;
+}
+
+.list-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.list-section-header h3 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+}
+
+.add-new-btn {
+    background-color: #D3D9FF;
+    color: #5F76FE;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 25px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.add-new-btn:hover {
+    background-color: #c4ccff;
+}
+
+/* Action buttons in table */
+.action-icons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.edit-icon {
+    color: #9CA3AF;
+    cursor: pointer;
+}
+
+.edit-icon:hover {
+    color: #4B5563;
+}
+
+.delete-icon {
+    color: #9CA3AF;
+    cursor: pointer;
+}
+
+.delete-icon:hover {
+    color: #EF4444;
+}
+
+/* Reusing PatientAppointments table style logic but customized slightly for Medicine */
+.medicine-table-container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.medicine-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: center;
+}
+
+.medicine-table th:first-child {
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+}
+
+.medicine-table th:last-child {
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.medicine-table th {
+    background-color: #F8FAFC;
+    color: #111827;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #F1F5F9;
+    text-align: left;
+}
+
+.medicine-table th.text-center {
+    text-align: center;
+}
+
+.medicine-table td {
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #4b5563;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: left;
+}
+
+.medicine-table td.text-center {
+    text-align: center;
+}
+
+.medicine-table tr:hover {
+    background-color: #f8fafc;
+}
+
+.status-active {
+    color: #10B981;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.status-inactive {
+    color: #EF4444;
+    font-weight: 600;
+    font-size: 12px;
+}

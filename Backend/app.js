@@ -9,6 +9,8 @@ const appointmentRoutes = require('./routes/appointmentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const pushNotificationRoutes = require('./routes/pushNotificationRoutes');
 const medicineRoutes = require('./routes/medicineRoutes');
+const medicineTimingRoutes = require('./routes/medicineTimingRoutes');
+const medicineIntakeRoutes = require('./routes/medicineIntakeRoutes');
 
 const app = express();
 
@@ -36,5 +38,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/push-notifications', pushNotificationRoutes);
 app.use('/api/medicines', medicineRoutes);
+app.use('/api/medicine-timings', medicineTimingRoutes);
+app.use('/api/medicine-intakes', medicineIntakeRoutes);
 
 module.exports = app;

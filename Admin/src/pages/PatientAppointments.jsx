@@ -319,6 +319,34 @@ const PatientAppointments = () => {
                 </div>
               </div>
             </div>
+            
+            {selectedAppointment.prescription && selectedAppointment.prescription.length > 0 && (
+              <div style={{ padding: '0 25px 25px 25px' }}>
+                <h4 className="column-title">Prescription Details</h4>
+                <div className="table-container" style={{ padding: '0', boxShadow: 'none' }}>
+                  <table className="appointments-table">
+                    <thead>
+                      <tr>
+                        <th>S.No</th>
+                        <th>Medicine Name</th>
+                        <th>Time</th>
+                        <th>Intake</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedAppointment.prescription.map((med, index) => (
+                        <tr key={med.id || index}>
+                          <td>{index + 1}</td>
+                          <td>{med.name}</td>
+                          <td>{med.timing}</td>
+                          <td>{med.intake}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

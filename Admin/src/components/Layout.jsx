@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt } from 'react-icons/fa';
+import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt, FaChevronDown, FaChevronUp, FaPills, FaListUl, FaClock, FaPrescriptionBottle } from 'react-icons/fa';
 import './Layout.css';
 import logoImage from '../assets/DoctorlogoApp1.png';
 import adminImage from '../assets/adminimage.png';
@@ -10,6 +10,7 @@ import adminImage from '../assets/adminimage.png';
 const Layout = () => {
   const navigate = useNavigate();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isMedicineOpen, setIsMedicineOpen] = useState(false);
 
   const handleLogout = () => {
     sessionStorage.removeItem('token');
@@ -76,10 +77,34 @@ const Layout = () => {
             <FaBell className="nav-icon" />
             <span>Medical Camp</span>
           </NavLink>
-          <NavLink to="/medi" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-            <FaBell className="nav-icon" />
-            <span>Medicine Management</span>
-          </NavLink>
+          <div 
+            className={`nav-item ${['/medi', '/medicine-time', '/medicine-intake'].includes(location.pathname) ? 'active' : ''}`}
+            onClick={() => setIsMedicineOpen(!isMedicineOpen)}
+            style={{ cursor: 'pointer', justifyContent: 'space-between' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <FaPills className="nav-icon" />
+              <span>Medicine Management</span>
+            </div>
+            {isMedicineOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+          </div>
+          
+          {isMedicineOpen && (
+            <div className="sub-nav" style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <NavLink to="/medi" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaListUl className="nav-icon" style={{ fontSize: '14px' }} />
+                <span style={{ fontSize: '13px' }}>Medicine List</span>
+              </NavLink>
+              <NavLink to="/medicine-time" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaClock className="nav-icon" style={{ fontSize: '14px' }} />
+                <span style={{ fontSize: '13px' }}>Medicine Time</span>
+              </NavLink>
+              <NavLink to="/medicine-intake" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaPrescriptionBottle className="nav-icon" style={{ fontSize: '14px' }} />
+                <span style={{ fontSize: '13px' }}>Medicine Intake</span>
+              </NavLink>
+            </div>
+          )}
         </nav>
       </aside>
 

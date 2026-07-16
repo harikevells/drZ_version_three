@@ -15,7 +15,7 @@ interface Medicine {
 export default function PrescriptionScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { patientName, patientId, appointmentId } = route.params || {};
+  const { patientName, patientId, appointmentId, existingPrescription } = route.params || {};
 
   const [pName, setPName] = useState(patientName || '');
   const [pId, setPId] = useState(patientId || '');
@@ -29,7 +29,10 @@ export default function PrescriptionScreen() {
   useEffect(() => {
     if (patientName) setPName(patientName);
     if (patientId) setPId(patientId);
-  }, [patientName, patientId]);
+    if (existingPrescription && Array.isArray(existingPrescription)) {
+      setMedicines(existingPrescription);
+    }
+  }, [patientName, patientId, existingPrescription]);
 
   const handleAddMedicine = () => {
     if (!medicineName.trim()) {

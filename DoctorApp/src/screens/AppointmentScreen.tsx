@@ -71,6 +71,7 @@ export default function AppointmentScreen({ route }: any) {
   const [completeVisible, setCompleteVisible] = useState(false);
   const [cancelVisible, setCancelVisible] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [expandedPrescriptions, setExpandedPrescriptions] = useState<Record<string, boolean>>({});
 
   const fetchAppointments = async (showLoading = true) => {
     try {
@@ -497,7 +498,10 @@ export default function AppointmentScreen({ route }: any) {
                 <TouchableOpacity activeOpacity={1} onPress={() => removeBlink(item)}>
                   <Animated.View style={cardStyle}>
                     <View style={styles.cardHeader}>
-                      <Text style={styles.patientName}>{item.patient_name}</Text>
+                      <View style={styles.headerLeftInfo}>
+                        <Text style={styles.appointmentIdText}>APP ID: {item.booking_id || item.id || item._id}</Text>
+                        <Text style={styles.patientName}>{item.patient_name}</Text>
+                      </View>
                       {activeTab === 'Approved' ? (
                         <TouchableOpacity 
                           style={styles.joinBtn} 
@@ -570,16 +574,53 @@ export default function AppointmentScreen({ route }: any) {
                     
                     {activeTab === 'Completed' && item.prescription && item.prescription.length > 0 && (
                       <View style={styles.prescriptionContainer}>
-                        <Text style={styles.prescriptionTitle}>Prescription Details:</Text>
-                        {item.prescription.map((med: any, index: number) => (
-                          <View key={med.id || index.toString()} style={styles.medRow}>
-                            <View style={styles.medBullet} />
-                            <View style={styles.medInfo}>
-                              <Text style={styles.medName}>{med.name}</Text>
-                              <Text style={styles.medDetails}>{med.timing} | {med.intake}</Text>
-                            </View>
+                        <TouchableOpacity 
+                          style={styles.prescriptionHeader} 
+                          onPress={() => {
+                            const id = item.id || item._id;
+                            setExpandedPrescriptions(prev => ({
+                              ...prev,
+                              [id]: !prev[id]
+                            }));
+                          }}
+                        >
+                          <Text style={styles.prescriptionTitle}>Prescription Details</Text>
+                          <View style={styles.headerIcons}>
+                            <TouchableOpacity
+                              style={styles.editIconBtn}
+                              onPress={(e) => {
+                                e.stopPropagation(); // Prevent toggling the accordion
+                                navigation.navigate('Prescription', { 
+                                  patientName: item.patient_name, 
+                                  patientId: item.id || item._id,
+                                  appointmentId: item.booking_id || item.id || item._id,
+                                  existingPrescription: item.prescription
+                                });
+                              }}
+                            >
+                              <Ionicons name="pencil" size={16} color="#0D6EFD" />
+                            </TouchableOpacity>
+                            <Ionicons 
+                              name={expandedPrescriptions[item.id || item._id] ? "chevron-up" : "chevron-down"} 
+                              size={18} 
+                              color="#0D6EFD" 
+                            />
                           </View>
-                        ))}
+                        </TouchableOpacity>
+                        
+                        {expandedPrescriptions[item.id || item._id] && (
+                          <View style={styles.prescriptionContent}>
+                            {item.prescription.map((med: any, index: number) => (
+                              <View key={med.id || index.toString()} style={styles.medRow}>
+                                <View style={styles.medInfo}>
+                                  <Text style={styles.medDetailLine}>Medicine Name: {med.name}</Text>
+                                  <Text style={styles.medDetailLine}>Timing: {med.timing}</Text>
+                                  <Text style={styles.medDetailLine}>Intake : {med.intake}</Text>
+                                </View>
+                              </View>
+                            ))}
+                          </View>
+                        )}
                       </View>
                     )}
                   </Animated.View>
@@ -825,6 +866,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
+  headerLeftInfo: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  appointmentIdText: {
+    fontSize: 11,
+    color: '#888',
+    marginBottom: 2,
+    fontWeight: '600',
+  },
   patientName: {
     fontSize: 15,
     fontWeight: 'bold',
@@ -928,36 +979,42 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
+  prescriptionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+  prescriptionContent: {
+    marginTop: 10,
+  },
   prescriptionTitle: {
     fontSize: 13,
     fontWeight: 'bold',
     color: '#0D6EFD',
-    marginBottom: 8,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editIconBtn: {
+    paddingHorizontal: 10,
   },
   medRow: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'flex-start',
-    marginBottom: 6,
-  },
-  medBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#0D6EFD',
-    marginTop: 6,
-    marginRight: 8,
+    marginBottom: 15,
+    backgroundColor: '#F9FAFB',
+    padding: 10,
+    borderRadius: 8,
   },
   medInfo: {
     flex: 1,
   },
-  medName: {
+  medDetailLine: {
     fontSize: 13,
-    fontWeight: '600',
     color: '#333',
-  },
-  medDetails: {
-    fontSize: 11,
-    color: '#666',
-    marginTop: 2,
+    marginBottom: 6,
+    fontWeight: '500',
   }
 });
