@@ -75,7 +75,7 @@ const Layout = () => {
           </NavLink>
           <NavLink to="/medical-camp" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
             <FaBell className="nav-icon" />
-            <span>Medical Camp</span>
+            <span>Push Message</span>
           </NavLink>
           <div 
             className={`nav-item ${['/medi', '/medicine-time', '/medicine-intake'].includes(location.pathname) ? 'active' : ''}`}

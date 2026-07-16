@@ -15,53 +15,17 @@ import BookAppointmentScreen from '../screens/BookAppointmentScreen';
 import NotificationPatient from '../screens/NotificationPatient';
 import ChatbotScreen from '../screens/ChatbotScreen';
 import PatientAppointmentsScreen from '../screens/PatientAppointmentsScreen';
-// import ReportScreen from '../screens/ReportScreen';
+import PrescriptionListScreen from '../screens/PrescriptionListScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Dummy Component for Ambulance Tab
-const AmbulanceComponent = () => <View />;
 
-// ✅ NEW: Payment Screen Component (Fixed to prevent crash)
-const PaymentScreen = () => {
-  return (
-    <View style={styles.paymentContainer}>
-      <Text style={styles.paymentTitle}>Scan here to pay</Text>
-      <Text style={styles.paymentSubtitle}>இங்கே ஸ்கேன் செய்து பணம் செலுத்தவும்</Text>
-
-      <View style={styles.qrContainer}>
-        {/* NOTE: To use your real image:
-           1. Put 'payment.png' inside 'src/assets/' folder.
-           2. Uncomment the <Image> block below.
-           3. Remove the <Icon> line.
-        */}
-
-        <Image
-          source={require('../assets/payment.jpeg')}
-          style={styles.qrImage}
-          resizeMode="contain"
-        />
-
-
-        {/* Placeholder Icon so app doesn't crash */}
-        {/* <Icon name="qrcode-scan" size={200} color="#000" /> */}
-
-      </View>
-    </View>
-  );
-};
 
 // --- DASHBOARD TABS ---
 function DashboardTabs() {
   const { texts } = useContext(LanguageContext);
-
-  const openAmbulance = () => {
-    const phoneNumber = '801';
-    Linking.openURL(`tel:${phoneNumber}`).catch(err =>
-      Alert.alert('Error', 'Unable to open dialer')
-    );
-  };
 
   // Custom Tab Bar Component
   const CustomTabBar = ({ state, descriptors, navigation }) => {
@@ -170,50 +134,44 @@ function DashboardTabs() {
         }}
       />
 
-      {/* 3. PAYMENT TAB */}
+      {/* 3. PRESCRIPTION TAB */}
       <Tab.Screen
-        name="PaymentTab"
-        component={PaymentScreen}
+        name="PrescriptionTab"
+        component={PrescriptionListScreen}
         options={{
           tabBarLabel: ({ focused, color }) => (
             <View style={{ alignItems: 'center', marginTop: 0 }}>
               <Text style={{ fontSize: 12, color: color, fontWeight: focused ? 'bold' : 'normal' }}>
-                Payment/
+                Prescription/
               </Text>
-              <Text style={{ fontSize: 12, color: color, marginTop: -2 }}>
-                பேமெண்ட்
+              <Text style={{ fontSize: 10, color: color, marginTop: -2 }} numberOfLines={1} adjustsFontSizeToFit>
+                மருந்துச் சீட்டு
               </Text>
             </View>
           ),
           tabBarIcon: ({ color, focused }) => (
-            <Icon name="credit-card-outline" color={color} size={26} />
+            <Icon name="file-document-edit-outline" color={color} size={26} />
           ),
         }}
       />
 
-      {/* 3. AMBULANCE TAB (Opens Dialer) */}
+      {/* 4. PROFILE TAB */}
       <Tab.Screen
-        name="Ambulance"
-        component={AmbulanceComponent}
-        listeners={{
-          tabPress: (e) => {
-            e.preventDefault();
-            openAmbulance();
-          },
-        }}
+        name="ProfileTab"
+        component={ProfileScreen}
         options={{
           tabBarLabel: ({ focused, color }) => (
             <View style={{ alignItems: 'center', marginTop: 0 }}>
               <Text style={{ fontSize: 12, color: color, fontWeight: focused ? 'bold' : 'normal' }}>
-                {texts?.ambulance || 'Ambulance'}/
+                Profile/
               </Text>
-              <Text style={{ fontSize: 10, color: color, marginTop: -2 }}>
-                ஆம்புலன்ஸ்
+              <Text style={{ fontSize: 10, color: color, marginTop: -2 }} numberOfLines={1} adjustsFontSizeToFit>
+                சுயவிவரம்
               </Text>
             </View>
           ),
           tabBarIcon: ({ color, focused }) => (
-            <Icon name="ambulance" color={color} size={28} />
+            <Icon name="account-outline" color={color} size={28} />
           ),
         }}
       />

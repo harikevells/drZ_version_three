@@ -115,6 +115,9 @@ const NotificationPatient = ({ navigation }) => {
         } else if (n.title.includes('Rescheduled')) {
           iconColor = '#F39C12';
           iconName = 'calendar-clock-outline';
+        } else if (n.title.includes('Prescription')) {
+          iconColor = '#5F76FE';
+          iconName = 'file-document-edit-outline';
         } else if (n.title.includes('Completed')) {
           iconColor = '#8E44AD';
           iconName = 'check-all';
@@ -184,6 +187,11 @@ const NotificationPatient = ({ navigation }) => {
         }
         if (item.isPushNotification) {
           setExpandedPushId(isExpanded ? null : item.id);
+        } else if (item.title && item.title.includes('Prescription')) {
+          navigation.navigate('Dashboard', { 
+            screen: 'PrescriptionTab', 
+            params: { blinkAppId: item.booking_id, blinkMessage: item.message } 
+          });
         } else {
           navigation.navigate('Dashboard', { 
             screen: 'PatientAppointments', 
