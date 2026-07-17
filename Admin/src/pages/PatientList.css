@@ -1,0 +1,232 @@
+.patient-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.patient-list-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: #1f2937;
+}
+
+.header-icon {
+  background-color: #5b7cff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.patient-table-container {
+  background: white;
+  border-radius: 16px;
+  padding: 30px 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  border: 1px solid #f9fafb;
+}
+
+.patient-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.patient-table th {
+  text-align: left;
+  padding: 15px 10px;
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 700;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.patient-table td {
+  padding: 20px 10px;
+  font-size: 13px;
+  color: #4b5563;
+  border-bottom: 1px solid #f9fafb;
+}
+
+.patient-table tr:last-child td {
+  border-bottom: none;
+}
+
+.patient-table .patient-name {
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.patient-table .patient-gender {
+  color: #4b5563;
+}
+
+.patient-table .patient-id {
+  color: #6b7cff;
+  font-weight: 500;
+}
+
+.patient-table .doctor-name {
+  color: #4b5563;
+}
+
+.patient-table .appointment-date {
+  color: #4b5563;
+}
+
+.patient-table th:last-child {
+  text-align: center;
+}
+
+.patient-table td:last-child {
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  margin: 0 auto;
+}
+
+.table-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: color 0.2s ease;
+  padding: 0;
+}
+
+.view-btn:hover {
+  color: #6b7cff;
+}
+
+.delete-btn:hover {
+  color: #ef4444;
+}
+
+/* Patient Modal Styles */
+.patient-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+}
+
+.patient-modal-content {
+  background-color: white;
+  border-radius: 16px;
+  width: 750px;
+  max-width: 90%;
+  padding: 40px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #ef4444;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  padding: 0;
+  display: flex;
+}
+
+.modal-close-btn:hover {
+  opacity: 0.8;
+}
+
+.modal-title {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 0;
+  margin-bottom: 40px;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  row-gap: 30px;
+  column-gap: 20px;
+}
+
+.modal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.modal-value {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Filters */
+.filters-container {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.search-input, .date-input {
+  padding: 10px 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-input {
+  flex: 1;
+  max-width: 400px;
+}
+
+.clear-filter-btn {
+  padding: 10px 15px;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #374151;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.clear-filter-btn:hover {
+  background-color: #e5e7eb;
+}

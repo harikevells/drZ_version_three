@@ -1,11 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground } from 'react-native';
 
 const HomeScreen = () => {
   return (
-    <View style={styles.container}>
+    <ImageBackground
+      source={require('../assets/bg.png')}
+      style={styles.container}
+      resizeMode="cover"
+    >
       <Text style={styles.text}>Welcome to Home Screen 🏠</Text>
-    </View>
+    </ImageBackground>
   );
 };
 

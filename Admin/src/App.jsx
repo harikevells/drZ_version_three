@@ -6,6 +6,12 @@ import DoctorManagement from './pages/DoctorManagement';
 import Schedule from './pages/Schedule';
 import PatientAppointments from './pages/PatientAppointments';
 import Notification from './pages/Notification';
+import Dashboard from './pages/Dashboard';
+import PatientList from './pages/PatientList';
+import PushMessages from './pages/PushMessages';
+import MedicineManagement from './pages/MedicineManagement';
+import CreateMedicineTiming from './pages/CreateMedicineTiming';
+import CreateMedicineIntake from './pages/CreateMedicineIntake';
 
 const ProtectedRoute = ({ element }) => {
   const token = localStorage.getItem('token');
@@ -25,7 +31,13 @@ function App() {
         
         <Route path="/" element={<ProtectedRoute element={<Layout />} />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DoctorManagement />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="push-messages" element={<PushMessages />} />
+          <Route path="medicine" element={<MedicineManagement />} />
+          <Route path="medicine-timing" element={<CreateMedicineTiming />} />
+          <Route path="medicine-intake" element={<CreateMedicineIntake />} />
+          <Route path="patient-list" element={<PatientList />} />
+          <Route path="doctors" element={<DoctorManagement />} />
           <Route path="schedule" element={<Schedule />} />
           <Route path="patient" element={<PatientAppointments />} />
           <Route path="notifications" element={<Notification />} />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaEye, FaTimes } from 'react-icons/fa';
+import { FaEye, FaTimes, FaCalendarCheck, FaTrashAlt } from 'react-icons/fa';
 import Pagination from '../components/Pagination';
 import './PatientAppointments.css';
 
@@ -11,7 +11,7 @@ const PatientAppointments = () => {
   const [loading, setLoading] = useState(true);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  const itemsPerPage = 10;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('');
@@ -85,8 +85,8 @@ const PatientAppointments = () => {
 
   return (
     <div className="patient-appointments-container">
-      <div className="header-section">
-        <h2>Patient Appointments</h2>
+      <div className="patient-appointments-header">
+        <h2>Appointment History <span className="header-icon"><FaCalendarCheck /></span></h2>
       </div>
 
       <div className="filters-container">
@@ -115,7 +115,7 @@ const PatientAppointments = () => {
           <table className="appointments-table">
             <thead>
               <tr>
-                <th>Booking ID</th>
+                <th>Appointment ID</th>
                 <th>Patient Name</th>
                 <th>Doctor Name</th>
                 <th>Appointment Date</th>
@@ -127,20 +127,25 @@ const PatientAppointments = () => {
             <tbody>
               {filteredAppointments.length > 0 ? filteredAppointments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((appt) => (
                 <tr key={appt.id || appt._id}>
-                  <td>{(appt.id || appt._id).slice(-6).toUpperCase()}</td>
+                  <td className="appointment-id-cell">{(appt.id || appt._id).slice(-6).toUpperCase()}</td>
                   <td>{appt.patient_name}</td>
                   <td>{removeTamil(appt.doctor_name)}</td>
                   <td>{appt.appointment_date}</td>
                   <td>{appt.appointment_time}</td>
                   <td>
-                    <span className={`status-badge ${(appt.status || 'Pending').toLowerCase()}`}>
+                    <span className={`status-text-only ${(appt.status || 'Pending').toLowerCase()}`}>
                       {appt.status || 'Pending'}
                     </span>
                   </td>
-                  <td>
-                    <button className="view-btn" onClick={() => handleView(appt)}>
-                      <FaEye />
-                    </button>
+                  <td className="action-cell">
+                    <div className="action-buttons">
+                      <button className="table-action-btn view-btn" onClick={() => handleView(appt)}>
+                        <FaEye />
+                      </button>
+                      <button className="table-action-btn delete-btn">
+                        <FaTrashAlt />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )) : (

@@ -96,63 +96,42 @@
 }
 
 .toggle-group {
-  flex-direction: row;
+  flex-direction: row !important;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 15px;
+  margin-top: 30px; /* Aligns it vertically with the password input box */
+  margin-bottom: 0;
 }
 
-/* Switch Styles */
-.switch {
+/* Switch Styles (Matched with Push Messages) */
+.toggle-switch {
+  width: 50px;
+  height: 26px;
+  background-color: #d1d5db;
+  border-radius: 13px;
   position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 20px;
-}
-
-.switch input { 
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
   cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
+  transition: background-color 0.3s;
 }
 
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 2px;
-  bottom: 2px;
+.toggle-switch.active {
+  background-color: #3b5cff;
+}
+
+.toggle-circle {
+  width: 20px;
+  height: 20px;
   background-color: white;
-  transition: .4s;
-}
-
-input:checked + .slider {
-  background-color: #22c55e;
-}
-
-input:focus + .slider {
-  box-shadow: 0 0 1px #22c55e;
-}
-
-input:checked + .slider:before {
-  transform: translateX(20px);
-}
-
-.slider.round {
-  border-radius: 34px;
-}
-
-.slider.round:before {
   border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-switch.active .toggle-circle {
+  transform: translateX(24px);
 }
 
 .form-actions-center {

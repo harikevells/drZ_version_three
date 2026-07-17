@@ -27,7 +27,7 @@ const DoctorManagement = () => {
   const [showPassword, setShowPassword] = useState(false);
   
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  const itemsPerPage = 2;
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -216,14 +216,15 @@ const DoctorManagement = () => {
                 </button>
               </div>
             </div>
-          </div>
-          
-          <div className="form-group toggle-group">
-            <label>Active Status</label>
-            <label className="switch">
-              <input type="checkbox" name="activeStatus" checked={formData.activeStatus} onChange={handleInputChange} />
-              <span className="slider round"></span>
-            </label>
+            <div className="form-group toggle-group">
+              <label>Active Status</label>
+              <div 
+                className={`toggle-switch ${formData.activeStatus ? 'active' : ''}`} 
+                onClick={() => setFormData(prev => ({ ...prev, activeStatus: !prev.activeStatus }))}
+              >
+                <div className="toggle-circle"></div>
+              </div>
+            </div>
           </div>
           
           <div className="form-actions-center">

@@ -26,6 +26,9 @@ const VoiceBookingScreen = ({ navigation }) => {
   const currentStepRef = useRef(currentStep);
   useEffect(() => { currentStepRef.current = currentStep; }, [currentStep]);
   
+  const currentOptionsRef = useRef([]);
+  const currentMsgIdRef = useRef(null);
+
   const [isListening, setIsListening] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loadingOptions, setLoadingOptions] = useState(false);
@@ -71,19 +74,106 @@ const VoiceBookingScreen = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
+    let partialTimeoutId = null;
     Voice.onSpeechStart = () => setIsListening(true);
     Voice.onSpeechEnd = () => setIsListening(false);
     Voice.onSpeechError = (e) => {
       console.log("Speech error (normal if silent):", e);
       setIsListening(false);
-      setRecognizedText('');
+      clearTimeout(partialTimeoutId);
     };
     Voice.onSpeechPartialResults = (e) => {
       if (e.value && e.value.length > 0) {
         setRecognizedText(e.value[0]); // Live updating text
+        
+        clearTimeout(partialTimeoutId);
+        partialTimeoutId = setTimeout(() => {
+           const currentText = e.value[0];
+           if (currentText && currentText.trim()) {
+               Voice.stop();
+               setRecognizedText('');
+               addUserMessage(currentText);
+               
+               // Use a slight timeout to ensure state settles
+               setTimeout(() => {
+                 const step = currentStepRef.current;
+                 const options = currentOptionsRef.current;
+                 
+                 // Handle option selection via voice if options are present
+                 if (options && options.length > 0) {
+                   const spokenText = currentText.toLowerCase().trim();
+                   const wordToNum = { 'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'ten': '10', 'first': '1', 'second': '2', 'third': '3', 'fourth': '4', 'fifth': '5' };
+                   const spokenNumber = wordToNum[spokenText] || spokenText;
+                   
+                   let matchedOption = options.find((opt, idx) => {
+                     return String(idx + 1) === spokenNumber || 
+                            opt.label.toLowerCase().includes(spokenText);
+                   });
+                   
+                   if (!matchedOption && step === 'category') {
+                       const translationMap = {
+                         'idhaya': 'cardiology', 'heart': 'cardiology',
+                         'pal': 'dental', 'pallu': 'dental', 'dentist': 'dental',
+                         'kuzhandhai': 'pediatrics', 'pillaigal': 'pediatrics', 'child': 'pediatrics',
+                         'thool': 'dermatology', 'thol': 'dermatology', 'skin': 'dermatology',
+                         'kann': 'ophthalmology', 'kan': 'ophthalmology', 'eye': 'ophthalmology',
+                         'elumbu': 'orthopedics', 'bone': 'orthopedics', 'elambiyan': 'orthopedics', 'elumbiyal': 'orthopedics',
+                         'pengal': 'gynecology', 'ladies': 'gynecology',
+                         'narambu': 'neurology', 'brain': 'neurology',
+                         'pothu': 'general',
+                         'mooku': 'ent', 'mookku': 'ent', 'thondai': 'ent', 'dondai': 'ent', 'movie dondai': 'ent', 'kaandhu': 'ent', 'ent': 'ent',
+                         'kathir': 'radiology', 'xray': 'radiology', 'scan': 'radiology', 'radiology': 'radiology'
+                       };
+                       let translatedText = spokenText;
+                       for (let k in translationMap) {
+                          if (translatedText.includes(k)) translatedText += " " + translationMap[k];
+                       }
+                       matchedOption = options.find((opt, idx) => {
+                           return translatedText.toLowerCase().includes(opt.label.toLowerCase().split(' / ')[0].replace(/^\d+\.\s*/, '').trim());
+                       });
+                   }
+                   
+                   if (!matchedOption && step === 'gender') {
+                       if (/\b(female|பெண்|pen|pain|pin|ben|pan|ten|when|then|spend|pent|tent|spin|பீமேல்|email|pombala|pombale|ponnu|girl|women|woman)\b/i.test(spokenText) || spokenText.includes('பெண்') || spokenText.includes('female')) {
+                           matchedOption = options.find(o => o.value === 'Female');
+                       } else if (/\b(male|ஆண்|aan|on|an|and|aen|earn|arm|all|am|aah|hand|own|awe|haan|han|aahn|aand|மேல்|மெயில்|mail|mile|ambala|aambala|payan|paiyan|boy|man|men)\b/i.test(spokenText) || spokenText.includes('ஆண்') || spokenText.includes('male')) {
+                           matchedOption = options.find(o => o.value === 'Male');
+                       } else if (/\b(other|others|மற்றவை|matravai|அதர்ஸ்)\b/i.test(spokenText) || spokenText.includes('மற்றவை') || spokenText.includes('other')) {
+                           matchedOption = options.find(o => o.value === 'Others');
+                       }
+                   }
+                   
+                   if (matchedOption && !matchedOption.disabled) {
+                     handleOptionSelect(matchedOption, currentMsgIdRef.current);
+                     return;
+                   }
+                 }
+
+                 if (step === 'name') {
+                   setFormData(prev => ({ ...prev, patientName: currentText }));
+                   setCurrentStep('age');
+                   addBotMessage("How old are you?\n\nஉங்கள் வயதை உள்ளிடவும்.");
+                 } else if (step === 'age') {
+                   setFormData(prev => ({ ...prev, age: currentText }));
+                   setCurrentStep('gender');
+                   addBotMessage("Please Select your gender.\n\nபாலினத்தை தேர்வு செய்யவும்.", [
+                     { label: '1. Male / ஆண்', value: 'Male' },
+                     { label: '2. Female / பெண்', value: 'Female' },
+                     { label: '3. Others / மற்றவை', value: 'Others' }
+                   ]);
+                 } else if (step === 'whatsapp') {
+                   setFormData(prev => ({ ...prev, whatsapp: currentText }));
+                   setCurrentStep('date');
+                   addBotMessage("Please Select a Date from the calendar.\n\nகாலண்டரில் இருந்து தேதியை தேர்வு செய்யவும்.");
+                   setShowDatePicker(true);
+                 }
+               }, 100);
+           }
+        }, 4000);
       }
     };
     Voice.onSpeechResults = (e) => {
+      clearTimeout(partialTimeoutId);
       if (e.value && e.value.length > 0) {
         const text = e.value[0];
         setRecognizedText(text);
@@ -97,6 +187,35 @@ const VoiceBookingScreen = ({ navigation }) => {
 
           setTimeout(() => {
             const step = currentStepRef.current;
+            const options = currentOptionsRef.current;
+                 
+            // Handle option selection via voice if options are present
+            if (options && options.length > 0) {
+              const spokenText = text.toLowerCase().trim();
+              const wordToNum = { 'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'ten': '10', 'first': '1', 'second': '2', 'third': '3', 'fourth': '4', 'fifth': '5' };
+              const spokenNumber = wordToNum[spokenText] || spokenText;
+              
+              let matchedOption = options.find((opt, idx) => {
+                return String(idx + 1) === spokenNumber || 
+                       opt.label.toLowerCase().includes(spokenText);
+              });
+              
+              if (!matchedOption && step === 'gender') {
+                 if (/\b(female|பெண்|pen|pain|pin|ben|pan|ten|when|then|spend|pent|tent|spin|பீமேல்|email|pombala|pombale|ponnu|girl|women|woman)\b/i.test(spokenText) || spokenText.includes('பெண்') || spokenText.includes('female')) {
+                     matchedOption = options.find(o => o.value === 'Female');
+                 } else if (/\b(male|ஆண்|aan|on|an|and|aen|earn|arm|all|am|aah|hand|own|awe|haan|han|aahn|aand|மேல்|மெயில்|mail|mile|ambala|aambala|payan|paiyan|boy|man|men)\b/i.test(spokenText) || spokenText.includes('ஆண்') || spokenText.includes('male')) {
+                     matchedOption = options.find(o => o.value === 'Male');
+                 } else if (/\b(other|others|மற்றவை|matravai|அதர்ஸ்)\b/i.test(spokenText) || spokenText.includes('மற்றவை') || spokenText.includes('other')) {
+                     matchedOption = options.find(o => o.value === 'Others');
+                 }
+              }
+              
+              if (matchedOption && !matchedOption.disabled) {
+                handleOptionSelect(matchedOption, currentMsgIdRef.current);
+                return;
+              }
+            }
+
             if (step === 'name') {
               setFormData(prev => ({ ...prev, patientName: text }));
               setCurrentStep('age');
@@ -105,9 +224,9 @@ const VoiceBookingScreen = ({ navigation }) => {
               setFormData(prev => ({ ...prev, age: text }));
               setCurrentStep('gender');
               addBotMessage("Please Select your gender.\n\nபாலினத்தை தேர்வு செய்யவும்.", [
-                { label: 'Male / ஆண்', value: 'Male' },
-                { label: 'Female / பெண்', value: 'Female' },
-                { label: 'Others / மற்றவை', value: 'Others' }
+                { label: '1. Male / ஆண்', value: 'Male' },
+                { label: '2. Female / பெண்', value: 'Female' },
+                { label: '3. Others / மற்றவை', value: 'Others' }
               ]);
             } else if (step === 'whatsapp') {
               setFormData(prev => ({ ...prev, whatsapp: text }));
@@ -119,8 +238,8 @@ const VoiceBookingScreen = ({ navigation }) => {
                 { label: 'Book an appointment\nசந்திப்பை முன்பதிவு செய்யவும்', value: 'book_appointment' }
               ]);
             }
-          }, 500);
-        }, 500);
+          }, 1500);
+        }, 1500);
       }
     };
 
@@ -148,8 +267,10 @@ const VoiceBookingScreen = ({ navigation }) => {
         }
       }
       Tts.stop();
-      setIsListening(true);
-      await Voice.start('en-IN'); 
+      try {
+        await Voice.destroy();
+      } catch (e) {}
+      await Voice.start('en-IN');
     } catch (e) {
       console.error("Start listening error", e);
     }
@@ -173,7 +294,11 @@ const VoiceBookingScreen = ({ navigation }) => {
   }, [messages, doctorCategories]);
 
   const addBotMessage = (text, options = []) => {
-    setMessages(prev => [...prev, { id: Date.now().toString(), text, isBot: true, options }]);
+    const msgId = (Date.now() + Math.random()).toString();
+    currentOptionsRef.current = options;
+    currentMsgIdRef.current = msgId;
+
+    setMessages(prev => [...prev, { id: msgId, text, isBot: true, options }]);
     
     const parts = text.split('\n\n');
     const textToSpeak = parts.length > 1 ? parts[1] : parts[0];
@@ -182,7 +307,7 @@ const VoiceBookingScreen = ({ navigation }) => {
   };
 
   const addUserMessage = (text) => {
-    setMessages(prev => [...prev, { id: Date.now().toString(), text, isBot: false }]);
+    setMessages(prev => [...prev, { id: (Date.now() + Math.random()).toString(), text, isBot: false }]);
   };
 
   const formatDate = (rawDate) => { 
@@ -244,7 +369,7 @@ const VoiceBookingScreen = ({ navigation }) => {
       const departments = Array.from(uniqueDepts);
       const formattedCategories = departments.map((cat, index) => ({ 
           _id: String(index + 1), 
-          label: cat, 
+          label: `${index + 1}. ` + cat, 
           value: cat,
           originalName: cat.split('/')[0].trim(),
           fullDepartment: cat
@@ -267,12 +392,15 @@ const VoiceBookingScreen = ({ navigation }) => {
   };
 
   const handleOptionSelect = (option, msgId) => {
+    // Clear the active options so it doesn't trigger anymore via voice
+    currentOptionsRef.current = [];
+    
     setMessages(prev => prev.map(msg => msg.id === msgId ? { ...msg, options: [] } : msg));
     addUserMessage(option.label.split('\n')[0]);
     Tts.stop();
 
     setTimeout(() => {
-      if (currentStep === 'start' && option.value === 'book_appointment') {
+      if (option.value === 'book_appointment') {
         setCurrentStep('name');
         addBotMessage("Sure! Let's get started.\nWhat is your full name?\n\nசரி, ஆரம்பிக்கலாம். உங்கள் முழு பெயர் என்ன?");
         startListening();
@@ -287,9 +415,9 @@ const VoiceBookingScreen = ({ navigation }) => {
           const depts = doc.department.split(',').map(cat => cat.trim());
           return depts.includes(option.fullDepartment);
         });
-        const formattedDoctors = docsForCategory.map(doc => ({
+        const formattedDoctors = docsForCategory.map((doc, index) => ({
            _id: doc._id || doc.id,
-           label: doc.doctorName + " / " + (doc.experience ? doc.experience + " Yrs" : ""),
+           label: `${index + 1}. ` + doc.doctorName + " / " + (doc.experience ? doc.experience + " Yrs" : ""),
            value: doc,
         }));
         
@@ -319,8 +447,8 @@ const VoiceBookingScreen = ({ navigation }) => {
         const booked = bookedByDoctor[option.value.doctorName] || [];
 
         if (timings.length > 0) {
-          const timingOptions = timings.map(t => ({ 
-            label: t, 
+          const timingOptions = timings.map((t, index) => ({ 
+            label: `${index + 1}. ` + t, 
             value: t,
             disabled: booked.includes(t)
           }));
@@ -333,8 +461,8 @@ const VoiceBookingScreen = ({ navigation }) => {
         setFormData(prev => ({ ...prev, time: option.value }));
         setCurrentStep('confirm');
         addBotMessage("Your details have been collected. Confirm Booking?\n\nஉங்கள் விவரங்கள் சேகரிக்கப்பட்டுள்ளன. முன்பதிவை உறுதி செய்யவா?", [
-          { label: 'Confirm Booking / உறுதி செய்', value: 'confirm' },
-          { label: 'Cancel / ரத்து செய்', value: 'cancel' }
+          { label: '1. Confirm Booking / உறுதி செய்', value: 'confirm' },
+          { label: '2. Cancel / ரத்து செய்', value: 'cancel' }
         ]);
       } else if (currentStep === 'confirm') {
         if (option.value === 'confirm') {
@@ -349,6 +477,11 @@ const VoiceBookingScreen = ({ navigation }) => {
 
   const handleDateConfirm = (event, selectedDate) => {
     setShowDatePicker(false);
+    
+    if (event && event.type === 'dismissed') {
+      return;
+    }
+
     if (selectedDate) {
       addUserMessage(formatDate(selectedDate));
       setFormData(prev => ({ ...prev, date: selectedDate }));

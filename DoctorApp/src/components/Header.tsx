@@ -7,17 +7,16 @@ import axios from 'axios';
 
 const { width } = Dimensions.get('window');
 
-interface HeaderProps {
+  interface HeaderProps {
   title?: string;
   isNotification?: boolean;
+  isBlueTheme?: boolean;
 }
 
-export default function Header({ title, isNotification = false }: HeaderProps) {
+export default function Header({ title, isNotification = false, isBlueTheme = false }: HeaderProps) {
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
-  const [doctorName, setDoctorName] = useState('Doctor');
-  const [greeting, setGreeting] = useState('');
-  const [currentDate, setCurrentDate] = useState('');
+  const [doctorName, setDoctorName] = useState('Dr.Johnny');
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -37,31 +36,13 @@ export default function Header({ title, isNotification = false }: HeaderProps) {
       }
     };
     loadUserData();
-
-    // Get Time-based Greeting
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Good Morning');
-    else if (hour < 17) setGreeting('Good Afternoon');
-    else setGreeting('Good Evening');
-
-    // Get Formatted Date
-    const date = new Date();
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-    const dayName = days[date.getDay()];
-    const monthName = months[date.getMonth()];
-    const dayNum = date.getDate();
-    const year = date.getFullYear();
-
-    setCurrentDate(`${dayName}, ${monthName} ${dayNum}, ${year}`);
   }, []);
 
   useEffect(() => {
     if (isFocused && doctorName !== 'Doctor') {
       fetchUnreadCount(doctorName);
     }
-  }, [isFocused]);
+  }, [isFocused, doctorName]);
 
   const fetchUnreadCount = async (name: string) => {
     try {
@@ -74,26 +55,25 @@ export default function Header({ title, isNotification = false }: HeaderProps) {
   };
 
   return (
-    <View style={styles.headerContainer}>
+    <View style={[styles.headerContainer, isBlueTheme ? styles.blueThemeContainer : styles.whiteThemeContainer]}>
       <View style={styles.headerContent}>
-        <View style={styles.userInfo}>
-          <Image
-            source={require('../assets/DoctorlogoApp1.png')}
-            style={[styles.avatar, { resizeMode: 'contain' }]}
-          />
+        {/* User Pill */}
+        <View style={styles.userPill}>
+          <View style={styles.logoCircle}>
+             <Image
+              source={require('../assets/DoctorlogoApp1.png')}
+              style={styles.pillAvatar}
+            />
+          </View>
           <View style={styles.textContainer}>
-            {title ? (
-              <Text style={styles.greeting}>{title}</Text>
-            ) : (
-              <>
-                {/* <Text style={styles.greeting}>{greeting}</Text> */}
-                {/* <Text style={styles.date}>{currentDate}</Text> */}
-              </>
-            )}
+            <Text style={styles.welcomeText}>Welcome To DrZ</Text>
+            <Text style={styles.doctorNameText}>{doctorName}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.notificationIconContainer} onPress={() => navigation.navigate('Notifications')}>
-          <Ionicons name="notifications-outline" size={32} color="#FFF" />
+
+        {/* Right Notification Icon */}
+        <TouchableOpacity style={styles.notificationCircle} onPress={() => navigation.navigate('Notifications')}>
+          <Ionicons name="notifications-outline" size={22} color="#0066FF" />
           {unreadCount > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
@@ -107,71 +87,91 @@ export default function Header({ title, isNotification = false }: HeaderProps) {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: '#052A3F',
-    height: 100,
     width: '100%',
-    // borderBottomLeftRadius: width * 0.95,
-    // borderBottomRightRadius: width * 0.95,
-    // transform: [{ scaleX: 1.5 }],
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: 20,
-    marginBottom: 20,
+    paddingTop: 45, // For status bar
+    paddingBottom: 15,
+  },
+  blueThemeContainer: {
+    backgroundColor: '#0066FF',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    paddingBottom: 30,
+  },
+  whiteThemeContainer: {
+    backgroundColor: 'transparent',
   },
   headerContent: {
-    // transform: [{ scaleX: 0.66 }],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
     paddingHorizontal: 20,
   },
-  userInfo: {
+  userPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 30,
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
-  avatar: {
-    width: 90,
-    height: 40,
-    borderRadius: 25,
-    // borderWidth: 2,
-    borderColor: '#FFF',
-    // backgroundColor: '#FFF',
+  logoCircle: {
+    width: 35,
+    height: 35,
+    borderRadius: 17.5,
+    backgroundColor: '#E6F4FE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  pillAvatar: {
+    width: 25,
+    height: 25,
+    resizeMode: 'contain',
   },
   textContainer: {
-    marginLeft: 12,
+    marginLeft: 10,
+    justifyContent: 'center',
   },
-  greeting: {
-    color: '#FFF',
-    fontSize: 18,
+  welcomeText: {
+    color: '#888',
+    fontSize: 10,
+    marginBottom: 2,
+  },
+  doctorNameText: {
+    color: '#000',
+    fontSize: 14,
     fontWeight: 'bold',
   },
-  date: {
-    color: '#A0B3C1',
-    fontSize: 13,
-    marginTop: 4,
-  },
-  notificationIconContainer: {
+  notificationCircle: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     position: 'relative',
-    padding: 5,
   },
   badge: {
     position: 'absolute',
-    top: 0,
-    right: 2,
+    top: -2,
+    right: -2,
     backgroundColor: '#E74C3C',
     borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    minWidth: 18,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#052A3F',
+    borderColor: '#FFF',
     paddingHorizontal: 4,
   },
   badgeText: {
     color: '#FFF',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
   },
 });

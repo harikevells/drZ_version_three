@@ -28,7 +28,7 @@ const Schedule = () => {
   const [modalInitialDate, setModalInitialDate] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  const itemsPerPage = 2;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('');

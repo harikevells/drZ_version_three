@@ -9,11 +9,13 @@ interface Props {
   onClose: () => void;
   patientId: string;
   doctorName: string;
+  currentDate?: string;
+  currentTime?: string;
 }
 
 const API_URL = 'http://10.10.11.90:5000/api/appointments';
 
-export default function RescheduleModal({ visible, onClose, patientId, doctorName }: Props) {
+export default function RescheduleModal({ visible, onClose, patientId, doctorName, currentDate, currentTime }: Props) {
   const [selectedTime, setSelectedTime] = useState('');
   const [date, setDate] = useState('');
   const [bookedTimings, setBookedTimings] = useState<string[]>([]);
@@ -23,12 +25,15 @@ export default function RescheduleModal({ visible, onClose, patientId, doctorNam
 
   useEffect(() => {
     if (visible) {
-      const today = new Date();
-      const dd = String(today.getDate()).padStart(2, '0');
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const yyyy = today.getFullYear();
-      
-      setDate(`${dd}/${mm}/${yyyy}`);
+      if (currentDate) {
+        setDate(currentDate.replace(/\s+/g, ''));
+      } else {
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        setDate(`${dd}/${mm}/${yyyy}`);
+      }
       setSelectedTime('');
       setBookedTimings([]);
       setAvailableTimings([]);
@@ -36,7 +41,7 @@ export default function RescheduleModal({ visible, onClose, patientId, doctorNam
     } else {
       setDate('');
     }
-  }, [visible]);
+  }, [visible, currentDate]);
 
   useEffect(() => {
     if (date.length === 10 && doctorName) {
@@ -191,7 +196,7 @@ export default function RescheduleModal({ visible, onClose, patientId, doctorNam
           </View>
 
           <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm}>
-            <Text style={styles.confirmText}>Confirm</Text>
+            <Text style={styles.confirmText}>Save</Text>
           </TouchableOpacity>
         </View>
       </View>

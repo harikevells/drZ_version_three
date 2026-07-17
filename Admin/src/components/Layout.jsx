@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured } from 'react-icons/fa';
+import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaUsers, FaPills, FaClock, FaUtensils } from 'react-icons/fa';
+import { MdDashboard } from 'react-icons/md';
 import './Layout.css';
 import logoImage from '../assets/logo.png';
 
@@ -33,57 +34,74 @@ const Layout = () => {
 
   return (
     <div className="layout-container">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-logo" style={{ marginBottom: '5px', padding: '20px 20px 0 20px', display: 'flex', justifyContent: 'center' }}>
-          <img src={logoImage} alt="DrZ Logo" style={{ height: '80px' }} />
+      {/* Top Header */}
+      <header className="topbar">
+        <div className="topbar-logo">
+          <img src={logoImage} alt="DrZ Logo" style={{ height: '40px' }} />
         </div>
         
-        <nav className="sidebar-nav">
-          <NavLink to="/dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-            <FaUserMd className="nav-icon" />
-            <span>DR Management</span>
-          </NavLink>
-          <NavLink to="/schedule" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-            <FaCalendarCheck className="nav-icon" />
-            <span>Schedule</span>
-          </NavLink>
-          <NavLink to="/patient" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-            <FaUserInjured className="nav-icon" />
-            <span>Appointment</span>
-          </NavLink>
-        </nav>
-      </aside>
+        <div className="topbar-actions">
+          <button className="icon-btn action-btn" onClick={() => navigate('/notifications')}>
+            <FaBell />
+            {unreadCount > 0 && <span className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+          </button>
+          <button className="icon-btn action-btn" onClick={() => setIsLogoutModalOpen(true)} title="Logout">
+            <FaSignOutAlt />
+          </button>
+          <div className="admin-profile">
+            <span className="admin-name">Admin</span>
+            <div className="admin-avatar">
+              <img src="https://i.pravatar.cc/150?img=1" alt="admin" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+            </div>
+          </div>
+        </div>
+      </header>
 
-      {/* Main Content Area */}
-      <div className="main-area">
-        {/* Top Header */}
-        <header className="topbar">
-          <div className="topbar-welcome">
-            <h2>Welcome, Johnny.</h2>
-            <p>Super admin For DrZ...</p>
-          </div>
-          <div className="topbar-actions">
-            <button className="icon-btn" style={{ position: 'relative' }} onClick={() => navigate('/notifications')}>
-              <FaBell />
-              {unreadCount > 0 && (
-                <span style={{
-                  position: 'absolute', top: '-5px', right: '-5px',
-                  backgroundColor: '#e74c3c', color: '#fff', fontSize: '10px',
-                  borderRadius: '50%', padding: '2px 6px', fontWeight: 'bold'
-                }}>
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </button>
-            <button className="icon-btn" onClick={() => setIsLogoutModalOpen(true)}>
-              <FaSignOutAlt />
-            </button>
-          </div>
-        </header>
+      <div className="main-content-wrapper">
+        {/* Blue Sidebar */}
+        <aside className="blue-sidebar">
+          <nav className="sidebar-nav">
+            <NavLink to="/dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <div className="nav-icon"><MdDashboard /></div>
+              <span>Dashboard</span>
+            </NavLink>
+            <NavLink to="/push-messages" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <div className="nav-icon"><FaBell /></div>
+              <span>Push Messages</span>
+            </NavLink>
+            <NavLink to="/medicine" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <div className="nav-icon"><FaPills /></div>
+              <span>Create Medicine</span>
+            </NavLink>
+            <NavLink to="/medicine-timing" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <div className="nav-icon"><FaClock /></div>
+              <span>Create Timing</span>
+            </NavLink>
+            <NavLink to="/medicine-intake" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <div className="nav-icon"><FaUtensils /></div>
+              <span>Create Intake</span>
+            </NavLink>
+            <NavLink to="/patient-list" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <div className="nav-icon"><FaUsers /></div>
+              <span>Patient List</span>
+            </NavLink>
+            <NavLink to="/doctors" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <div className="nav-icon"><FaUserMd /></div>
+              <span>DR Management</span>
+            </NavLink>
+            <NavLink to="/schedule" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <div className="nav-icon"><FaCalendarCheck /></div>
+              <span>Schedule</span>
+            </NavLink>
+            <NavLink to="/patient" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <div className="nav-icon"><FaUserInjured /></div>
+              <span>Appointment</span>
+            </NavLink>
+          </nav>
+        </aside>
 
         {/* Page Content */}
-        <main className="content-wrapper">
+        <main className="page-content">
           <Outlet />
         </main>
       </div>

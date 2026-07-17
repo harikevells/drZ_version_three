@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Image, Platform } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
@@ -11,11 +10,14 @@ const IP_ADDRESS = '10.10.11.90';
 const PORT = '5000';
 const BASE_URL = `http://${IP_ADDRESS}:${PORT}`;
 
+const CIRCLE_COLORS = ['#F9C74F', '#FF7F9F', '#E73B25', '#74B9FF', '#A29BFE'];
+
 const NotificationPatient = ({ navigation }) => {
   const { user } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [serverOffset, setServerOffset] = useState(0);
   const isFocused = useIsFocused();
 
   useEffect(() => {
@@ -24,17 +26,12 @@ const NotificationPatient = ({ navigation }) => {
     }
   }, [isFocused]);
 
-  const handleMarkAllAsRead = async () => {
-    if (!user || (!user.contactNumber && !user.mobile)) return;
-    try {
-      const mobile = user.contactNumber || user.mobile;
-      await axios.put(`${BASE_URL}/api/notifications/readAll/patient/${mobile}`);
-      // Update local state visually
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-    } catch (error) {
-      console.log("Error marking as read", error);
-    }
-  };
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchNotifications = async () => {
     if (!user || (!user.contactNumber && !user.mobile)) {
@@ -46,39 +43,23 @@ const NotificationPatient = ({ navigation }) => {
       const mobile = user.contactNumber || user.mobile;
       const response = await axios.get(`${BASE_URL}/api/notifications/patient/${mobile}`);
       
+      if (response.headers && response.headers.date) {
+        const srvTime = new Date(response.headers.date).getTime();
+        const localTime = new Date().getTime();
+        setServerOffset(srvTime - localTime);
+      }
+      
       const realNotifications = response.data || [];
       
-      const formattedNotifications = realNotifications.map(n => {
-        let iconName = 'bell-outline';
-        let iconColor = '#1C3E55';
-        
-        if (n.title.includes('Submitted') || n.title.includes('Booked')) {
-          iconColor = '#3498DB';
-          iconName = 'calendar-check-outline';
-        } else if (n.title.includes('Approved')) {
-          iconColor = '#27AE60';
-          iconName = 'check-circle-outline';
-        } else if (n.title.includes('Cancelled') || n.title.includes('Rejected')) {
-          iconColor = '#E74C3C';
-          iconName = 'close-circle-outline';
-        } else if (n.title.includes('Rescheduled')) {
-          iconColor = '#F39C12';
-          iconName = 'calendar-clock-outline';
-        } else if (n.title.includes('Completed')) {
-          iconColor = '#8E44AD';
-          iconName = 'check-all';
-        }
-
-        return {
-          id: n.id || Math.random().toString(),
-          title: n.title,
-          message: n.message,
-          iconName,
-          iconColor,
-          isRead: n.isRead,
-          date: new Date(n.createdAt).toLocaleDateString()
-        };
-      });
+      const formattedNotifications = realNotifications.map(n => ({
+        id: n._id || n.id || Math.random().toString(),
+        title: n.title,
+        message: n.message,
+        type: n.type,
+        imageUrl: n.imageUrl || n.image || null,
+        isRead: n.isRead !== undefined ? n.isRead : false,
+        createdAt: n.createdAt
+      }));
 
       setNotifications(formattedNotifications);
     } catch (error) {
@@ -88,32 +69,174 @@ const NotificationPatient = ({ navigation }) => {
     }
   };
 
-  const renderItem = ({ item }) => (
-    <View style={[styles.notificationCard, !item.isRead && styles.unreadCard]}>
-      <View style={[styles.iconContainer, { backgroundColor: item.iconColor + '20' }]}>
-        <Icon name={item.iconName} size={30} color={item.iconColor} />
+  const handleMarkAsRead = async (id) => {
+    try {
+      await axios.put(`${BASE_URL}/api/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    } catch (error) {
+      console.error("Error marking as read:", error);
+    }
+  };
+
+  const getInitials = (title) => {
+    if (!title) return 'NA';
+    const words = title.trim().split(' ');
+    if (words.length > 1) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return title.substring(0, 2).toUpperCase();
+  };
+
+  const timeAgo = (dateString) => {
+    if (!dateString) return '';
+    const dateObj = new Date(dateString);
+    const trueCurrentTime = currentTime.getTime() + serverOffset;
+    const diffMs = trueCurrentTime - dateObj.getTime();
+    
+    // Prevent negative times if there's a slight network delay offset
+    const finalDiffMs = Math.max(0, diffMs);
+    
+    const diffMins = Math.floor(finalDiffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) {
+      return 'Just now';
+    } else if (diffMins < 60) {
+      return `${diffMins} Min ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} Hour${diffHours > 1 ? 's' : ''} ago`;
+    } else {
+      return `${diffDays} Day${diffDays > 1 ? 's' : ''} ago`;
+    }
+  };
+
+  const NotificationItem = ({ item, index }) => {
+    const [expanded, setExpanded] = useState(false);
+    const t = (item.title || '').toLowerCase();
+    const isCamp = item.type === 'camp' || t.includes('camp') || t.includes('முகாம்');
+    const isAppointment = item.type === 'appointment' || t.includes('appointment') || t.includes('நேர்காணல்');
+
+    let iconContent = <Text style={styles.initialsText}>{getInitials(item.title)}</Text>;
+    let bgColor = CIRCLE_COLORS[index % CIRCLE_COLORS.length];
+
+    if (isCamp) {
+      iconContent = <Icon name="bullhorn" size={20} color="#FFF" />;
+      bgColor = '#F9C74F'; // Yellow/Orange
+    } else if (isAppointment) {
+      iconContent = <Text style={styles.initialsText}>AP</Text>;
+      bgColor = '#FF7F9F'; // Pink
+    }
+
+    return (
+      <View style={styles.notificationWrapper}>
+        <TouchableOpacity 
+          style={styles.notificationRow}
+          activeOpacity={0.7}
+          onPress={() => { 
+            if (!item.isRead) handleMarkAsRead(item.id); 
+            if (isCamp) {
+              setExpanded(!expanded);
+            } else {
+              if (item.message) {
+                import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => {
+                  AsyncStorage.setItem('highlightedPatientMessage', item.message);
+                });
+              }
+              navigation.navigate('Dashboard', { 
+                screen: 'AppointmentsListTab',
+                params: { highlightedMessage: item.message }
+              });
+            }
+          }}
+        >
+          {/* Unread blue dot */}
+          <View style={styles.dotContainer}>
+            {!item.isRead ? <View style={styles.blueDot} /> : null}
+          </View>
+          
+          {/* CARD */}
+          <View style={[
+            styles.cardContainer, 
+            isCamp ? styles.campCard : (!item.isRead ? styles.unreadCard : styles.readCard)
+          ]}>
+            <View style={styles.cardInnerRow}>
+              {/* Icon/Initials Circle */}
+              <View style={[styles.initialsCircle, { backgroundColor: bgColor }]}>
+                {iconContent}
+              </View>
+
+              {/* Content */}
+              <View style={styles.notificationContent}>
+                <View style={styles.titleRowInline}>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  {isCamp && (
+                    <Icon name={expanded ? "chevron-up" : "chevron-down"} size={20} color="#666" />
+                  )}
+                </View>
+                <Text style={styles.cardMessage}>{item.message}</Text>
+                
+                {/* Show image if expanded and it's a camp */}
+                {isCamp && expanded && (
+                  <Image 
+                    source={item.imageUrl ? { uri: item.imageUrl } : require('../assets/logo.png')} 
+                    style={styles.campImage} 
+                    resizeMode="cover"
+                  />
+                )}
+
+                <Text style={styles.cardDate}>{timeAgo(item.createdAt)}</Text>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+        {!isCamp && <View style={styles.divider} />}
       </View>
-      <View style={styles.textContainer}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.cardTitle, !item.isRead && styles.unreadText]}>{item.title}</Text>
-          {!item.isRead && <View style={styles.unreadDot} />}
-        </View>
-        <Text style={styles.cardMessage}>{item.message}</Text>
-        <Text style={styles.cardDate}>{item.date}</Text>
-      </View>
-    </View>
+    );
+  };
+
+  const renderItem = ({ item, index }) => (
+    <NotificationItem item={item} index={index} />
   );
 
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
+    <View style={styles.container}>
+      {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={28} color="#1C3E55" />
+        <View style={styles.userInfo}>
+          <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+          <Text style={styles.welcomeText}>Welcome To DrZ</Text>
+        </View>
+
+        <TouchableOpacity style={styles.bellIconContainer}>
+          <Icon name="bell-outline" size={22} color="#6276F5" />
+          {/* Unread count badge on bell */}
+          {unreadCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        <TouchableOpacity onPress={handleMarkAllAsRead} style={{ padding: 4 }}>
-          <Icon name="check-all" size={26} color="#1C3E55" />
+      </View>
+
+      {/* BACK BUTTON AND TITLE */}
+      <View style={styles.titleRow}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="arrow-left" size={24} color="#555" />
+          </TouchableOpacity>
+          <Text style={styles.screenTitle}>Notification / அறிவிப்பு</Text>
+        </View>
+
+        {/* Mark all as read button */}
+        <TouchableOpacity style={styles.markReadButton} onPress={() => {
+          // Dummy mark as read logic for demo
+          const updated = notifications.map(n => ({...n, isRead: true}));
+          setNotifications(updated);
+        }}>
+          <Icon name="check-all" size={24} color="#6276F5" />
         </TouchableOpacity>
       </View>
 
@@ -124,7 +247,8 @@ const NotificationPatient = ({ navigation }) => {
         ) : notifications.length > 0 ? (
           <FlatList
             data={notifications}
-            keyExtractor={(item) => item.id}
+            extraData={currentTime}
+            keyExtractor={(item, index) => item.id || index.toString()}
             renderItem={renderItem}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
@@ -136,60 +260,211 @@ const NotificationPatient = ({ navigation }) => {
           </View>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  header: {
-    flexDirection: 'row',
+  container: { 
+    flex: 1, 
+    backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'android' ? 35 : 50 
+  },
+  
+  // Header Styles
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 24,
+    marginBottom: 30 
+  },
+  userInfo: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#F4F4F4', 
+    padding: 6, 
+    paddingRight: 18, 
+    borderRadius: 25 
+  },
+  logo: { 
+    width: 32, 
+    height: 32, 
+    borderRadius: 16, 
+    marginRight: 10, 
+    backgroundColor: '#FFF' 
+  },
+  welcomeText: { 
+    fontSize: 13, 
+    fontWeight: 'bold', 
+    color: '#111' 
+  },
+  bellIconContainer: { 
+    backgroundColor: '#F4F4F4', 
+    width: 40, 
+    height: 40, 
+    borderRadius: 20, 
+    justifyContent: 'center', 
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    position: 'relative',
   },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#1C3E55' },
-  content: { flex: 1 },
-  listContainer: { padding: 16 },
-  notificationCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    alignItems: 'center'
-  },
-  iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  bellBadge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#FF3B30', // Red for count badge
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16
+    paddingHorizontal: 3,
+    borderWidth: 1,
+    borderColor: '#FFF'
   },
-  textContainer: { flex: 1 },
-  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 4, flex: 1 },
-  unreadText: { color: '#000', fontWeight: '900' },
-  unreadCard: { backgroundColor: '#F4F9FC', borderColor: '#D0E1E8', borderWidth: 1 },
-  unreadDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#E74C3C', marginTop: 4, marginLeft: 8 },
-  cardMessage: { fontSize: 14, color: '#555', lineHeight: 20 },
-  cardDate: { fontSize: 12, color: '#999', marginTop: 8, alignSelf: 'flex-end' },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { marginTop: 10, fontSize: 16, color: '#888' }
+  bellBadgeText: {
+    color: '#FFF',
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+
+  // Title Row
+  titleRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between',
+    paddingHorizontal: 24, 
+    marginBottom: 25 
+  },
+  screenTitle: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    color: '#333', 
+    marginLeft: 10 
+  },
+  markReadButton: {
+    padding: 5,
+  },
+
+  // Content
+  content: { 
+    flex: 1 
+  },
+  listContainer: { 
+    paddingBottom: 20
+  },
+
+  // Notification Card
+  notificationWrapper: {
+    marginBottom: 10,
+  },
+  notificationRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+  },
+  dotContainer: {
+    width: 16,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginTop: 34, // Aligns with the center of the icon inside the card
+    marginRight: 6,
+  },
+  blueDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4A60F0',
+  },
+  cardContainer: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingRight: 8,
+    borderRadius: 8,
+  },
+  campCard: {
+    backgroundColor: '#F6F8FA', // Distinct light grey for camps
+    padding: 12, // add some inner padding since it has a background
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  unreadCard: {
+    backgroundColor: 'transparent',
+  },
+  readCard: {
+    backgroundColor: 'transparent',
+  },
+  cardInnerRow: {
+    flexDirection: 'row',
+  },
+  initialsCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  initialsText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  titleRowInline: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+    flex: 1,
+    marginRight: 10,
+  },
+  cardMessage: {
+    fontSize: 12,
+    color: '#666',
+    lineHeight: 18,
+  },
+  campImage: {
+    width: '100%',
+    height: 120,
+    borderRadius: 8,
+    marginTop: 10,
+    backgroundColor: '#F0F0F0',
+  },
+  cardDate: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#6276F5',
+    marginTop: 10,
+    alignSelf: 'flex-end',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#EAEAEA',
+    marginLeft: 70, // Align with the start of the text content
+    marginRight: 24,
+  },
+
+  // Empty State
+  emptyContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  emptyText: { 
+    marginTop: 10, 
+    fontSize: 16, 
+    color: '#888' 
+  }
 });
 
 export default NotificationPatient;
+

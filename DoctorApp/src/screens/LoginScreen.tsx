@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, Alert, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, Alert, Dimensions, ImageBackground } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 // Replace with your local machine's IP address if testing on physical device,
 // or use 10.0.2.2 for Android emulator
@@ -32,6 +32,7 @@ export default function LoginScreen() {
       // Store token and user data
       await AsyncStorage.setItem('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
+      await AsyncStorage.setItem('loginTimestamp', Date.now().toString());
       
       // Navigate directly to MainTabs
       navigation.replace('MainTabs');
@@ -45,23 +46,28 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView 
+    <ImageBackground 
+      source={require('../../assets/images/Android Compact - 122 (1).png')} 
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      resizeMode="cover"
     >
-      {/* Top Blue Curved Header */}
-      <View style={styles.header}>
-        <View style={styles.logoContainer}>
+      <KeyboardAvoidingView 
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+
+      {/* Form Area */}
+      <View style={styles.formContainer}>
+        {/* We keep the Logo and Title just in case the background doesn't have it.
+            If the background image has it already, these can be hidden later. */}
+        <View style={styles.logoWrapper}>
           <Image 
             source={require('../assets/DoctorlogoApp.png')} 
             style={styles.logo} 
             resizeMode="contain"
           />
+          <Text style={styles.welcomeText}>Welcome To DrZ</Text>
         </View>
-      </View>
-
-      {/* Login Form */}
-      <View style={styles.formContainer}>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>User Name:</Text>
           <TextInput
@@ -102,7 +108,8 @@ export default function LoginScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
@@ -111,62 +118,59 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  header: {
-    backgroundColor: '#052A3F', // Dark blue from mockup
-    height: '50%',
-    width: '100%',
-    borderBottomLeftRadius: width * 0.5,
-    borderBottomRightRadius: width * 0.5,
-    transform: [{ scaleX: 1.5 }], // Trick to make the curve gentler and wider
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  logoContainer: {
-    transform: [{ scaleX: 0.66 }], // Counteract the parent scaling so the logo isn't stretched
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logo: {
-    width: 260,
-    height: 200,
+  keyboardView: {
+    flex: 1,
   },
   formContainer: {
     flex: 1,
     paddingHorizontal: 40,
-    paddingTop: 60,
+    justifyContent: 'center',
+    paddingTop: height * 0.1,
+  },
+  logoWrapper: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  logo: {
+    width: 200,
+    height: 120,
+    marginBottom: 10,
+  },
+  welcomeText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000',
+    alignSelf: 'flex-start',
+    marginTop: 10,
   },
   inputGroup: {
-    marginBottom: 25,
+    marginBottom: 20,
   },
   label: {
     fontSize: 14,
     color: '#333',
+    fontWeight: '600',
     marginBottom: 8,
     marginLeft: 5,
   },
   input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
+    height: 55,
+    borderRadius: 12,
     paddingHorizontal: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#F7F8FA',
     fontSize: 16,
     color: '#000',
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    backgroundColor: '#fff',
+    height: 55,
+    borderRadius: 12,
+    backgroundColor: '#F7F8FA',
   },
   passwordInput: {
     flex: 1,
-    height: 50,
+    height: 55,
     paddingHorizontal: 15,
     fontSize: 16,
     color: '#000',
@@ -177,14 +181,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loginButton: {
-    backgroundColor: '#2CA01C', // Green from mockup
-    borderRadius: 8,
-    height: 50,
+    backgroundColor: '#5C7CFA', // Blue from Figma
+    borderRadius: 25,
+    height: 55,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 30,
-    alignSelf: 'center',
-    width: 150,
+    marginTop: 40,
+    width: '100%',
   },
   loginButtonText: {
     color: '#fff',

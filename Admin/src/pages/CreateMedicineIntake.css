@@ -1,0 +1,7 @@
+.medicine-intake-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Inheriting from MedicineManagement styles for consistency */

@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Image, StyleSheet,
-  ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Linking
+  ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Linking, ImageBackground, Dimensions
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -124,24 +124,28 @@ const LoginScreen = ({ navigation }) => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1, backgroundColor: '#fff' }}
     >
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContainer} bounces={false} showsVerticalScrollIndicator={false}>
 
-        <TouchableOpacity onPress={handleLogoClick} style={{ alignItems: 'center', width: '100%' }}>
-          <View style={styles.poweredByContainer}>
+        <ImageBackground 
+          source={require('../assets/Group 1707481559.png')} 
+          style={styles.headerBackground}
+          imageStyle={styles.headerBackgroundImage}
+        >
+          <TouchableOpacity onPress={handleLogoClick} style={{ alignItems: 'center' }}>
             <Image source={require('../assets/logo.png')} style={styles.drzLogo} resizeMode="contain" />
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </ImageBackground>
 
-        <View style={styles.loginTitleContainer}>
-          <Icon name={isLogin ? "login" : "account-plus"} size={28} color="#000" style={{ marginRight: 8 }} />
-          <Text style={styles.loginTitle}>
-            {isLogin ? 'Login / உள்நுழைய' : 'Register / பதிவு செய்ய'}
-          </Text>
-        </View>
+        <View style={styles.formContainer}>
+          <View style={styles.loginTitleContainer}>
+            <Text style={styles.loginTitle}>
+              {isLogin ? 'Login / உள்நுழைவு' : 'Register / பதிவு செய்யவும்'}
+            </Text>
+          </View>
 
         <View style={styles.form}>
           <Text style={styles.label}>
-            Email or Mobile / மின்னஞ்சல் அல்லது எண் <Text style={styles.star}>*</Text>
+            Email Or Mobile / மின்னஞ்சல் அல்லது கைபேசி
           </Text>
           <TextInput
             style={styles.input}
@@ -154,7 +158,7 @@ const LoginScreen = ({ navigation }) => {
           />
 
           <Text style={styles.label}>
-            Password / கடவுச்சொல் <Text style={styles.star}>*</Text>
+            Password / கடவுச்சொல்
           </Text>
           <View style={styles.passwordContainer}>
             <TextInput
@@ -173,7 +177,7 @@ const LoginScreen = ({ navigation }) => {
           {!isLogin && (
             <>
               <Text style={styles.label}>
-                Confirm Password / உறுதிப்படுத்துக <Text style={styles.star}>*</Text>
+                Confirm Password / கடவுச்சொல் உறுதி
               </Text>
               <View style={styles.passwordContainer}>
                 <TextInput
@@ -198,26 +202,26 @@ const LoginScreen = ({ navigation }) => {
             <Icon
               name={rememberMe ? "checkbox-marked" : "checkbox-blank-outline"}
               size={24}
-              color={rememberMe ? "#1C4E63" : "#888"}
+              color={rememberMe ? "#5A75F6" : "#888"}
             />
             <Text style={styles.checkboxText}>
-              Remember Me / நினைவில் கொள்க
+              Remember Me / என்னை நினைவில் கொள்ளவும்
             </Text>
           </TouchableOpacity>
 
           {loading ? (
-            <ActivityIndicator size="large" color="#1C4E63" style={{ marginTop: 20 }} />
+            <ActivityIndicator size="large" color="#5A75F6" style={{ marginTop: 20 }} />
           ) : (
             <TouchableOpacity style={styles.button} onPress={handleAuth}>
               <Text style={styles.buttonText}>
-                {isLogin ? 'Login / உள்நுழைய' : 'Register / பதிவு செய்ய'}
+                {isLogin ? 'Login / உள்நுழைவு' : 'Register / பதிவு செய்யவும்'}
               </Text>
             </TouchableOpacity>
           )}
 
           <View style={styles.toggleAuthContainer}>
             <Text style={styles.toggleAuthText}>
-              {isLogin ? "Don't have an account? / கணக்கு இல்லையா? " : "Already have an account? / ஏற்கனவே கணக்கு உள்ளதா? "}
+              {isLogin ? "Don't have an account? / கணக்கு இல்லையா? " : "Already have an account? / கணக்கு உள்ளதா? "}
             </Text>
             <TouchableOpacity onPress={() => { setIsLogin(!isLogin); setPassword(''); setConfirmPassword(''); }}>
               <Text style={styles.toggleAuthLink}>
@@ -234,35 +238,38 @@ const LoginScreen = ({ navigation }) => {
               Emergency / அவசர உதவி
             </Text>
           </View>
-
+        </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
+const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#fff', paddingHorizontal: 25, paddingTop: 50, paddingBottom: 40, alignItems: 'center' },
-  poweredByContainer: { alignItems: 'center', marginTop: 5, marginBottom: 30 },
-  drzLogo: { width: 100, height: 100 },
-  loginTitleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  loginTitle: { fontSize: 24, fontWeight: 'bold', color: '#000' },
+  scrollContainer: { flexGrow: 1, backgroundColor: '#fff', paddingBottom: 40 },
+  headerBackground: { width: '100%', height: 280, justifyContent: 'center', alignItems: 'center' },
+  headerBackgroundImage: { resizeMode: 'stretch' },
+  drzLogo: { width: 180, height: 180, marginTop: 20 },
+  formContainer: { paddingHorizontal: 30, paddingTop: 20, alignItems: 'center', flex: 1 },
+  loginTitleContainer: { marginBottom: 25 },
+  loginTitle: { fontSize: 20, fontWeight: '900', color: '#222', textAlign: 'center' },
   form: { width: '100%' },
-  label: { fontSize: 14, fontWeight: 'bold', color: '#444', marginBottom: 8, marginTop: 15 },
-  star: { color: 'red' },
-  input: { borderWidth: 1.5, borderColor: '#777', borderRadius: 8, padding: 14, fontSize: 16, backgroundColor: '#fff', color: '#000' },
-  passwordContainer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#777', borderRadius: 8, backgroundColor: '#fff' },
-  passwordInput: { flex: 1, padding: 14, fontSize: 16, color: '#000' },
+  label: { fontSize: 12, fontWeight: 'bold', color: '#555', marginBottom: 8, marginTop: 15 },
+  input: { backgroundColor: '#F5F6F8', borderRadius: 8, padding: 14, fontSize: 14, color: '#000', borderWidth: 0 },
+  passwordContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F5F6F8', borderRadius: 8 },
+  passwordInput: { flex: 1, padding: 14, fontSize: 14, color: '#000' },
   eyeIcon: { padding: 10, paddingRight: 14 },
-  checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 15, marginBottom: 10 },
-  checkboxText: { marginLeft: 8, fontSize: 13, fontWeight: 'bold', color: '#444' },
-  button: { backgroundColor: '#1C4E63', paddingVertical: 15, borderRadius: 8, alignItems: 'center', elevation: 3, marginTop: 25, paddingHorizontal: 20 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
-  toggleAuthContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20, flexWrap: 'wrap' },
-  toggleAuthText: { fontSize: 13, color: '#444', textAlign: 'center' },
-  toggleAuthLink: { fontSize: 13, color: '#1C4E63', fontWeight: 'bold' },
-  ambulanceButton: { width: 65, height: 65, borderRadius: 32.5, backgroundColor: '#D32F2F', alignItems: 'center', justifyContent: 'center', elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4, marginBottom: 5, borderWidth: 2, borderColor: '#fff' },
-  ambulanceText: { color: '#D32F2F', fontWeight: 'bold', fontSize: 12 }
+  checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 15, marginBottom: 5 },
+  checkboxText: { marginLeft: 8, fontSize: 12, color: '#555', fontWeight: 'bold' },
+  button: { backgroundColor: '#6276F5', paddingVertical: 14, borderRadius: 10, alignItems: 'center', elevation: 0, marginTop: 25 },
+  buttonText: { color: '#fff', fontSize: 15, fontWeight: 'bold', textAlign: 'center' },
+  toggleAuthContainer: { flexDirection: 'column', alignItems: 'center', marginTop: 25, gap: 5 },
+  toggleAuthText: { fontSize: 12, color: '#666', textAlign: 'center' },
+  toggleAuthLink: { fontSize: 13, color: '#6276F5', fontWeight: 'bold' },
+  ambulanceButton: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center', elevation: 5, marginBottom: 8 },
+  ambulanceText: { color: '#E74C3C', fontWeight: 'bold', fontSize: 12 }
 });
 
 export default LoginScreen;

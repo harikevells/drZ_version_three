@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Header from '../components/Header';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import RescheduleModal from '../components/RescheduleModal';
 import ApproveModal from '../components/ApproveModal';
 import CancelModal from '../components/CancelModal';
@@ -13,6 +13,8 @@ const API_URL = 'http://10.10.11.90:5000/api/appointments';
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const [highlightedPatientName, setHighlightedPatientName] = useState<string | null>(null);
   const [rescheduleVisible, setRescheduleVisible] = useState(false);
   const [approveVisible, setApproveVisible] = useState(false);
   const [cancelVisible, setCancelVisible] = useState(false);
@@ -21,7 +23,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [doctorName, setDoctorName] = useState('');
   
-  const [stats, setStats] = useState({ todaysAppointments: 0, pendingAppointments: 0, totalAttended: 0 });
+  const [stats, setStats] = useState({ todaysAppointments: 0, pendingAppointments: 0, totalAttended: 0, rescheduledAppointments: 0 });
   const [patientRequests, setPatientRequests] = useState<any[]>([]);
   const [recentPatients, setRecentPatients] = useState<any[]>([]);
 
@@ -48,6 +50,21 @@ export default function HomeScreen() {
     fetchDashboardData();
   }, []);
 
+  useEffect(() => {
+    if (route.params?.highlightedPatientName) {
+      setHighlightedPatientName(route.params.highlightedPatientName);
+      // Clear route param so it doesn't stick forever when returning to this tab
+      navigation.setParams({ highlightedPatientName: null });
+    } else {
+      AsyncStorage.getItem('highlightedPatientName').then(name => {
+        if (name) {
+          setHighlightedPatientName(name);
+          AsyncStorage.removeItem('highlightedPatientName');
+        }
+      });
+    }
+  }, [route.params?.highlightedPatientName]);
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchDashboardData();
@@ -65,16 +82,19 @@ export default function HomeScreen() {
   };
 
   const openReschedule = (patient: any) => {
+    setHighlightedPatientName(null);
     setSelectedPatient(patient);
     setRescheduleVisible(true);
   };
 
   const openApprove = (patient: any) => {
+    setHighlightedPatientName(null);
     setSelectedPatient(patient);
     setApproveVisible(true);
   };
 
   const openCancel = (patient: any) => {
+    setHighlightedPatientName(null);
     setSelectedPatient(patient);
     setCancelVisible(true);
   };
@@ -101,7 +121,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Header />
+      <Header isBlueTheme={false} />
       
       <ScrollView 
         showsVerticalScrollIndicator={false} 
@@ -112,15 +132,17 @@ export default function HomeScreen() {
         {/* Appointments Summary */}
         <Text style={styles.sectionTitle}>Appointments</Text>
         <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{stats.todaysAppointments < 10 ? `0${stats.todaysAppointments}` : stats.todaysAppointments}</Text>
-            <Text style={styles.statLabel}>Today's{'\n'}Appointment</Text>
-            <Ionicons name="calendar-outline" size={24} color="#2CA01C" style={styles.statIcon} />
+          <View style={[styles.statCardBlue, { marginRight: 10 }]}>
+            <Text style={styles.statNumberWhite}>{stats.todaysAppointments < 10 ? `0${stats.todaysAppointments}` : stats.todaysAppointments}</Text>
+            <Text style={styles.statLabelWhite}>Today's{'\n'}Appointment</Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{stats.pendingAppointments < 10 ? `0${stats.pendingAppointments}` : stats.pendingAppointments}</Text>
-            <Text style={styles.statLabel}>Pending{'\n'}Appointment</Text>
-            <Ionicons name="time-outline" size={24} color="#FFA500" style={styles.statIcon} />
+          <View style={[styles.statCardBlue, { marginRight: 10 }]}>
+            <Text style={styles.statNumberWhite}>{stats.pendingAppointments < 10 ? `0${stats.pendingAppointments}` : stats.pendingAppointments}</Text>
+            <Text style={styles.statLabelWhite}>Pending{'\n'}Appointment</Text>
+          </View>
+          <View style={styles.statCardBlue}>
+            <Text style={styles.statNumberWhite}>{stats.rescheduledAppointments < 10 ? `0${stats.rescheduledAppointments}` : stats.rescheduledAppointments}</Text>
+            <Text style={styles.statLabelWhite}>Reschedule{'\n'}Appointment</Text>
           </View>
         </View>
 
@@ -135,15 +157,25 @@ export default function HomeScreen() {
         {patientRequests.length === 0 ? (
           <Text style={{ textAlign: 'center', color: '#999', marginVertical: 20 }}>No pending requests.</Text>
         ) : (
-          patientRequests.map((patient: any) => (
-            <View key={patient.id || patient._id} style={styles.requestCard}>
+          patientRequests.map((patient: any) => {
+            const isHighlighted = highlightedPatientName && patient.patient_name && patient.patient_name.trim().toLowerCase() === highlightedPatientName.trim().toLowerCase();
+            return (
+            <TouchableOpacity 
+              key={patient.id || patient._id} 
+              activeOpacity={0.9}
+              onPress={() => {
+                if (isHighlighted) {
+                  setHighlightedPatientName(null);
+                  navigation.setParams({ highlightedPatientName: null });
+                }
+              }}
+              style={[styles.requestCard, isHighlighted && { backgroundColor: '#E6F4FE', borderColor: '#0084FF', borderWidth: 1 }]}
+            >
               <View style={styles.cardHeader}>
                 <Text style={styles.patientName}>{patient.patient_name}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(patient.status) }]}>
-                  <Text style={styles.statusText}>{patient.status}</Text>
-                </View>
+                <Text style={[styles.statusText, { color: getStatusColor(patient.status) }]}>{patient.status}</Text>
               </View>
-              <Text style={styles.dateTime}>{patient.appointment_date} {patient.appointment_time}</Text>
+              <Text style={styles.dateTime}>{patient.appointment_date} {patient.appointment_time ? patient.appointment_time.replace(' to ', ' - ') : ''}</Text>
               <View style={styles.actionButtons}>
                 <TouchableOpacity 
                   style={[styles.btn, styles.approveBtn]}
@@ -164,8 +196,9 @@ export default function HomeScreen() {
                   <Text style={styles.btnTextDark} numberOfLines={1} adjustsFontSizeToFit>Cancel</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          ))
+            </TouchableOpacity>
+            );
+          })
         )}
 
         {/* Recent Patient History */}
@@ -180,14 +213,15 @@ export default function HomeScreen() {
             keyExtractor={(item: any) => item.id || item._id}
             renderItem={({ item }: { item: any }) => (
               <View style={styles.recentPatientCard}>
-                <View style={styles.cardBase}>
-                  <Image 
-                    source={item.patient_gender === 'Female' ? require('../assets/femalepatient.png') : require('../assets/malepatient.png')} 
-                    style={styles.patientImage}
-                  />
-                  <View style={styles.recentNameBadge}>
-                    <Text style={styles.recentName}>{item.patient_name}</Text>
-                  </View>
+                <Image 
+                  source={item.patient_gender === 'Female' ? require('../assets/femalepatient.png') : require('../assets/malepatient.png')} 
+                  style={styles.recentPatientImage}
+                />
+                <Text style={styles.recentName}>{item.patient_name}</Text>
+                <Text style={styles.recentCategory}>{item.treatment_category || 'General Checkup'}</Text>
+                <View style={styles.recentDateBadge}>
+                  <Ionicons name="calendar-outline" size={10} color="#0066FF" />
+                  <Text style={styles.recentDateText}>30 Mar 2026</Text>
                 </View>
               </View>
             )}
@@ -203,6 +237,8 @@ export default function HomeScreen() {
         onClose={() => { setRescheduleVisible(false); fetchDashboardData(); }} 
         patientId={selectedPatient?.id || selectedPatient?._id}
         doctorName={doctorName}
+        currentDate={selectedPatient?.appointment_date}
+        currentTime={selectedPatient?.appointment_time}
       />
       <ApproveModal 
         visible={approveVisible} 
@@ -234,7 +270,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 5,
+    paddingBottom: 110, // Added space so content isn't hidden behind the floating footer
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -256,45 +292,36 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
+    paddingBottom: 10,
     justifyContent: 'space-between',
   },
-  statCard: {
-    backgroundColor: '#FFF',
+  statCardBlue: {
+    flex: 1,
+    backgroundColor: '#0066FF',
     borderRadius: 12,
-    paddingVertical: 25,
-    paddingHorizontal: 20,
-    width: '48%',
+    paddingVertical: 15,
+    paddingHorizontal: 10,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 5,
-    elevation: 2,
-    position: 'relative',
-    minHeight: 110,
+    elevation: 3,
   },
-  statNumber: {
-    fontSize: 28,
+  statNumberWhite: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#052A3F',
-    marginBottom: 8,
+    color: '#FFF',
+    marginBottom: 5,
   },
-  statLabel: {
-    fontSize: 15,
-    color: '#666',
-  },
-  statIcon: {
-    position: 'absolute',
-    top: 25,
-    right: 20,
+  statLabelWhite: {
+    fontSize: 12,
+    color: '#FFF',
+    lineHeight: 16,
   },
   requestCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 16,
     padding: 15,
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -303,25 +330,20 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   patientName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#333',
   },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
   statusText: {
-    color: '#FFF',
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   dateTime: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     marginBottom: 15,
     marginTop: 5,
+    fontWeight: '500',
   },
   actionButtons: {
     flexDirection: 'row',
@@ -329,8 +351,8 @@ const styles = StyleSheet.create({
   },
   btn: {
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
@@ -340,65 +362,72 @@ const styles = StyleSheet.create({
     backgroundColor: '#2CA01C',
   },
   rescheduleBtn: {
-    backgroundColor: '#0084FF',
+    backgroundColor: '#FFA500', // Yellow/Orange
   },
   cancelBtn: {
     backgroundColor: '#E0E0E0',
   },
   btnText: {
-    color: '#FFF',
-    fontSize: 13,
+    color: '#000',
+    fontSize: 11,
     fontWeight: 'bold',
     textAlign: 'center',
   },
   btnTextDark: {
     color: '#666',
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: 'bold',
     textAlign: 'center',
   },
   recentList: {
-    paddingTop: 85,
-    paddingBottom: 5,
+    paddingBottom: 20,
     paddingLeft: 5,
   },
   recentPatientCard: {
-    alignItems: 'center',
-    marginRight: 20,
-    width: 140,
-  },
-  cardBase: {
-    width: 140,
-    height: 70,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
     backgroundColor: '#FFF',
-    justifyContent: 'flex-end',
+    borderRadius: 12,
+    padding: 15,
     alignItems: 'center',
-    position: 'relative',
-    overflow: 'visible',
+    marginRight: 15,
+    width: 130,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  patientImage: {
-    width: 120,
-    height: 140,
-    resizeMode: 'contain',
-    position: 'absolute',
-    bottom: 25,
-    zIndex: 1,
-  },
-  recentNameBadge: {
-    backgroundColor: '#E83F5B',
-    width: '100%',
-    paddingVertical: 6,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
+  recentPatientImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginBottom: 10,
+    resizeMode: 'cover',
   },
   recentName: {
-    color: '#FFF',
+    color: '#333',
     fontSize: 14,
     fontWeight: 'bold',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  recentCategory: {
+    color: '#888',
+    fontSize: 10,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  recentDateBadge: {
+    flexDirection: 'row',
+    backgroundColor: '#E6F4FE',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recentDateText: {
+    color: '#0066FF',
+    fontSize: 9,
+    fontWeight: 'bold',
+    marginLeft: 4,
   },
 });

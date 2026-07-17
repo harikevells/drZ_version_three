@@ -12,7 +12,8 @@ import {
   Platform,
   Modal,
   Dimensions,
-  PixelRatio
+  PixelRatio,
+  ImageBackground
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -101,19 +102,18 @@ const AppointmentScreen = ({ navigation }) => {
         <View style={styles.header}>
 
           {/* User Info */}
-          <View style={styles.userInfo}>
-            <Image source={require('../assets/logo.png')} style={styles.userImage} resizeMode="contain" />
+          <View style={[styles.userInfo, { backgroundColor: '#F0F0F0', padding: 5, paddingRight: 15, borderRadius: 25 }]}>
+            <Image source={require('../assets/logo.png')} style={{ width: 40, height: 40, borderRadius: 20, marginRight: 10, backgroundColor: '#FFF' }} resizeMode="contain" />
             <View style={styles.textContainer}>
-              <Text style={styles.greeting}>Hi / வணக்கம் ,</Text>
-
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#111' }}>Welcome To DrZ</Text>
             </View>
           </View>
 
           {/* Header Icons */}
           <View style={styles.headerIcons}>
             {/* Notification Icon */}
-            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('NotificationPatient')}>
-              <Icon name="bell-outline" size={24} color="#1C3E55" />
+            <TouchableOpacity style={[styles.iconButton, { backgroundColor: '#F0F0F0', width: 45, height: 45, borderRadius: 22.5, justifyContent: 'center', alignItems: 'center', elevation: 0 }]} onPress={() => navigation.navigate('NotificationPatient')}>
+              <Icon name="bell-outline" size={24} color="#6276F5" />
               {unreadCount > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
@@ -121,8 +121,8 @@ const AppointmentScreen = ({ navigation }) => {
               )}
             </TouchableOpacity>
 
-            {/* Logout Icon */}
-            <TouchableOpacity style={[styles.iconButton, { marginLeft: 10 }]} onPress={handleLogoutPress}>
+            {/* Logout Icon (Kept for functionality but styled softly) */}
+            <TouchableOpacity style={[styles.iconButton, { backgroundColor: '#F0F0F0', width: 45, height: 45, borderRadius: 22.5, justifyContent: 'center', alignItems: 'center', elevation: 0, marginLeft: 5 }]} onPress={handleLogoutPress}>
               <Icon name="logout" size={24} color="#E74C3C" />
             </TouchableOpacity>
           </View>
@@ -130,10 +130,12 @@ const AppointmentScreen = ({ navigation }) => {
 
         {/* --- MAIN CARD SECTION (Redesigned) --- */}
         <View style={styles.cardWrapper}>
-          <View style={styles.card}>
+          <View style={[styles.card, { paddingVertical: 0, paddingHorizontal: 0, overflow: 'hidden' }]}>
+            <Image source={require('../assets/bg.png')} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%', borderRadius: 20 }} resizeMode="stretch" />
+            <View style={{ width: '100%', paddingVertical: height * 0.05, paddingHorizontal: width * 0.05, alignItems: 'center' }}>
 
             {/* ✅ Victor Hospital Logo Section */}
-            <TouchableOpacity onPress={handleLogoClick} style={styles.logoContainer}>
+            <View style={styles.logoContainer}>
               {/* <Image source={require('../assets/motherteressa.png')} style={styles.topImage} resizeMode="contain" /> */}
               {/* <Text style={styles.hospitalName}>VICTOR</Text> */}
               {/* <Text style={styles.hospitalSubName}>Hospital</Text> */}
@@ -142,7 +144,7 @@ const AppointmentScreen = ({ navigation }) => {
                 {/* <Text style={styles.poweredByText}>Powered by</Text> */}
                 <Image source={require('../assets/logo.png')} style={styles.drzLogo} resizeMode="contain" />
               </View>
-            </TouchableOpacity>
+            </View>
 
             {/* Description Text */}
             <Text style={styles.description}>
@@ -179,29 +181,32 @@ const AppointmentScreen = ({ navigation }) => {
                 </Text>
               </TouchableOpacity>
             </View>
+            </View>
           </View>
 
-          {/* --- FOOTER WITH CHAT ICON --- */}
+          {/* --- FOOTER (Centered Website Info) --- */}
           <View style={styles.footerWrapper}>
             <View style={styles.footerWebsiteContainer}>
               <Text style={styles.footerWebsiteTitle}>எங்கள் வலைதளத்தைப் பார்வையிடவும்</Text>
               <TouchableOpacity onPress={handleWebsite} style={styles.websiteRow}>
                 <Text style={[styles.footerWebsiteTitle, { marginBottom: 0 }]}>Website : </Text>
-                <Text style={styles.footerWebsiteLink} numberOfLines={1} adjustsFontSizeToFit>kevellcorp.com</Text>
+                <Text style={styles.footerWebsiteLink} numberOfLines={1}>http://victorhospital.in/</Text>
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity 
-              style={styles.inlineFab} 
-              onPress={() => navigation.navigate('ChatBotBooking')}
-            >
-              <Icon name="robot-outline" size={24} color="#FFF" style={{ marginBottom: 2 }} />
-              <Text style={styles.fabText}>AI Chat</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
       </ScrollView>
+
+      {/* AI Chat Bot (Floating) */}
+      <View style={{ position: 'absolute', bottom: 100, right: 20, zIndex: 999 }}>
+        <TouchableOpacity 
+          style={{ elevation: 4 }} 
+          onPress={() => navigation.navigate('ChatBotBooking')}
+        >
+          <Image source={require('../assets/Group 1707481311.png')} style={{ width: 140, height: 140 }} resizeMode="contain" />
+        </TouchableOpacity>
+      </View>
 
       {/* --- LANGUAGE MODAL --- */}
       <Modal
@@ -303,60 +308,55 @@ const styles = StyleSheet.create({
   badgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
 
   // Card Wrapper
-  cardWrapper: { alignItems: 'center', justifyContent: 'center', marginTop: height * 0.02, paddingHorizontal: width * 0.05 },
+  cardWrapper: { alignItems: 'center', justifyContent: 'center', marginTop: height * 0.01, paddingHorizontal: width * 0.05 },
   card: {
-    backgroundColor: '#F9F9F9', // Slightly lighter background
-    borderRadius: 10,
-    paddingVertical: height * 0.025,
+    backgroundColor: '#EDE7F6', // Light purple background to match the image
+    borderRadius: 20,
+    paddingVertical: height * 0.05, // Increased padding to make the card slightly taller
     paddingHorizontal: width * 0.05,
     alignItems: 'center',
     width: '100%',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6
+    elevation: 0, // Flat design
   },
 
   // ✅ New Logo Section Styles (Matches Image 2)
-  logoContainer: { alignItems: 'center', marginBottom: height * 0.005 },
+  logoContainer: { alignItems: 'center', marginBottom: 0 },
   topImage: { width: width * 0.3, height: height * 0.07, borderRadius: 40, marginBottom: height * 0.005 },
   hospitalName: { fontSize: scaleFont(32), fontWeight: '900', color: '#032541', letterSpacing: 1, textAlign: 'center', marginBottom: 0 },
   hospitalSubName: { fontSize: scaleFont(20), fontWeight: 'bold', color: '#032541', marginTop: -4, textAlign: 'center', marginBottom: height * 0.005 },
-  poweredByContainer: { alignItems: 'center', marginTop: height * 0.005, marginBottom: height * 0.01 },
+  poweredByContainer: { alignItems: 'center', marginTop: 0, marginBottom: 0 },
   poweredByText: { fontSize: scaleFont(12), color: '#555', fontWeight: 'bold', marginBottom: 2 },
-  drzLogo: { width: width * 0.55, height: height * 0.24 },
+  drzLogo: { width: width * 0.55, height: height * 0.16 },
 
   // Description
   description: { fontSize: scaleFont(14), color: '#444', textAlign: 'center', marginBottom: height * 0.01, lineHeight: 22, paddingHorizontal: 1 },
 
   // Buttons Stack
-  buttonStack: { width: '100%', gap: height * 0.02 },
+  buttonStack: { width: '100%', gap: height * 0.015 },
 
   // Buttons
-  primaryButton: { backgroundColor: '#1C3E55', width: '100%', paddingVertical: height * 0.015, borderRadius: 10, alignItems: 'center' },
-  primaryButtonText: { color: '#fff', fontSize: scaleFont(16), fontWeight: 'bold', textAlign: 'center', paddingHorizontal: 5 },
-  secondaryButton: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#1C3E55', width: '100%', paddingVertical: height * 0.015, borderRadius: 10, alignItems: 'center' },
-  secondaryButtonText: { color: '#1C3E55', fontSize: scaleFont(16), fontWeight: 'bold', textAlign: 'center', paddingHorizontal: 5 },
-  successButton: { backgroundColor: '#38A745', width: '100%', paddingVertical: height * 0.015, borderRadius: 10, alignItems: 'center' },
-  successButtonText: { color: '#fff', fontSize: scaleFont(16), fontWeight: 'bold', textAlign: 'center', paddingHorizontal: 5 },
+  primaryButton: { backgroundColor: '#6276F5', width: '100%', paddingVertical: height * 0.015, borderRadius: 10, alignItems: 'center' },
+  primaryButtonText: { color: '#fff', fontSize: scaleFont(15), fontWeight: 'bold', textAlign: 'center', paddingHorizontal: 5 },
+  secondaryButton: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#333', width: '100%', paddingVertical: height * 0.015, borderRadius: 10, alignItems: 'center' },
+  secondaryButtonText: { color: '#333', fontSize: scaleFont(15), fontWeight: 'bold', textAlign: 'center', paddingHorizontal: 5 },
+  successButton: { backgroundColor: '#2CC84D', width: '100%', paddingVertical: height * 0.015, borderRadius: 10, alignItems: 'center' },
+  successButtonText: { color: '#fff', fontSize: scaleFont(15), fontWeight: 'bold', textAlign: 'center', paddingHorizontal: 5 },
 
   // Footer Website Styles
   footerWrapper: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'center', // Centered!
     width: '100%',
     paddingHorizontal: width * 0.05,
-    marginTop: height * 0.05,
-    marginBottom: height * 0.02,
+    marginTop: height * 0.03,
+    marginBottom: height * 0.08, // Extra padding at bottom
   },
-  footerWebsiteContainer: { alignItems: 'flex-start', flex: 1 },
-  footerWebsiteTitle: { fontSize: scaleFont(14), color: '#333', fontWeight: 'bold', marginBottom: 5 },
-  footerWebsiteLink: { fontSize: scaleFont(14), color: '#0d71b3ff', textDecorationLine: 'underline', flexShrink: 1 },
+  footerWebsiteContainer: { alignItems: 'center', width: '100%' }, // Centered text container
+  footerWebsiteTitle: { fontSize: scaleFont(14), color: '#333', fontWeight: 'bold', marginBottom: 5, textAlign: 'center' },
+  footerWebsiteLink: { fontSize: scaleFont(14), color: '#0d71b3ff', textDecorationLine: 'underline', textAlign: 'center' },
   websiteRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center', // Centered row
     marginTop: 5,
   },
 

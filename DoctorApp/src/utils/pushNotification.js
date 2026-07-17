@@ -51,6 +51,7 @@ export async function displayNotification(title, body) {
       android: {
         channelId,
         importance: AndroidImportance.HIGH,
+        smallIcon: 'ic_launcher',
         pressAction: {
           id: 'default',
         },
