@@ -40,14 +40,30 @@ const LoginScreen = ({ navigation }) => {
 
   const handleImageUpload = async () => {
     try {
+      console.log("[Frontend handleImageUpload] Launching image library...");
       const result = await launchImageLibrary({
         mediaType: 'photo',
         quality: 0.8,
         includeBase64: true,
       });
 
+      console.log("[Frontend handleImageUpload] Result keys:", Object.keys(result));
+      if (result.didCancel) {
+        console.log("[Frontend handleImageUpload] User cancelled image picker");
+        return;
+      }
+      if (result.errorCode) {
+        console.log("[Frontend handleImageUpload] Error code:", result.errorCode, "Message:", result.errorMessage);
+        Alert.alert("Picker Error", `Error: ${result.errorMessage || result.errorCode}`);
+        return;
+      }
+
       if (result.assets && result.assets.length > 0) {
+        console.log("[Frontend handleImageUpload] Asset uri:", result.assets[0].uri);
+        console.log("[Frontend handleImageUpload] Asset base64 exists:", !!result.assets[0].base64);
         setProfileImage(result.assets[0]);
+      } else {
+        console.log("[Frontend handleImageUpload] No assets found in result");
       }
     } catch (error) {
       console.error("ImagePicker Error: ", error);
@@ -121,6 +137,11 @@ const LoginScreen = ({ navigation }) => {
           state: stateName,
           profileImage: base64Image
         };
+      console.log("[Frontend handleAuth] Sending payload keys:", Object.keys(payload));
+      console.log("[Frontend handleAuth] profileImage present:", !!payload.profileImage);
+      if (payload.profileImage) {
+        console.log("[Frontend handleAuth] profileImage length:", payload.profileImage.length);
+        console.log("[Frontend handleAuth] profileImage snippet:", payload.profileImage.substring(0, 100));
       }
       
       const response = await axios.post(`${BASE_URL}${endpoint}`, payload);

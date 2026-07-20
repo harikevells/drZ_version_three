@@ -64,6 +64,19 @@ const patientRegister = async (req, res) => {
         state,
         profileImage 
     } = req.body;
+    console.log("[Backend patientRegister] Received payload:", {
+        identifier,
+        patient_name,
+        patient_age,
+        blood_group,
+        emergency_contact,
+        street,
+        area,
+        district,
+        state,
+        hasProfileImage: !!profileImage,
+        profileImageSnippet: profileImage ? profileImage.substring(0, 100) : null
+    });
     try {
         const existing = await Patient.findOne({ identifier });
         if (existing) {
@@ -170,4 +183,54 @@ const updateFcmToken = async (req, res) => {
     }
 };
 
-module.exports = { login, doctorLogin, patientRegister, patientLogin, updateFcmToken };
+const patientUpdate = async (req, res) => {
+    const { id } = req.user;
+    const { 
+        patient_name, 
+        patient_age, 
+        blood_group, 
+        emergency_contact, 
+        street, 
+        area, 
+        district, 
+        state,
+        profileImage 
+    } = req.body;
+
+    console.log("[Backend patientUpdate] Updating patient:", id, "Fields:", {
+        patient_name,
+        patient_age,
+        blood_group,
+        emergency_contact,
+        street,
+        area,
+        district,
+        state,
+        hasProfileImage: !!profileImage
+    });
+
+    try {
+        const updated = await Patient.findByIdAndUpdate(id, {
+            patient_name,
+            patient_age,
+            blood_group,
+            emergency_contact,
+            street,
+            area,
+            district,
+            state,
+            profileImage
+        });
+
+        if (!updated) {
+            return res.status(404).json({ error: 'Patient not found' });
+        }
+
+        res.json({ message: 'Profile updated successfully', user: updated.toJSON() });
+    } catch (err) {
+        console.error('Update error:', err);
+        res.status(500).json({ error: 'Server error during profile update' });
+    }
+};
+
+module.exports = { login, doctorLogin, patientRegister, patientLogin, updateFcmToken, patientUpdate };
