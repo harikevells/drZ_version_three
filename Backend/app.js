@@ -11,6 +11,7 @@ const pushNotificationRoutes = require('./routes/pushNotificationRoutes');
 const medicineRoutes = require('./routes/medicineRoutes');
 const medicineTimingRoutes = require('./routes/medicineTimingRoutes');
 const medicineIntakeRoutes = require('./routes/medicineIntakeRoutes');
+const medicineDayRoutes = require('./routes/medicineDayRoutes');
 
 const app = express();
 
@@ -40,5 +41,6 @@ app.use('/api/push-notifications', pushNotificationRoutes);
 app.use('/api/medicines', medicineRoutes);
 app.use('/api/medicine-timings', medicineTimingRoutes);
 app.use('/api/medicine-intakes', medicineIntakeRoutes);
+app.use('/api/medicine-days', medicineDayRoutes);
 
 module.exports = app;

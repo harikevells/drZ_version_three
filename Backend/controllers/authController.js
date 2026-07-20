@@ -57,9 +57,12 @@ const patientRegister = async (req, res) => {
         if (existing) {
             return res.status(400).json({ error: 'Patient already exists with this email/number' });
         }
-        const patient = await Patient.create({ identifier, password, role: 'patient' });
+        const patientCount = await Patient.countDocuments();
+        const patient_id = `Pat${String(patientCount + 1).padStart(4, '0')}`;
+
+        const patient = await Patient.create({ identifier, password, role: 'patient', patient_id });
         const token = jwt.sign({ id: patient._id, identifier: patient.identifier, role: patient.role }, process.env.JWT_SECRET || 'supersecret123', { expiresIn: '7d' });
-        res.json({ token, user: { id: patient._id, identifier: patient.identifier, role: patient.role } });
+        res.json({ token, user: { id: patient._id, identifier: patient.identifier, role: patient.role, patient_id: patient.patient_id } });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

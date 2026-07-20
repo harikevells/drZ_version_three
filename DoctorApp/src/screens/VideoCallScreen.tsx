@@ -8,7 +8,7 @@ const { width, height } = Dimensions.get('window');
 export default function VideoCallScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { patientName, patientId, appointmentId } = route.params || {};
+  const { patientName, patientId, appointmentId, displayAppointmentId, displayPatientId } = route.params || {};
 
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
@@ -16,7 +16,7 @@ export default function VideoCallScreen() {
 
   const handleEndCall = () => {
     // Navigate to PrescriptionScreen when call ends
-    navigation.replace('Prescription', { patientName, patientId, appointmentId });
+    navigation.replace('Prescription', { patientName, patientId, appointmentId, displayAppointmentId, displayPatientId });
   };
 
   return (

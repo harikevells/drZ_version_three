@@ -477,7 +477,9 @@ export default function AppointmentScreen({ route }: any) {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
-            renderItem={({ item }) => {
+            renderItem={({ item, index }) => {
+              const displayAppmtId = item.booking_id || item.id || item._id || 'N/A';
+              const displayPatId = item.patient_id || item.id || item._id || 'N/A';
               const isHighlighted = highlightedBookingId && (item.booking_id === highlightedBookingId || item.id === highlightedBookingId || item._id === highlightedBookingId);
               const cardStyle = [
                 styles.requestCard,
@@ -499,7 +501,7 @@ export default function AppointmentScreen({ route }: any) {
                   <Animated.View style={cardStyle}>
                     <View style={styles.cardHeader}>
                       <View style={styles.headerLeftInfo}>
-                        <Text style={styles.appointmentIdText}>APP ID: {item.booking_id || item.id || item._id}</Text>
+                        <Text style={styles.appointmentIdText}>APP ID: {displayAppmtId}</Text>
                         <Text style={styles.patientName}>{item.patient_name}</Text>
                       </View>
                       {activeTab === 'Approved' ? (
@@ -508,7 +510,9 @@ export default function AppointmentScreen({ route }: any) {
                           onPress={() => navigation.navigate('VideoCall', { 
                             patientName: item.patient_name, 
                             patientId: item.id || item._id,
-                            appointmentId: item.booking_id || item.id || item._id
+                            appointmentId: item.booking_id || item.id || item._id,
+                            displayAppointmentId: displayAppmtId,
+                            displayPatientId: displayPatId
                           })}
                         >
                           <Ionicons name="videocam" size={14} color="#FFF" />
@@ -594,6 +598,8 @@ export default function AppointmentScreen({ route }: any) {
                                   patientName: item.patient_name, 
                                   patientId: item.id || item._id,
                                   appointmentId: item.booking_id || item.id || item._id,
+                                  displayAppointmentId: displayAppmtId,
+                                  displayPatientId: displayPatId,
                                   existingPrescription: item.prescription
                                 });
                               }}

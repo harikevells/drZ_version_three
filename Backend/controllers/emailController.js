@@ -35,8 +35,13 @@ const sendBookingEmail = async (req, res) => {
             ? `${treatment_category} / ${departmentTranslations[treatment_category]}`
             : treatment_category;
 
+        // Generate Booking ID
+        const appointmentCount = await Appointment.countDocuments();
+        const booking_id = `Appmt${String(appointmentCount + 1).padStart(4, '0')}`;
+
         // Save appointment to MongoDB
         const newAppointment = new Appointment({
+            booking_id,
             patient_name,
             patient_age,
             patient_gender,
