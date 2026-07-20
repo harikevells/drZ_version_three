@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const Appointment = require('../models/Appointment');
+const Patient = require('../models/Patient');
 const { createNotification } = require('./notificationController');
 
 const sendBookingEmail = async (req, res) => {
@@ -35,6 +36,19 @@ const sendBookingEmail = async (req, res) => {
             ? `${treatment_category} / ${departmentTranslations[treatment_category]}`
             : treatment_category;
 
+        // Fetch or Generate Patient ID
+        const patient = await Patient.findOne({ identifier: login_mobile });
+        let patient_id = patient ? patient.patient_id : null;
+
+        if (patient && !patient_id) {
+            const patientCount = await Patient.countDocuments();
+            patient_id = `Pat${String(patientCount + 1).padStart(4, '0')}`;
+            await Patient.findByIdAndUpdate(patient.id, { patient_id });
+        } else if (!patient) {
+            const patientCount = await Patient.countDocuments();
+            patient_id = `Pat${String(patientCount + 1).padStart(4, '0')}`;
+        }
+
         // Generate Booking ID
         const appointmentCount = await Appointment.countDocuments();
         const booking_id = `Appmt${String(appointmentCount + 1).padStart(4, '0')}`;
@@ -42,6 +56,7 @@ const sendBookingEmail = async (req, res) => {
         // Save appointment to MongoDB
         const newAppointment = new Appointment({
             booking_id,
+            patient_id,
             patient_name,
             patient_age,
             patient_gender,

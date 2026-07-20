@@ -478,8 +478,8 @@ export default function AppointmentScreen({ route }: any) {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
             renderItem={({ item, index }) => {
-              const displayAppmtId = item.booking_id || item.id || item._id || 'N/A';
-              const displayPatId = item.patient_id || item.id || item._id || 'N/A';
+              const displayAppmtId = item.booking_id || 'Appmt0000';
+              const displayPatId = item.patient_id || 'Pat0000';
               const isHighlighted = highlightedBookingId && (item.booking_id === highlightedBookingId || item.id === highlightedBookingId || item._id === highlightedBookingId);
               const cardStyle = [
                 styles.requestCard,
@@ -501,7 +501,7 @@ export default function AppointmentScreen({ route }: any) {
                   <Animated.View style={cardStyle}>
                     <View style={styles.cardHeader}>
                       <View style={styles.headerLeftInfo}>
-                        <Text style={styles.appointmentIdText}>APP ID: {displayAppmtId}</Text>
+                        <Text style={styles.appointmentIdText}>Booking ID: {displayAppmtId}</Text>
                         <Text style={styles.patientName}>{item.patient_name}</Text>
                       </View>
                       {activeTab === 'Approved' ? (

@@ -16,7 +16,7 @@ export default function SearchableDropdown({ data, value, onChangeText, placehol
 
   useEffect(() => {
     if (value) {
-      setFilteredData(data.filter(item => 
+      setFilteredData(data.filter(item =>
         item[labelKey]?.toLowerCase().includes(value.toLowerCase())
       ));
     } else {
@@ -44,8 +44,8 @@ export default function SearchableDropdown({ data, value, onChangeText, placehol
           placeholder={placeholder}
           placeholderTextColor="#999"
         />
-        <TouchableOpacity 
-          style={styles.iconContainer} 
+        <TouchableOpacity
+          style={styles.iconContainer}
           onPress={() => setShowOptions(!showOptions)}
         >
           <Ionicons name={showOptions ? "chevron-up" : "chevron-down"} size={20} color="#666" />

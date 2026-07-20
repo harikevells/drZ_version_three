@@ -144,7 +144,7 @@ function DashboardTabs() {
               <Text style={{ fontSize: 12, color: color, fontWeight: focused ? 'bold' : 'normal' }}>
                 Prescription/
               </Text>
-              <Text style={{ fontSize: 10, color: color, marginTop: -2 }} numberOfLines={1} adjustsFontSizeToFit>
+              <Text style={{ fontSize: 12, color: color, marginTop: -2 }} numberOfLines={1} adjustsFontSizeToFit>
                 மருந்துச் சீட்டு
               </Text>
             </View>
@@ -165,7 +165,7 @@ function DashboardTabs() {
               <Text style={{ fontSize: 12, color: color, fontWeight: focused ? 'bold' : 'normal' }}>
                 Profile/
               </Text>
-              <Text style={{ fontSize: 10, color: color, marginTop: -2 }} numberOfLines={1} adjustsFontSizeToFit>
+              <Text style={{ fontSize: 12, color: color, marginTop: -2 }} numberOfLines={1} adjustsFontSizeToFit>
                 சுயவிவரம்
               </Text>
             </View>

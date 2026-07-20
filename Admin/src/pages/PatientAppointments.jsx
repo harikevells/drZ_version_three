@@ -88,7 +88,7 @@ const PatientAppointments = () => {
     const patientName = String(appt.patient_name || '').toLowerCase();
     const docNameClean = String(removeTamil(appt.doctor_name)).toLowerCase();
     const docNameRaw = String(appt.doctor_name || '').toLowerCase();
-    const bookingId = String(appt.id || appt._id || '').toLowerCase();
+    const bookingId = String(appt.booking_id || appt.id || appt._id || '').toLowerCase();
     const status = String(appt.status || 'Pending').toLowerCase();
     
     return (
@@ -186,7 +186,7 @@ const PatientAppointments = () => {
               <tbody>
                 {paginatedAppointments.length > 0 ? paginatedAppointments.map((appt) => (
                   <tr key={appt.id || appt._id}>
-                    <td>{(appt.id || appt._id).slice(-6).toUpperCase()}</td>
+                    <td>{appt.booking_id || '0000'}</td>
                     <td>{appt.patient_name}</td>
                     <td>{removeTamil(appt.doctor_name)}</td>
                     <td>{appt.appointment_date ? appt.appointment_date.replace(/\s+/g, '') : ''}</td>
@@ -281,7 +281,7 @@ const PatientAppointments = () => {
                 <h4 className="column-title">Patient & Appointment</h4>
                 <div className="detail-row">
                   <span className="detail-label">Booking ID:</span>
-                  <span className="detail-value">{(selectedAppointment.id || selectedAppointment._id).slice(-6).toUpperCase()}</span>
+                  <span className="detail-value">{selectedAppointment.booking_id || '0000'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Patient Name:</span>

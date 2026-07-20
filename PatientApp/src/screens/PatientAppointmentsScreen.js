@@ -246,6 +246,15 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
 
           <View style={{borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 15}}>
             <View style={styles.infoRow}>
+              <View style={[styles.infoIconBox, { backgroundColor: '#0984e3' }]}>
+                <Icon name="identifier" size={16} color="#fff" />
+              </View>
+              <Text style={styles.infoLabel}>Booking ID</Text>
+              <Text style={styles.infoColon}>:</Text>
+              <Text style={styles.infoValue}>{item.booking_id || 'Appmt0000'}</Text>
+            </View>
+
+            <View style={styles.infoRow}>
               <View style={[styles.infoIconBox, { backgroundColor: '#6C5CE7' }]}>
                 <Icon name="view-grid-outline" size={16} color="#fff" />
               </View>

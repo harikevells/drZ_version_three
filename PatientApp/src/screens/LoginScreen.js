@@ -7,6 +7,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 import { API_BASE_URL } from '../config';
 import { setupPushNotifications } from '../services/PushNotificationService';
@@ -25,6 +26,34 @@ const LoginScreen = ({ navigation }) => {
   
   const [securePassword, setSecurePassword] = useState(true);
   const [secureConfirmPassword, setSecureConfirmPassword] = useState(true);
+
+  // New Profile Registration Fields State
+  const [patientName, setPatientName] = useState('');
+  const [patientAge, setPatientAge] = useState('');
+  const [bloodGroup, setBloodGroup] = useState('');
+  const [emergencyContact, setEmergencyContact] = useState('');
+  const [street, setStreet] = useState('');
+  const [area, setArea] = useState('');
+  const [district, setDistrict] = useState('');
+  const [stateName, setStateName] = useState('');
+  const [profileImage, setProfileImage] = useState(null);
+
+  const handleImageUpload = async () => {
+    try {
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        quality: 0.8,
+        includeBase64: true,
+      });
+
+      if (result.assets && result.assets.length > 0) {
+        setProfileImage(result.assets[0]);
+      }
+    } catch (error) {
+      console.error("ImagePicker Error: ", error);
+      Alert.alert("Upload Error", "Image picker failed.");
+    }
+  };
 
   // LOAD SAVED CREDENTIALS
   useEffect(() => {
@@ -52,9 +81,15 @@ const LoginScreen = ({ navigation }) => {
       return;
     }
 
-    if (!isLogin && password !== confirmPassword) {
-      Alert.alert("Error / பிழை", "Passwords do not match / கடவுச்சொற்கள் பொருந்தவில்லை");
-      return;
+    if (!isLogin) {
+      if (!patientName) {
+        Alert.alert("Error / பிழை", "Please enter your name / பெயரை உள்ளிடவும்");
+        return;
+      }
+      if (password !== confirmPassword) {
+        Alert.alert("Error / பிழை", "Passwords do not match / கடவுச்சொற்கள் பொருந்தவில்லை");
+        return;
+      }
     }
 
     setLoading(true);
@@ -67,7 +102,26 @@ const LoginScreen = ({ navigation }) => {
       }
 
       const endpoint = isLogin ? '/api/auth/patient/login' : '/api/auth/patient/register';
-      const payload = { identifier, password };
+      let payload = { identifier, password };
+
+      if (!isLogin) {
+        let base64Image = '';
+        if (profileImage) {
+          base64Image = profileImage.base64 ? `data:${profileImage.type};base64,${profileImage.base64}` : profileImage.uri;
+        }
+        payload = {
+          ...payload,
+          patient_name: patientName,
+          patient_age: patientAge,
+          blood_group: bloodGroup,
+          emergency_contact: emergencyContact,
+          street,
+          area,
+          district,
+          state: stateName,
+          profileImage: base64Image
+        };
+      }
       
       const response = await axios.post(`${BASE_URL}${endpoint}`, payload);
       
@@ -129,34 +183,181 @@ const LoginScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.label}>
-              Email Or Mobile / மின்னஞ்சல் அல்லது கைபேசி
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={identifier}
-              onChangeText={setIdentifier}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <Text style={styles.label}>
-              Password / கடவுச்சொல்
-            </Text>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={securePassword}
-              />
-              <TouchableOpacity onPress={() => setSecurePassword(!securePassword)} style={styles.eyeIcon}>
-                <Icon name={securePassword ? "eye-off-outline" : "eye-outline"} size={24} color="#888" />
-              </TouchableOpacity>
-            </View>
-
-            {!isLogin && (
+            {isLogin ? (
               <>
+                <Text style={styles.label}>
+                  Email Or Mobile / மின்னஞ்சல் அல்லது கைபேசி
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={identifier}
+                  onChangeText={setIdentifier}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+
+                <Text style={styles.label}>
+                  Password / கடவுச்சொல்
+                </Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={securePassword}
+                  />
+                  <TouchableOpacity onPress={() => setSecurePassword(!securePassword)} style={styles.eyeIcon}>
+                    <Icon name={securePassword ? "eye-off-outline" : "eye-outline"} size={24} color="#888" />
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                {/* 1. Profile Image Pick */}
+                <View style={{ alignItems: 'center', marginBottom: 15 }}>
+                  <TouchableOpacity onPress={handleImageUpload} style={styles.imagePickerButton}>
+                    {profileImage ? (
+                      <Image source={{ uri: profileImage.uri }} style={styles.profileImage} />
+                    ) : (
+                      <View style={styles.imagePlaceholder}>
+                        <Icon name="camera-plus" size={30} color="#fff" />
+                        <Text style={styles.imagePlaceholderText}>Upload Image</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                {/* 2. Register Name */}
+                <Text style={styles.label}>
+                  Register Name / பெயர்
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={patientName}
+                  onChangeText={setPatientName}
+                  placeholder="Enter Name"
+                  placeholderTextColor="#999"
+                />
+
+                {/* 3. Email Or Mobile */}
+                <Text style={styles.label}>
+                  Email Or Mobile / மின்னஞ்சல் அல்லது கைபேசி
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={identifier}
+                  onChangeText={setIdentifier}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  placeholder="Enter Email or Mobile"
+                  placeholderTextColor="#999"
+                />
+
+                {/* 4. Age */}
+                <Text style={styles.label}>
+                  Age / வயது
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={patientAge}
+                  onChangeText={setPatientAge}
+                  keyboardType="numeric"
+                  placeholder="Enter Age"
+                  placeholderTextColor="#999"
+                />
+
+                {/* 5. Blood Group */}
+                <Text style={styles.label}>
+                  Blood Group / இரத்த வகை
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={bloodGroup}
+                  onChangeText={setBloodGroup}
+                  placeholder="Enter Blood Group"
+                  placeholderTextColor="#999"
+                />
+
+                {/* 6. Emergency Contact */}
+                <Text style={styles.label}>
+                  Emergency Contact / அவசர தொடர்பு எண்
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={emergencyContact}
+                  onChangeText={setEmergencyContact}
+                  keyboardType="phone-pad"
+                  placeholder="Enter Emergency Contact"
+                  placeholderTextColor="#999"
+                />
+
+                {/* 7. Address - Street */}
+                <Text style={styles.label}>
+                  Street / தெரு
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={street}
+                  onChangeText={setStreet}
+                  placeholder="Enter Street"
+                  placeholderTextColor="#999"
+                />
+
+                {/* 8. Address - Area */}
+                <Text style={styles.label}>
+                  Area / பகுதி
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={area}
+                  onChangeText={setArea}
+                  placeholder="Enter Area"
+                  placeholderTextColor="#999"
+                />
+
+                {/* 9. Address - District */}
+                <Text style={styles.label}>
+                  District / மாவட்டம்
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={district}
+                  onChangeText={setDistrict}
+                  placeholder="Enter District"
+                  placeholderTextColor="#999"
+                />
+
+                {/* 10. Address - State */}
+                <Text style={styles.label}>
+                  State / மாநிலம்
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  value={stateName}
+                  onChangeText={setStateName}
+                  placeholder="Enter State"
+                  placeholderTextColor="#999"
+                />
+
+                {/* 11. Password */}
+                <Text style={styles.label}>
+                  Password / கடவுச்சொல்
+                </Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={securePassword}
+                    placeholder="Enter Password"
+                    placeholderTextColor="#999"
+                  />
+                  <TouchableOpacity onPress={() => setSecurePassword(!securePassword)} style={styles.eyeIcon}>
+                    <Icon name={securePassword ? "eye-off-outline" : "eye-outline"} size={24} color="#888" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* 12. Confirm Password */}
                 <Text style={styles.label}>
                   Confirm Password / கடவுச்சொல் உறுதி
                 </Text>
@@ -166,6 +367,8 @@ const LoginScreen = ({ navigation }) => {
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     secureTextEntry={secureConfirmPassword}
+                    placeholder="Confirm Password"
+                    placeholderTextColor="#999"
                   />
                   <TouchableOpacity onPress={() => setSecureConfirmPassword(!secureConfirmPassword)} style={styles.eyeIcon}>
                     <Icon name={secureConfirmPassword ? "eye-off-outline" : "eye-outline"} size={24} color="#888" />
@@ -202,7 +405,20 @@ const LoginScreen = ({ navigation }) => {
               <Text style={styles.toggleAuthText}>
                 {isLogin ? "Don't have an account? / கணக்கு இல்லையா?" : "Already have an account? / கணக்கு உள்ளதா?"}
               </Text>
-              <TouchableOpacity onPress={() => { setIsLogin(!isLogin); setPassword(''); setConfirmPassword(''); }} style={{ marginTop: 5 }}>
+              <TouchableOpacity onPress={() => {
+                setIsLogin(!isLogin);
+                setPassword('');
+                setConfirmPassword('');
+                setPatientName('');
+                setPatientAge('');
+                setBloodGroup('');
+                setEmergencyContact('');
+                setStreet('');
+                setArea('');
+                setDistrict('');
+                setStateName('');
+                setProfileImage(null);
+              }} style={{ marginTop: 5 }}>
                 <Text style={styles.toggleAuthLink}>
                   {isLogin ? "Register" : "Login"}
                 </Text>
@@ -246,7 +462,39 @@ const styles = StyleSheet.create({
   toggleAuthText: { fontSize: 12, color: '#666', textAlign: 'center', width:'100%' },
   toggleAuthLink: { fontSize: 13, color: '#5C74FF', fontWeight: 'bold' },
   ambulanceButton: { width: 55, height: 55, borderRadius: 27.5, backgroundColor: '#D32F2F', alignItems: 'center', justifyContent: 'center', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3, marginBottom: 5 },
-  ambulanceText: { color: '#D32F2F', fontWeight: 'bold', fontSize: 12 }
+  ambulanceText: { color: '#D32F2F', fontWeight: 'bold', fontSize: 12 },
+  imagePickerButton: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#5C74FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#fff',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    marginTop: 10,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  imagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePlaceholderText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
 });
 
 export default LoginScreen;

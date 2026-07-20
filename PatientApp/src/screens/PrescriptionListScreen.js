@@ -13,6 +13,7 @@ import { useIsFocused } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { generatePrescriptionPDF } from '../utils/pdfGenerator';
 import { API_BASE_URL } from '../config';
 
 const PrescriptionListScreen = ({ navigation, route }) => {
@@ -129,9 +130,14 @@ const PrescriptionListScreen = ({ navigation, route }) => {
           app => app.prescription && Array.isArray(app.prescription) && app.prescription.length > 0
         ).map(app => ({
           doctorName: app.doctor_name || app.doctor || 'Unknown Doctor',
-          appId: String(app._id || app.id || app.booking_id || '').substring(0, 8),
-          fullAppId: String(app._id || app.id || app.booking_id || ''),
+          appId: app.booking_id || 'Appmt0000',
+          fullAppId: String(app.booking_id || app._id || app.id || ''),
           appointmentDate: app.appointment_date || app.appointmentDate || 'N/A',
+          appointmentTime: app.appointment_time || app.appointmentTime || 'N/A',
+          patientName: app.patient_name || 'N/A',
+          patientAge: app.patient_age || 'N/A',
+          patientGender: app.patient_gender || app.gender || '-',
+          treatmentCategory: app.treatment_category || 'N/A',
           medicines: app.prescription
         }));
         
@@ -160,12 +166,6 @@ const PrescriptionListScreen = ({ navigation, route }) => {
 
     return (
       <TouchableOpacity activeOpacity={1} onPress={() => handleStopBlink(item.fullAppId)}>
-        <View style={{ alignItems: 'flex-end', width: '100%', marginBottom: 10 }}>
-          <View style={styles.dateFilter}>
-            <Text style={styles.dateFilterText}>{item.appointmentDate}</Text>
-            <Icon name="calendar-month-outline" size={14} color="#555" />
-          </View>
-        </View>
 
         <Animated.View style={[
           styles.card,
@@ -177,7 +177,7 @@ const PrescriptionListScreen = ({ navigation, route }) => {
         ]}>
         <View style={styles.cardHeader}>
           <Text style={styles.prescribedBy}>Prescribed By: {item.doctorName}</Text>
-          <Text style={styles.appId}>App Id: {item.appId}</Text>
+          <Text style={styles.appId}>Booking ID : {item.appId}</Text>
         </View>
 
         {item.medicines.map((med, index) => (
@@ -185,6 +185,7 @@ const PrescriptionListScreen = ({ navigation, route }) => {
             <Text style={styles.medDetail}>Medicine Name: {med.name || med.medicineName || 'N/A'}</Text>
             <Text style={styles.medDetail}>Timing: {med.timing || 'N/A'}</Text>
             <Text style={styles.medDetail}>Intake : {med.intake || 'N/A'}</Text>
+            <Text style={styles.medDetail}>Days : {med.days || 'N/A'}</Text>
             {index < item.medicines.length - 1 && (
               <View style={{ height: 1, backgroundColor: '#E0E0E0', marginTop: 8 }} />
             )}
@@ -192,10 +193,9 @@ const PrescriptionListScreen = ({ navigation, route }) => {
         ))}
 
         <Text style={styles.medDetail}>Appointment Date: {item.appointmentDate}</Text>
-        <Text style={styles.medDetail}>Days: 5 days</Text>
 
         <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.actionBtn}>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => generatePrescriptionPDF(item)}>
             <Icon name="download" size={16} color="#fff" />
             <Text style={styles.actionBtnText}>Download</Text>
           </TouchableOpacity>
@@ -230,7 +230,7 @@ const PrescriptionListScreen = ({ navigation, route }) => {
             extraData={blinkingAppId}
             keyExtractor={(item, index) => index.toString()}
             renderItem={renderMedicineCard}
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={{ paddingBottom: 80 }}
             showsVerticalScrollIndicator={false}
             onScrollToIndexFailed={(info) => {
               const wait = new Promise(resolve => setTimeout(resolve, 500));

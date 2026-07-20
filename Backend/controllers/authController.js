@@ -51,7 +51,19 @@ const doctorLogin = async (req, res) => {
 };
 
 const patientRegister = async (req, res) => {
-    const { identifier, password } = req.body;
+    const { 
+        identifier, 
+        password, 
+        patient_name, 
+        patient_age, 
+        blood_group, 
+        emergency_contact, 
+        street, 
+        area, 
+        district, 
+        state,
+        profileImage 
+    } = req.body;
     try {
         const existing = await Patient.findOne({ identifier });
         if (existing) {
@@ -60,9 +72,40 @@ const patientRegister = async (req, res) => {
         const patientCount = await Patient.countDocuments();
         const patient_id = `Pat${String(patientCount + 1).padStart(4, '0')}`;
 
-        const patient = await Patient.create({ identifier, password, role: 'patient', patient_id });
+        const patient = await Patient.create({ 
+            identifier, 
+            password, 
+            role: 'patient', 
+            patient_id,
+            patient_name,
+            patient_age,
+            blood_group,
+            emergency_contact,
+            street,
+            area,
+            district,
+            state,
+            profileImage
+        });
         const token = jwt.sign({ id: patient._id, identifier: patient.identifier, role: patient.role }, process.env.JWT_SECRET || 'supersecret123', { expiresIn: '7d' });
-        res.json({ token, user: { id: patient._id, identifier: patient.identifier, role: patient.role, patient_id: patient.patient_id } });
+        res.json({ 
+            token, 
+            user: { 
+                id: patient._id, 
+                identifier: patient.identifier, 
+                role: patient.role, 
+                patient_id: patient.patient_id,
+                patient_name: patient.patient_name,
+                patient_age: patient.patient_age,
+                blood_group: patient.blood_group,
+                emergency_contact: patient.emergency_contact,
+                street: patient.street,
+                area: patient.area,
+                district: patient.district,
+                state: patient.state,
+                profileImage: patient.profileImage
+            } 
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -77,7 +120,24 @@ const patientLogin = async (req, res) => {
         const isMatch = await patient.matchPassword(password);
         if (isMatch) {
             const token = jwt.sign({ id: patient._id, identifier: patient.identifier, role: patient.role }, process.env.JWT_SECRET || 'supersecret123', { expiresIn: '7d' });
-            res.json({ token, user: { id: patient._id, identifier: patient.identifier, role: patient.role } });
+            res.json({ 
+                token, 
+                user: { 
+                    id: patient._id, 
+                    identifier: patient.identifier, 
+                    role: patient.role,
+                    patient_id: patient.patient_id,
+                    patient_name: patient.patient_name,
+                    patient_age: patient.patient_age,
+                    blood_group: patient.blood_group,
+                    emergency_contact: patient.emergency_contact,
+                    street: patient.street,
+                    area: patient.area,
+                    district: patient.district,
+                    state: patient.state,
+                    profileImage: patient.profileImage
+                } 
+            });
         } else {
             res.status(401).json({ error: 'Invalid credentials' });
         }

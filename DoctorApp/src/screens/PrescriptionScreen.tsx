@@ -29,14 +29,13 @@ export default function PrescriptionScreen() {
   const [intake, setIntake] = useState('');
   const [days, setDays] = useState('');
   const [editingMedicineId, setEditingMedicineId] = useState<string | null>(null);
-  
+
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   const [medicineOptions, setMedicineOptions] = useState<any[]>([]);
   const [timingOptions, setTimingOptions] = useState<any[]>([]);
   const [intakeOptions, setIntakeOptions] = useState<any[]>([]);
-  const [daysOptions, setDaysOptions] = useState<any[]>([]);
 
   useEffect(() => {
     if (patientName) setPName(patientName);
@@ -50,16 +49,14 @@ export default function PrescriptionScreen() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [medRes, timeRes, intakeRes, daysRes] = await Promise.all([
+        const [medRes, timeRes, intakeRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/medicines`),
           axios.get(`${API_BASE_URL}/medicine-timings`),
           axios.get(`${API_BASE_URL}/medicine-intakes`),
-          axios.get(`${API_BASE_URL}/medicine-days`),
         ]);
         setMedicineOptions(medRes.data.filter((m: any) => m.activeStatus !== false));
         setTimingOptions(timeRes.data.filter((t: any) => t.status !== 'Inactive'));
         setIntakeOptions(intakeRes.data.filter((i: any) => i.status !== 'Inactive'));
-        setDaysOptions(daysRes.data.filter((d: any) => d.status !== 'Inactive'));
       } catch (error) {
         console.error('Error fetching dynamic data:', error);
       }
@@ -72,7 +69,7 @@ export default function PrescriptionScreen() {
       Alert.alert('Error', 'Please select or enter a medicine name');
       return;
     }
-    
+
     if (editingMedicineId) {
       setMedicines(medicines.map(m => m.id === editingMedicineId ? {
         ...m,
@@ -92,7 +89,7 @@ export default function PrescriptionScreen() {
       };
       setMedicines([...medicines, newMedicine]);
     }
-    
+
     // Clear fields
     setMedicineName('');
     setSelectedTimings([]);
@@ -154,13 +151,13 @@ export default function PrescriptionScreen() {
       Alert.alert('Error', 'Appointment ID is missing.');
       return;
     }
-    
+
     setLoading(true);
     try {
       await axios.put(`${API_BASE_URL}/appointments/${appointmentId}/prescription`, {
         prescription: medicines
       });
-      
+
       setLoading(false);
       Alert.alert('Success', 'Prescription submitted successfully.', [
         { text: 'OK', onPress: () => navigation.navigate('MainTabs', { screen: 'Appointments' }) }
@@ -189,170 +186,169 @@ export default function PrescriptionScreen() {
       </View>
 
       <View style={styles.content}>
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
-          showsVerticalScrollIndicator={false} 
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled={true}
         >
           <View style={styles.card}>
             <Text style={styles.title}>Prescription:</Text>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Patient Name</Text>
-            <TextInput
-              style={styles.input}
-              value={pName}
-              onChangeText={setPName}
-              placeholder="Enter Patient Name"
-            />
-          </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Patient Name</Text>
+              <TextInput
+                style={styles.input}
+                value={pName}
+                onChangeText={setPName}
+                placeholder="Enter Patient Name"
+              />
+            </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Patient ID</Text>
-            <TextInput
-              style={styles.input}
-              value={pId}
-              onChangeText={setPId}
-              placeholder="Enter Patient ID"
-            />
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Appointment ID</Text>
-            <TextInput
-              style={styles.input}
-              value={appmtId}
-              onChangeText={setAppmtId}
-              placeholder="Enter Appointment ID"
-              editable={false}
-            />
-          </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Patient ID</Text>
+              <TextInput
+                style={styles.input}
+                value={pId}
+                onChangeText={setPId}
+                placeholder="Enter Patient ID"
+              />
+            </View>
 
-          <View style={styles.separator} />
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Appointment ID</Text>
+              <TextInput
+                style={styles.input}
+                value={appmtId}
+                onChangeText={setAppmtId}
+                placeholder="Enter Appointment ID"
+                editable={false}
+              />
+            </View>
 
-          <View style={[styles.inputGroup, { zIndex: 3 }]}>
-            <Text style={styles.label}>Medicine Name</Text>
-            <SearchableDropdown
-              data={medicineOptions}
-              value={medicineName}
-              onChangeText={setMedicineName}
-              placeholder="Select or type medicine"
-              labelKey="medicineName"
-            />
-          </View>
+            <View style={styles.separator} />
 
-          <View style={[styles.inputGroup, { zIndex: 2 }]}>
-            <Text style={styles.label}>Timing</Text>
-            <View style={styles.multiSelectContainer}>
-              <View style={styles.tagsContainer}>
-                {selectedTimings.map(t => (
-                  <View key={t} style={styles.tag}>
-                    <Text style={styles.tagText}>{t} </Text>
-                    <TouchableOpacity onPress={() => setSelectedTimings(prev => prev.filter(x => x !== t))}>
-                      <Ionicons name="close-circle" size={16} color="#666" />
-                    </TouchableOpacity>
+            <View style={[styles.inputGroup, { zIndex: 3 }]}>
+              <Text style={styles.label}>Medicine Name</Text>
+              <SearchableDropdown
+                data={medicineOptions}
+                value={medicineName}
+                onChangeText={setMedicineName}
+                placeholder="Select or type medicine"
+                labelKey="medicineName"
+              />
+            </View>
+
+            <View style={[styles.inputGroup, { zIndex: 2 }]}>
+              <Text style={styles.label}>Timing</Text>
+              <View style={styles.multiSelectContainer}>
+                <View style={styles.tagsContainer}>
+                  {selectedTimings.map(t => (
+                    <View key={t} style={styles.tag}>
+                      <Text style={styles.tagText}>{t} </Text>
+                      <TouchableOpacity onPress={() => setSelectedTimings(prev => prev.filter(x => x !== t))}>
+                        <Ionicons name="close-circle" size={16} color="#666" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  <TextInput
+                    style={styles.multiInput}
+                    value={timingSearch}
+                    onChangeText={text => { setTimingSearch(text); setShowTiming(true); }}
+                    onFocus={() => setShowTiming(true)}
+                    placeholder={selectedTimings.length === 0 ? "e.g. Morning" : ""}
+                    placeholderTextColor="#999"
+                  />
+                </View>
+                <TouchableOpacity onPress={() => setShowTiming(!showTiming)} style={{ padding: 10 }}>
+                  <Ionicons name={showTiming ? "chevron-up" : "chevron-down"} size={20} color="#666" />
+                </TouchableOpacity>
+              </View>
+
+              {showTiming && (
+                <View style={[styles.timingDropdown, { maxHeight: 180 }]}>
+                  <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
+                    {timingOptions.filter(opt => opt.title.toLowerCase().includes(timingSearch.toLowerCase())).map((opt, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        style={styles.timingOptionItem}
+                        onPress={() => {
+                          if (!selectedTimings.includes(opt.title)) {
+                            setSelectedTimings([...selectedTimings, opt.title]);
+                          }
+                          setTimingSearch('');
+                          setShowTiming(false);
+                        }}
+                      >
+                        <Text style={styles.timingOptionText}>{opt.title}</Text>
+                      </TouchableOpacity>
+                    ))}
+                    {timingOptions.filter(opt => opt.title.toLowerCase().includes(timingSearch.toLowerCase())).length === 0 && (
+                      <View style={styles.timingOptionItem}>
+                        <Text style={styles.timingOptionText}>No options found</Text>
+                      </View>
+                    )}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
+
+            <View style={[styles.inputGroup, { zIndex: 1 }]}>
+              <Text style={styles.label}>Intake</Text>
+              <SearchableDropdown
+                data={intakeOptions.map(i => ({ ...i, displayLabel: i.intake || i.title }))}
+                value={intake}
+                onChangeText={setIntake}
+                placeholder="e.g. Before Food"
+                labelKey="displayLabel"
+              />
+              <Text style={styles.intakeDesc}>
+                {intakeOptions.find(i => (i.intake || i.title) === intake)?.description || "Specify how the medicine should be taken (e.g. Before/After Food)"}
+              </Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Days</Text>
+              <TextInput
+                style={styles.input}
+                value={days}
+                onChangeText={setDays}
+                placeholder="e.g. 5 Days"
+              />
+            </View>
+
+            <TouchableOpacity style={styles.addBtnContainer} onPress={handleAddMedicine}>
+              <Text style={styles.addBtnText}>{editingMedicineId ? 'Update' : '+ Add'}</Text>
+            </TouchableOpacity>
+
+            {medicines.length > 0 && (
+              <View style={styles.medicinesList}>
+                <Text style={styles.medicinesListTitle}>Added Medicines:</Text>
+                {medicines.map((item, index) => (
+                  <View key={item.id} style={styles.medicineItem}>
+                    <View style={styles.medicineInfo}>
+                      <Text style={styles.medicineName}>{index + 1}. {item.name}</Text>
+                      <Text style={styles.medicineDetails}>Timing: {item.timing}</Text>
+                      <Text style={styles.medicineDetails}>Intake: {item.intake}</Text>
+                      {item.days ? <Text style={styles.medicineDetails}>Duration: {item.days}</Text> : null}
+                    </View>
+                    <View style={styles.actionIconsRow}>
+                      <TouchableOpacity onPress={() => handleEditMedicine(item)} style={{ marginRight: 15 }}>
+                        <Ionicons name="create-outline" size={20} color="#0D6EFD" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => removeMedicine(item.id)}>
+                        <Ionicons name="trash-outline" size={20} color="#FF4C4C" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 ))}
-                <TextInput 
-                  style={styles.multiInput}
-                  value={timingSearch}
-                  onChangeText={text => { setTimingSearch(text); setShowTiming(true); }}
-                  onFocus={() => setShowTiming(true)}
-                  placeholder={selectedTimings.length === 0 ? "e.g. Morning" : ""}
-                  placeholderTextColor="#999"
-                />
-              </View>
-              <TouchableOpacity onPress={() => setShowTiming(!showTiming)} style={{padding: 10}}>
-                <Ionicons name={showTiming ? "chevron-up" : "chevron-down"} size={20} color="#666" />
-              </TouchableOpacity>
-            </View>
-            
-            {showTiming && (
-              <View style={[styles.timingDropdown, { maxHeight: 180 }]}>
-                <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
-                  {timingOptions.filter(opt => opt.title.toLowerCase().includes(timingSearch.toLowerCase())).map((opt, i) => (
-                    <TouchableOpacity 
-                      key={i} 
-                      style={styles.timingOptionItem}
-                      onPress={() => {
-                         if(!selectedTimings.includes(opt.title)) {
-                           setSelectedTimings([...selectedTimings, opt.title]);
-                         }
-                         setTimingSearch('');
-                         setShowTiming(false);
-                      }}
-                    >
-                      <Text style={styles.timingOptionText}>{opt.title}</Text>
-                    </TouchableOpacity>
-                  ))}
-                  {timingOptions.filter(opt => opt.title.toLowerCase().includes(timingSearch.toLowerCase())).length === 0 && (
-                    <View style={styles.timingOptionItem}>
-                       <Text style={styles.timingOptionText}>No options found</Text>
-                    </View>
-                  )}
-                </ScrollView>
               </View>
             )}
+
+            <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>
+              <Text style={styles.submitBtnText}>{loading ? 'Submitting...' : 'Submit'}</Text>
+            </TouchableOpacity>
           </View>
-
-          <View style={[styles.inputGroup, { zIndex: 1 }]}>
-            <Text style={styles.label}>Intake</Text>
-            <SearchableDropdown
-              data={intakeOptions.map(i => ({ ...i, displayLabel: i.intake || i.title }))}
-              value={intake}
-              onChangeText={setIntake}
-              placeholder="e.g. Before Food"
-              labelKey="displayLabel"
-            />
-            <Text style={styles.intakeDesc}>
-              {intakeOptions.find(i => (i.intake || i.title) === intake)?.description || "Specify how the medicine should be taken (e.g. Before/After Food)"}
-            </Text>
-          </View>
-          
-          <View style={[styles.inputGroup, { zIndex: 1 }]}>
-            <Text style={styles.label}>Days</Text>
-            <SearchableDropdown
-              data={daysOptions}
-              value={days}
-              onSelect={(val) => setDays(val)}
-              placeholder="Select days"
-              searchKey="title"
-            />
-          </View>
-
-          <TouchableOpacity style={styles.addBtnContainer} onPress={handleAddMedicine}>
-            <Text style={styles.addBtnText}>{editingMedicineId ? 'Update' : '+ Add'}</Text>
-          </TouchableOpacity>
-
-          {medicines.length > 0 && (
-            <View style={styles.medicinesList}>
-              <Text style={styles.medicinesListTitle}>Added Medicines:</Text>
-              {medicines.map((item, index) => (
-                <View key={item.id} style={styles.medicineItem}>
-                  <View style={styles.medicineInfo}>
-                    <Text style={styles.medicineName}>{index + 1}. {item.name}</Text>
-                    <Text style={styles.medicineDetails}>Timing: {item.timing}</Text>
-                    <Text style={styles.medicineDetails}>Intake: {item.intake}</Text>
-                    {item.days ? <Text style={styles.medicineDetails}>Duration: {item.days}</Text> : null}
-                  </View>
-                  <View style={styles.actionIconsRow}>
-                    <TouchableOpacity onPress={() => handleEditMedicine(item)} style={{ marginRight: 15 }}>
-                      <Ionicons name="create-outline" size={20} color="#0D6EFD" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => removeMedicine(item.id)}>
-                      <Ionicons name="trash-outline" size={20} color="#FF4C4C" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
-
-          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>
-            <Text style={styles.submitBtnText}>{loading ? 'Submitting...' : 'Submit'}</Text>
-          </TouchableOpacity>
-        </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -362,7 +358,7 @@ export default function PrescriptionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F6F8', 
+    backgroundColor: '#F5F6F8',
   },
   blueTopBackground: {
     position: 'absolute',
