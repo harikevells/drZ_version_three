@@ -214,8 +214,11 @@ const sendCallNotification = async (req, res) => {
             return res.status(400).json({ message: "patientMobile is required" });
         }
 
-        // Find patient by mobile or email
-        let patient = await Patient.findOne({ mobile: patientMobile });
+        // Find patient by identifier, mobile or email
+        let patient = await Patient.findOne({ identifier: patientMobile });
+        if (!patient) {
+            patient = await Patient.findOne({ mobile: patientMobile });
+        }
         if (!patient) {
             patient = await Patient.findOne({ email: patientMobile });
         }
