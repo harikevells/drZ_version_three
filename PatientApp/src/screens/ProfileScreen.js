@@ -10,7 +10,7 @@ import { AuthContext } from '../context/AuthContext';
 import { LanguageContext } from '../context/LanguageContext';
 import { API_BASE_URL } from '../config';
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }) => {
   const { user, login } = useContext(AuthContext);
   const { texts } = useContext(LanguageContext);
 
@@ -150,7 +150,12 @@ const ProfileScreen = () => {
         style={{ flex: 1 }}
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile / சுயவிவரம்</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity onPress={() => navigation && navigation.goBack()} style={{ padding: 5 }}>
+              <Icon name="arrow-left" size={24} color="#555" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Profile / சுயவிவரம்</Text>
+          </View>
           {!isEditMode && (
             <TouchableOpacity onPress={() => setIsEditMode(true)} style={styles.editHeaderButton}>
               <Icon name="pencil" size={20} color="#1C3E55" />
@@ -161,21 +166,25 @@ const ProfileScreen = () => {
 
         <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           {/* Circular Profile Avatar Card */}
-          <View style={styles.avatarSection}>
-            <TouchableOpacity 
-              activeOpacity={isEditMode ? 0.7 : 1} 
+          <View style={[styles.avatarSection, isEditMode && styles.avatarSectionEdit]}>
+            <TouchableOpacity
+              activeOpacity={isEditMode ? 0.7 : 1}
               onPress={isEditMode ? handleImagePick : null}
               style={styles.avatarWrapper}
             >
-              <Image source={getProfileImageSource()} style={styles.avatar} />
+              <Image source={getProfileImageSource()} style={[styles.avatar, isEditMode && styles.avatarEdit]} />
               {isEditMode && (
                 <View style={styles.editIconBadge}>
                   <Icon name="camera" size={16} color="#fff" />
                 </View>
               )}
             </TouchableOpacity>
-            <Text style={styles.profileName}>{user?.patient_name || 'Patient Name'}</Text>
-            <Text style={styles.profileId}>{user?.patient_id || 'PatXXXX'}</Text>
+            {!isEditMode && (
+              <>
+                <Text style={styles.profileName}>{user?.patient_name || 'Patient Name'}</Text>
+                <Text style={styles.profileId}>{user?.patient_id || 'PatXXXX'}</Text>
+              </>
+            )}
           </View>
 
           {/* Details / Edit form */}
@@ -363,17 +372,17 @@ const ProfileScreen = () => {
 
               {/* Action buttons */}
               <View style={styles.actionButtonContainer}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   disabled={loading}
-                  onPress={() => setIsEditMode(false)} 
+                  onPress={() => setIsEditMode(false)}
                   style={[styles.btn, styles.btnCancel]}
                 >
                   <Text style={styles.btnCancelText}>Cancel</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   disabled={loading}
-                  onPress={handleSave} 
+                  onPress={handleSave}
                   style={[styles.btn, styles.btnSave]}
                 >
                   {loading ? (
@@ -400,16 +409,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
+    paddingTop: 60,
+    paddingBottom: 5,
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1C3E55',
+    color: '#555',
+    marginLeft: 10,
   },
   editHeaderButton: {
     flexDirection: 'row',
@@ -426,7 +434,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   scrollContainer: {
-    paddingBottom: 40,
+    paddingBottom: 60,
   },
   avatarSection: {
     alignItems: 'center',
@@ -440,9 +448,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 5,
   },
+  avatarSectionEdit: {
+    paddingVertical: 10,
+  },
   avatarWrapper: {
     position: 'relative',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   avatar: {
     width: 100,
@@ -451,6 +462,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#e9ecef',
     borderWidth: 3,
     borderColor: '#1C3E55',
+  },
+  avatarEdit: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 2,
   },
   editIconBadge: {
     position: 'absolute',
@@ -541,7 +558,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   inputGroup: {
-    marginBottom: 15,
+    marginBottom: 10,
   },
   inputRow: {
     flexDirection: 'row',
@@ -550,7 +567,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#555',
     fontWeight: 'bold',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   textInput: {
     backgroundColor: '#fff',
@@ -558,7 +575,7 @@ const styles = StyleSheet.create({
     borderColor: '#ced4da',
     borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
     fontSize: 14,
     color: '#333',
   },

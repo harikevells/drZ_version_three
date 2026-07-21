@@ -8,6 +8,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { launchImageLibrary } from 'react-native-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Dropdown } from 'react-native-element-dropdown';
+
 
 import { API_BASE_URL } from '../config';
 import { setupPushNotifications } from '../services/PushNotificationService';
@@ -15,6 +18,15 @@ const BASE_URL = API_BASE_URL;
 
 const LoginScreen = ({ navigation }) => {
   const { login } = useContext(AuthContext);
+
+  const formatDateString = (rawDate) => {
+    if (!rawDate) return '';
+    const d = new Date(rawDate);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}/${d.getFullYear()}`;
+  };
+
 
   // UI State
   const [isLogin, setIsLogin] = useState(true);
@@ -30,6 +42,9 @@ const LoginScreen = ({ navigation }) => {
   // New Profile Registration Fields State
   const [patientName, setPatientName] = useState('');
   const [patientAge, setPatientAge] = useState('');
+  const [gender, setGender] = useState('Male');
+  const [dob, setDob] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [bloodGroup, setBloodGroup] = useState('');
   const [emergencyContact, setEmergencyContact] = useState('');
   const [street, setStreet] = useState('');
@@ -37,6 +52,7 @@ const LoginScreen = ({ navigation }) => {
   const [district, setDistrict] = useState('');
   const [stateName, setStateName] = useState('');
   const [profileImage, setProfileImage] = useState(null);
+
 
   const handleImageUpload = async () => {
     try {
@@ -102,6 +118,14 @@ const LoginScreen = ({ navigation }) => {
         Alert.alert("Error / பிழை", "Please enter your name / பெயரை உள்ளிடவும்");
         return;
       }
+      if (!gender) {
+        Alert.alert("Error / பிழை", "Please select gender / பாலினத்தைத் தேர்ந்தெடுக்கவும்");
+        return;
+      }
+      if (!dob) {
+        Alert.alert("Error / பிழை", "Please select Date of Birth / பிறந்த தேதியைத் தேர்ந்தெடுக்கவும்");
+        return;
+      }
       if (password !== confirmPassword) {
         Alert.alert("Error / பிழை", "Passwords do not match / கடவுச்சொற்கள் பொருந்தவில்லை");
         return;
@@ -129,6 +153,8 @@ const LoginScreen = ({ navigation }) => {
           ...payload,
           patient_name: patientName,
           patient_age: patientAge,
+          gender,
+          dob: dob ? formatDateString(dob) : '',
           blood_group: bloodGroup,
           emergency_contact: emergencyContact,
           street,
@@ -137,6 +163,7 @@ const LoginScreen = ({ navigation }) => {
           state: stateName,
           profileImage: base64Image
         };
+      }
       console.log("[Frontend handleAuth] Sending payload keys:", Object.keys(payload));
       console.log("[Frontend handleAuth] profileImage present:", !!payload.profileImage);
       if (payload.profileImage) {
@@ -286,6 +313,60 @@ const LoginScreen = ({ navigation }) => {
                   placeholder="Enter Age"
                   placeholderTextColor="#999"
                 />
+
+                {/* Gender Dropdown */}
+                <Text style={styles.label}>
+                  Gender / பாலினம்
+                </Text>
+                <Dropdown
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  iconStyle={styles.iconStyle}
+                  itemTextStyle={{ color: 'black' }}
+                  data={[
+                    { label: 'Male / ஆண்', value: 'Male' },
+                    { label: 'Female / பெண்', value: 'Female' },
+                    { label: 'Other / மற்றவை', value: 'Other' }
+                  ]}
+                  maxHeight={200}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Gender / பாலினத்தைத் தேர்ந்தெடுக்கவும்"
+                  value={gender}
+                  onChange={item => setGender(item.value)}
+                />
+
+                {/* Date of Birth Picker */}
+                <Text style={styles.label}>
+                  Date of Birth / பிறந்த தேதி
+                </Text>
+                <TouchableOpacity 
+                  style={styles.dobContainer} 
+                  onPress={() => setShowDatePicker(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.dobText, !dob && { color: '#999' }]}>
+                    {dob ? formatDateString(dob) : 'Select Date of Birth'}
+                  </Text>
+                  <Icon name="calendar-month" size={24} color="#888" style={styles.calendarIcon} />
+                </TouchableOpacity>
+
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={dob || new Date()}
+                    mode="date"
+                    display="default"
+                    maximumDate={new Date()}
+                    onChange={(event, selectedDate) => {
+                      setShowDatePicker(false);
+                      if (selectedDate) {
+                        setDob(selectedDate);
+                      }
+                    }}
+                  />
+                )}
+
 
                 {/* 5. Blood Group */}
                 <Text style={styles.label}>
@@ -439,6 +520,8 @@ const LoginScreen = ({ navigation }) => {
                 setDistrict('');
                 setStateName('');
                 setProfileImage(null);
+                setGender('Male');
+                setDob(null);
               }} style={{ marginTop: 5 }}>
                 <Text style={styles.toggleAuthLink}>
                   {isLogin ? "Register" : "Login"}
@@ -472,6 +555,13 @@ const styles = StyleSheet.create({
   form: { width: '100%' },
   label: { fontSize: 12, fontWeight: 'bold', color: '#555', marginBottom: 8, marginTop: 15 },
   input: { borderRadius: 8, padding: 14, fontSize: 15, backgroundColor: '#F5F5F5', color: '#000' },
+  dropdown: { borderRadius: 8, paddingHorizontal: 14, height: 50, backgroundColor: '#F5F5F5' },
+  placeholderStyle: { fontSize: 15, color: '#999' },
+  selectedTextStyle: { fontSize: 15, color: '#000' },
+  iconStyle: { width: 20, height: 20 },
+  dobContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, padding: 14, backgroundColor: '#F5F5F5' },
+  dobText: { fontSize: 15, color: '#000' },
+  calendarIcon: { paddingLeft: 10 },
   passwordContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: 8, backgroundColor: '#F5F5F5' },
   passwordInput: { flex: 1, padding: 14, fontSize: 15, color: '#000' },
   eyeIcon: { padding: 10, paddingRight: 14 },

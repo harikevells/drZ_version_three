@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt, FaChevronDown, FaChevronUp, FaPills, FaListUl, FaClock, FaPrescriptionBottle } from 'react-icons/fa';
+import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt, FaChevronDown, FaChevronUp, FaPills, FaListUl, FaClock, FaPrescriptionBottle, FaUsers } from 'react-icons/fa';
 import './Layout.css';
 import logoImage from '../assets/DoctorlogoApp1.png';
 import adminImage from '../assets/adminimage.png';
@@ -73,6 +73,10 @@ const Layout = () => {
             <FaUserInjured className="nav-icon" />
             <span>Appointment</span>
           </NavLink>
+          <NavLink to="/patient-list" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+            <FaUsers className="nav-icon" />
+            <span>Patient List</span>
+          </NavLink>
           <NavLink to="/medical-camp" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
             <FaBell className="nav-icon" />
             <span>Push Message</span>
@@ -93,7 +97,7 @@ const Layout = () => {
             <div className="sub-nav" style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
               <NavLink to="/medi" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
                 <FaListUl className="nav-icon" style={{ fontSize: '14px' }} />
-                <span style={{ fontSize: '13px' }}>Medicine List</span>
+                <span style={{ fontSize: '13px' }}>Medicine Create</span>
               </NavLink>
               <NavLink to="/medicine-time" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
                 <FaClock className="nav-icon" style={{ fontSize: '14px' }} />
