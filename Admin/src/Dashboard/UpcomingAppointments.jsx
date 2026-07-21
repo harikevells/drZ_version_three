@@ -61,7 +61,7 @@ const UpcomingAppointments = ({ data = [] }) => {
             </tr>
           </thead>
           <tbody>
-            {data.length > 0 ? data.map((appt, index) => (
+            {data.length > 0 ? data.slice(0, 2).map((appt, index) => (
               <tr key={index}>
                 <td className="patient-name">{appt.patientName}</td>
                 <td className="doctor-name">{appt.doctorName}</td>

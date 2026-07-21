@@ -33,6 +33,7 @@
     "react-native-share": "^12.3.1",
     "react-native-tts": "^4.1.1",
     "react-native-vector-icons": "^10.3.0",
+    "react-native-webview": "^14.0.1",
     "recyclerlistview": "^4.2.0"
   },
   "devDependencies": {

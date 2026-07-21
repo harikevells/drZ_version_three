@@ -9,10 +9,21 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { LanguageContext } from '../context/LanguageContext';
 import { API_BASE_URL } from '../config';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Dropdown } from 'react-native-element-dropdown';
+
 
 const ProfileScreen = ({ navigation }) => {
   const { user, login } = useContext(AuthContext);
   const { texts } = useContext(LanguageContext);
+
+  const formatDateString = (rawDate) => {
+    if (!rawDate) return '';
+    const d = new Date(rawDate);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}/${d.getFullYear()}`;
+  };
 
   // Edit Mode Toggle
   const [isEditMode, setIsEditMode] = useState(false);
@@ -21,6 +32,9 @@ const ProfileScreen = ({ navigation }) => {
   // Form State Fields
   const [patientName, setPatientName] = useState('');
   const [patientAge, setPatientAge] = useState('');
+  const [gender, setGender] = useState('Male');
+  const [dob, setDob] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [bloodGroup, setBloodGroup] = useState('');
   const [emergencyContact, setEmergencyContact] = useState('');
   const [street, setStreet] = useState('');
@@ -34,6 +48,21 @@ const ProfileScreen = ({ navigation }) => {
     if (user) {
       setPatientName(user.patient_name || '');
       setPatientAge(user.patient_age ? String(user.patient_age) : '');
+      setGender(user.gender || 'Male');
+      if (user.dob) {
+        try {
+          const parts = user.dob.split('/');
+          if (parts.length === 3) {
+            setDob(new Date(`${parts[2]}-${parts[1]}-${parts[0]}`));
+          } else {
+            setDob(new Date(user.dob));
+          }
+        } catch (e) {
+          setDob(null);
+        }
+      } else {
+        setDob(null);
+      }
       setBloodGroup(user.blood_group || '');
       setEmergencyContact(user.emergency_contact || '');
       setStreet(user.street || '');
@@ -94,6 +123,8 @@ const ProfileScreen = ({ navigation }) => {
       const payload = {
         patient_name: patientName,
         patient_age: patientAge ? Number(patientAge) : '',
+        gender,
+        dob: dob ? formatDateString(dob) : '',
         blood_group: bloodGroup,
         emergency_contact: emergencyContact,
         street,
@@ -214,6 +245,22 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
 
                 <View style={styles.detailRow}>
+                  <Icon name="gender-male-female" size={20} color="#666" style={styles.detailIcon} />
+                  <View style={styles.detailTextContainer}>
+                    <Text style={styles.detailLabel}>Gender / பாலினம்</Text>
+                    <Text style={styles.detailValue}>{user?.gender || 'N/A'}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Icon name="calendar-month" size={20} color="#666" style={styles.detailIcon} />
+                  <View style={styles.detailTextContainer}>
+                    <Text style={styles.detailLabel}>Date of Birth / பிறந்த தேதி</Text>
+                    <Text style={styles.detailValue}>{user?.dob || 'N/A'}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.detailRow}>
                   <Icon name="water" size={20} color="#e63946" style={styles.detailIcon} />
                   <View style={styles.detailTextContainer}>
                     <Text style={styles.detailLabel}>Blood Group / இரத்த வகை</Text>
@@ -309,6 +356,59 @@ const ProfileScreen = ({ navigation }) => {
                   />
                 </View>
               </View>
+
+              {/* Gender Dropdown */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Gender / பாலினம்</Text>
+                <Dropdown
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  iconStyle={styles.iconStyle}
+                  itemTextStyle={{ color: 'black' }}
+                  data={[
+                    { label: 'Male / ஆண்', value: 'Male' },
+                    { label: 'Female / பெண்', value: 'Female' },
+                    { label: 'Other / மற்றவை', value: 'Other' }
+                  ]}
+                  maxHeight={200}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Gender"
+                  value={gender}
+                  onChange={item => setGender(item.value)}
+                />
+              </View>
+
+              {/* Date of Birth Picker */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Date of Birth / பிறந்த தேதி</Text>
+                <TouchableOpacity 
+                  style={styles.dobContainer} 
+                  onPress={() => setShowDatePicker(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.dobText, !dob && { color: '#888' }]}>
+                    {dob ? formatDateString(dob) : 'Select Date of Birth'}
+                  </Text>
+                  <Icon name="calendar-month" size={24} color="#888" style={styles.calendarIcon} />
+                </TouchableOpacity>
+              </View>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={dob || new Date()}
+                  mode="date"
+                  display="default"
+                  maximumDate={new Date()}
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker(false);
+                    if (selectedDate) {
+                      setDob(selectedDate);
+                    }
+                  }}
+                />
+              )}
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Emergency Contact / அவசர தொடர்பு எண்</Text>
@@ -579,10 +679,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
   },
+  dropdown: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: Platform.OS === 'ios' ? 42 : 38,
+  },
+  placeholderStyle: {
+    fontSize: 14,
+    color: '#888',
+  },
+  selectedTextStyle: {
+    fontSize: 14,
+    color: '#333',
+  },
+  iconStyle: {
+    width: 20,
+    height: 20,
+  },
+  dobContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+  },
+  dobText: {
+    fontSize: 14,
+    color: '#333',
+    flex: 1,
+  },
+  calendarIcon: {
+    marginLeft: 10,
+  },
   actionButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 20,
+    marginBottom: 40,
   },
   btn: {
     flex: 1,

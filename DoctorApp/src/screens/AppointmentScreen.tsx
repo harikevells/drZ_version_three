@@ -512,7 +512,9 @@ export default function AppointmentScreen({ route }: any) {
                             patientId: item.id || item._id,
                             appointmentId: item.booking_id || item.id || item._id,
                             displayAppointmentId: displayAppmtId,
-                            displayPatientId: displayPatId
+                            displayPatientId: displayPatId,
+                            doctorName: doctorName,
+                            loginMobile: item.login_mobile
                           })}
                         >
                           <Ionicons name="videocam" size={14} color="#FFF" />

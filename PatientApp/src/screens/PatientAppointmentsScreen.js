@@ -7,7 +7,8 @@ import {
   ActivityIndicator,
   Image,
   TouchableOpacity,
-  Animated
+  Animated,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -273,6 +274,17 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
             </View>
           </View>
           
+          {String(item.video_call).toLowerCase() === 'yes' && (
+            <TouchableOpacity 
+              style={styles.videoCallButton} 
+              onPress={() => {
+                Alert.alert("Video Call / வீடியோ கால்", "Video call will start at the scheduled time. / வீடியோ கால் குறிப்பிட்ட நேரத்தில் தொடங்கப்படும்.");
+              }}
+            >
+              <Icon name="video" size={24} color="#fff" />
+            </TouchableOpacity>
+          )}
+
         </Animated.View>
       </TouchableOpacity>
     );
@@ -339,6 +351,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 70 },
 
   card: {
+    position: 'relative',
     backgroundColor: '#fff',
     borderRadius: 20,
     marginBottom: 15,
@@ -373,6 +386,23 @@ const styles = StyleSheet.create({
   infoColon: { fontSize: 13, color: '#555', marginRight: 15 },
   infoValue: { fontSize: 13, color: '#1C3E55', flex: 1, fontWeight: '600' },
   
+  videoCallButton: {
+    position: 'absolute',
+    bottom: 15,
+    right: 15,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FF7675',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',

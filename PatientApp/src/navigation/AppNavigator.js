@@ -7,6 +7,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from '../context/AuthContext';
 import { LanguageContext } from '../context/LanguageContext';
+import { navigationRef } from './navigationRef';
 
 // IMPORT SCREENS
 import LoginScreen from '../screens/LoginScreen';
@@ -17,6 +18,7 @@ import ChatbotScreen from '../screens/ChatbotScreen';
 import PatientAppointmentsScreen from '../screens/PatientAppointmentsScreen';
 import PrescriptionListScreen from '../screens/PrescriptionListScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import VideoCallScreen from '../screens/VideoCallScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -215,6 +217,7 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer
+      ref={navigationRef}
       initialState={initialState}
       onStateChange={(state) =>
         AsyncStorage.setItem(PERSISTENCE_KEY, JSON.stringify(state))
@@ -229,6 +232,7 @@ const AppNavigator = () => {
             <Stack.Screen name="BookAppointment" component={BookAppointmentScreen} />
             <Stack.Screen name="NotificationPatient" component={NotificationPatient} />
             <Stack.Screen name="Chatbot" component={ChatbotScreen} />
+            <Stack.Screen name="VideoCall" component={VideoCallScreen} />
           </>
         )}
       </Stack.Navigator>

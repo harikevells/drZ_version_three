@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
   selectedTextStyle: { fontSize: 15, color: '#000' },
   iconStyle: { width: 20, height: 20 },
   dobContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, padding: 14, backgroundColor: '#F5F5F5' },
-  dobText: { fontSize: 15, color: '#000' },
+  dobText: { fontSize: 15, color: '#000', flex: 1 },
   calendarIcon: { paddingLeft: 10 },
   passwordContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: 8, backgroundColor: '#F5F5F5' },
   passwordInput: { flex: 1, padding: 14, fontSize: 15, color: '#000' },

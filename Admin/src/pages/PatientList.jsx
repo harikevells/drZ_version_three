@@ -26,14 +26,16 @@ const PatientList = () => {
     const patientName = String(patient.patient_name || '').toLowerCase();
     const identifier = String(patient.identifier || '').toLowerCase();
     const bloodGroup = String(patient.blood_group || '').toLowerCase();
-    const district = String(patient.district || '').toLowerCase();
+    const gender = String(patient.gender || '').toLowerCase();
+    const dob = String(patient.dob || '').toLowerCase();
 
     return (
       patientId.includes(search) ||
       patientName.includes(search) ||
       identifier.includes(search) ||
       bloodGroup.includes(search) ||
-      district.includes(search)
+      gender.includes(search) ||
+      dob.includes(search)
     );
   });
 
@@ -105,9 +107,10 @@ const PatientList = () => {
                   <th>Patient ID</th>
                   <th>Patient Name</th>
                   <th>Age</th>
+                  <th>Gender</th>
+                  <th>Date of Birth</th>
                   <th>Phone / Email ID</th>
                   <th>Blood Group</th>
-                  <th>District</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -117,9 +120,10 @@ const PatientList = () => {
                     <td>{patient.patient_id || 'N/A'}</td>
                     <td>{patient.patient_name || 'N/A'}</td>
                     <td>{patient.patient_age || 'N/A'}</td>
+                    <td>{patient.gender || 'N/A'}</td>
+                    <td>{patient.dob || 'N/A'}</td>
                     <td>{patient.identifier || 'N/A'}</td>
                     <td>{patient.blood_group || 'N/A'}</td>
-                    <td>{patient.district || 'N/A'}</td>
                     <td>
                       <button className="view-btn" onClick={() => handleView(patient)}>
                         <FaEye />
@@ -128,7 +132,7 @@ const PatientList = () => {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan="7" className="text-center">No patients found</td>
+                    <td colSpan="8" className="text-center">No patients found</td>
                   </tr>
                 )}
               </tbody>
@@ -183,6 +187,14 @@ const PatientList = () => {
                 <div className="detail-row">
                   <span className="detail-label">Age:</span>
                   <span className="detail-value">{selectedPatient.patient_age || 'N/A'}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Gender:</span>
+                  <span className="detail-value">{selectedPatient.gender || 'N/A'}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Date of Birth:</span>
+                  <span className="detail-value">{selectedPatient.dob || 'N/A'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Blood Group:</span>

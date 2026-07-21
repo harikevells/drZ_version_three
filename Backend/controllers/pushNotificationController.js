@@ -205,10 +205,86 @@ const broadcastToDoctors = async (title, body) => {
     }
 };
 
+// Send call notification to a specific patient
+const sendCallNotification = async (req, res) => {
+    try {
+        const { bookingId, roomId, doctorName, patientMobile } = req.body;
+
+        if (!patientMobile) {
+            return res.status(400).json({ message: "patientMobile is required" });
+        }
+
+        // Find patient by mobile or email
+        let patient = await Patient.findOne({ mobile: patientMobile });
+        if (!patient) {
+            patient = await Patient.findOne({ email: patientMobile });
+        }
+
+        if (!patient || !patient.fcmToken) {
+            return res.status(404).json({ message: "Patient or patient FCM token not found" });
+        }
+
+        const message = {
+            token: patient.fcmToken,
+            android: {
+                priority: 'high',
+            },
+            data: {
+                type: 'incoming_call',
+                bookingId: String(bookingId),
+                roomId: String(roomId),
+                doctorName: String(doctorName)
+            }
+        };
+
+        const response = await admin.messaging().send(message);
+        console.log(`Successfully sent incoming call push to ${patientMobile}:`, response);
+        res.status(200).json({ message: "Call notification sent successfully", response });
+    } catch (error) {
+        console.error("Error sending call notification:", error);
+        res.status(500).json({ message: "Failed to send call notification", error: error.message });
+    }
+};
+// Update video call status in Realtime Database
+const updateCallStatus = async (req, res) => {
+    try {
+        const { bookingId, status } = req.body;
+        if (!bookingId || !status) {
+            return res.status(400).json({ message: "bookingId and status are required" });
+        }
+        const db = require('../config/firebase');
+        await db.ref(`calls/${bookingId}`).update({ status, updatedAt: Date.now() });
+        res.status(200).json({ message: "Call status updated successfully" });
+    } catch (error) {
+        console.error("Error updating call status:", error);
+        res.status(500).json({ message: "Failed to update call status", error: error.message });
+    }
+};
+
+// Get video call status from Realtime Database
+const getCallStatus = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        if (!bookingId) {
+            return res.status(400).json({ message: "bookingId is required" });
+        }
+        const db = require('../config/firebase');
+        const snapshot = await db.ref(`calls/${bookingId}`).once('value');
+        const data = snapshot.val();
+        res.status(200).json(data || { status: 'none' });
+    } catch (error) {
+        console.error("Error getting call status:", error);
+        res.status(500).json({ message: "Failed to get call status", error: error.message });
+    }
+};
+
 module.exports = {
     createPushNotification,
     getAllPushNotifications,
     getActivePushNotifications,
     updatePushNotification,
-    deletePushNotification
+    deletePushNotification,
+    sendCallNotification,
+    updateCallStatus,
+    getCallStatus
 };
