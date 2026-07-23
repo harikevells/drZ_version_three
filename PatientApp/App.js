@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { LogBox } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
-import notifee, { AndroidImportance } from '@notifee/react-native';
+import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 import axios from 'axios';
 import { AuthProvider } from './src/context/AuthContext'; 
 import { LanguageProvider } from './src/context/LanguageContext'; 
@@ -16,13 +16,14 @@ const App = () => {
   const [incomingCall, setIncomingCall] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
+    // 1. Listen to FCM foreground messages
+    const unsubscribeFCM = messaging().onMessage(async remoteMessage => {
       console.log('FCM Foreground Message received:', remoteMessage);
 
       if (remoteMessage.data && remoteMessage.data.type === 'incoming_call') {
         const { bookingId, roomId, doctorName } = remoteMessage.data;
         setIncomingCall({ bookingId, roomId, doctorName });
-        return; // Skip normal notification display
+        return; // Skip displaying a notification card since overlay is active
       }
 
       // Request permissions (required for iOS)
@@ -35,7 +36,7 @@ const App = () => {
         importance: AndroidImportance.HIGH,
       });
 
-      // Display a notification
+      // Display normal notifications
       await notifee.displayNotification({
         title: remoteMessage.notification?.title || 'New Notification',
         body: remoteMessage.notification?.body || '',
@@ -49,7 +50,37 @@ const App = () => {
       });
     });
 
-    return unsubscribe;
+    // 2. Check if the app was launched by pressing a notification action (e.g. while killed)
+    notifee.getInitialNotification().then(async notificationDetail => {
+      if (notificationDetail) {
+        const { pressAction, notification } = notificationDetail;
+        if (pressAction && pressAction.id === 'accept_call') {
+          const { bookingId, roomId, doctorName } = notification.data;
+          console.log('App launched via Accept call action');
+          // Navigate to VideoCall screen after navigation is ready
+          setTimeout(() => {
+            navigate('VideoCall', { bookingId, roomId, doctorName });
+          }, 1500);
+        }
+      }
+    });
+
+    // 3. Listen to foreground events from Notifee (e.g. if the user clicks Accept/Decline)
+    const unsubscribeForeground = notifee.onForegroundEvent(({ type, detail }) => {
+      const { notification, pressAction } = detail;
+      if (type === EventType.ACTION_PRESS && pressAction?.id === 'accept_call') {
+        const { bookingId, roomId, doctorName } = notification.data;
+        notifee.cancelNotification(notification.id);
+        navigate('VideoCall', { bookingId, roomId, doctorName });
+      } else if (type === EventType.ACTION_PRESS && pressAction?.id === 'decline_call') {
+        notifee.cancelNotification(notification.id);
+      }
+    });
+
+    return () => {
+      unsubscribeFCM();
+      unsubscribeForeground();
+    };
   }, []);
 
   const handleAccept = async () => {

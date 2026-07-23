@@ -510,7 +510,7 @@ export default function AppointmentScreen({ route }: any) {
                           onPress={() => navigation.navigate('VideoCall', { 
                             patientName: item.patient_name, 
                             patientId: item.id || item._id,
-                            appointmentId: item.booking_id || item.id || item._id,
+                            appointmentId: item._id || item.id,
                             displayAppointmentId: displayAppmtId,
                             displayPatientId: displayPatId,
                             doctorName: doctorName,
@@ -599,7 +599,7 @@ export default function AppointmentScreen({ route }: any) {
                                 navigation.navigate('Prescription', { 
                                   patientName: item.patient_name, 
                                   patientId: item.id || item._id,
-                                  appointmentId: item.booking_id || item.id || item._id,
+                                  appointmentId: item._id || item.id,
                                   displayAppointmentId: displayAppmtId,
                                   displayPatientId: displayPatId,
                                   existingPrescription: item.prescription
