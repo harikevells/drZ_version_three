@@ -7,12 +7,14 @@ const {
     updatePushNotification,
     deletePushNotification,
     sendCallNotification,
+    sendCallToDoctor,
     updateCallStatus,
     getCallStatus
 } = require('../controllers/pushNotificationController');
 
 router.post('/', createPushNotification);
 router.post('/send-call', sendCallNotification);
+router.post('/send-call-to-doctor', sendCallToDoctor);
 router.put('/call-status', updateCallStatus);
 router.get('/call-status/:bookingId', getCallStatus);
 router.get('/', getAllPushNotifications);

@@ -281,6 +281,58 @@ const getCallStatus = async (req, res) => {
     }
 };
 
+// Send call notification to a specific doctor
+const sendCallToDoctor = async (req, res) => {
+    try {
+        const { bookingId, roomId, doctorName, patientName } = req.body;
+
+        if (!doctorName) {
+            return res.status(400).json({ message: "doctorName is required" });
+        }
+
+        // Try to find doctor by doctorName
+        let doctor = await Doctor.findOne({ doctorName: doctorName });
+        // Fallback: search without "Dr. " prefix if present in either the parameter or DB
+        if (!doctor) {
+            const cleanName = doctorName.replace(/^Dr\.\s*/i, '').trim();
+            doctor = await Doctor.findOne({ doctorName: cleanName });
+        }
+        if (!doctor) {
+            // Find any doctor whose name matches cleanName
+            const doctors = await Doctor.find({});
+            doctor = doctors.find(d => {
+                const dName = (d.doctorName || '').toLowerCase();
+                const cleanInput = doctorName.toLowerCase().replace(/^dr\.\s*/i, '').trim();
+                return dName.includes(cleanInput) || cleanInput.includes(dName);
+            });
+        }
+
+        if (!doctor || !doctor.fcmToken) {
+            return res.status(404).json({ message: "Doctor or doctor FCM token not found" });
+        }
+
+        const message = {
+            token: doctor.fcmToken,
+            android: {
+                priority: 'high',
+            },
+            data: {
+                type: 'incoming_call',
+                bookingId: String(bookingId),
+                roomId: String(roomId),
+                patientName: String(patientName || 'Patient')
+            }
+        };
+
+        const response = await admin.messaging().send(message);
+        console.log(`Successfully sent incoming call push to Doctor ${doctorName}:`, response);
+        res.status(200).json({ message: "Call notification sent successfully to doctor", response });
+    } catch (error) {
+        console.error("Error sending call notification to doctor:", error);
+        res.status(500).json({ message: "Failed to send call notification to doctor", error: error.message });
+    }
+};
+
 module.exports = {
     createPushNotification,
     getAllPushNotifications,
@@ -288,6 +340,7 @@ module.exports = {
     updatePushNotification,
     deletePushNotification,
     sendCallNotification,
+    sendCallToDoctor,
     updateCallStatus,
     getCallStatus
 };
