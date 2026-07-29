@@ -1,9 +1,49 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import Sound from 'react-native-sound';
 
 export default function CallOverlay({ visible, doctorName, onAccept, onReject }) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const ringtoneRef = useRef(null);
+
+  useEffect(() => {
+    // Enable playback in silence mode
+    Sound.setCategory('Playback');
+
+    if (visible) {
+      const sound = new Sound('https://raw.githubusercontent.com/extratone/macOSsystemsounds/main/mp3/Opening.mp3', '', (error) => {
+        if (error) {
+          console.log('Failed to load ringing sound:', error);
+          return;
+        }
+        sound.setNumberOfLoops(-1); // Loop indefinitely
+        sound.play((success) => {
+          if (!success) {
+            console.log('Playback failed due to audio decoding errors');
+          }
+        });
+      });
+      ringtoneRef.current = sound;
+    } else {
+      if (ringtoneRef.current) {
+        ringtoneRef.current.stop(() => {
+          if (ringtoneRef.current) {
+            ringtoneRef.current.release();
+            ringtoneRef.current = null;
+          }
+        });
+      }
+    }
+
+    return () => {
+      if (ringtoneRef.current) {
+        ringtoneRef.current.stop();
+        ringtoneRef.current.release();
+        ringtoneRef.current = null;
+      }
+    };
+  }, [visible]);
 
   useEffect(() => {
     if (visible) {

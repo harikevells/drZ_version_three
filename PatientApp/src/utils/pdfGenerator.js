@@ -3,7 +3,7 @@ import Share from 'react-native-share';
 import { Alert, NativeModules, Platform } from 'react-native';
 import { LOGO_BASE64 } from './logoBase64';
 
-export const generatePrescriptionPDF = async (appData) => {
+export const generatePrescriptionPDF = async (appData, options = { share: false }) => {
   try {
     const {
       doctorName,
@@ -372,7 +372,7 @@ export const generatePrescriptionPDF = async (appData) => {
       ? file.filePath
       : `file://${file.filePath}`;
 
-    if (Platform.OS === 'android') {
+     if (Platform.OS === 'android' && !options?.share) {
       try {
         const fileName = `Prescription_${appId || 'Doc'}.pdf`;
         await NativeModules.FileModule.saveToDownloads(file.filePath, fileName);
@@ -389,7 +389,7 @@ export const generatePrescriptionPDF = async (appData) => {
         });
       }
     } else {
-      // iOS
+      // iOS or options.share === true
       await Share.open({
         url: shareUrl,
         title: 'Prescription PDF',

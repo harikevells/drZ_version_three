@@ -53,11 +53,26 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
 
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('Pending');
 
   const blinkAnim = React.useRef(new Animated.Value(1)).current;
   const flatListRef = React.useRef(null);
   const [blinkingAppointments, setBlinkingAppointments] = useState([]);
   const isFocused = useIsFocused();
+
+  const filteredAppointments = appointments.filter(app => {
+    const s = (app.status || 'Pending').toLowerCase();
+    if (activeTab === 'Pending') {
+      return s === 'pending' || s === 'rescheduled';
+    } else if (activeTab === 'Approved') {
+      return s === 'approved';
+    } else if (activeTab === 'Completed') {
+      return s === 'completed';
+    } else if (activeTab === 'Cancelled') {
+      return s === 'cancelled';
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (!isFocused) {
@@ -98,17 +113,25 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
 
       if (matchedItems.length > 0) {
         const targetIndex = matchedItems[0].index;
-        setBlinkingAppointments([targetIndex]);
-        
-        setTimeout(() => {
-          if (flatListRef.current) {
-            flatListRef.current.scrollToIndex({
-              index: targetIndex,
-              animated: true,
-              viewPosition: 0.5 // Centers the card
-            });
+        const matchedApp = appointments[targetIndex];
+        const matchedId = matchedApp._id || matchedApp.id;
+
+        // Auto-switch tab to match status
+        if (matchedApp && matchedApp.status) {
+          const statusMap = {
+            'pending': 'Pending',
+            'approved': 'Approved',
+            'completed': 'Completed',
+            'cancelled': 'Cancelled',
+            'rescheduled': 'Pending'
+          };
+          const correctTab = statusMap[matchedApp.status.toLowerCase()];
+          if (correctTab) {
+            setActiveTab(correctTab);
           }
-        }, 500);
+        }
+
+        setBlinkingAppointments([matchedId]);
 
         Animated.loop(
           Animated.sequence([
@@ -141,9 +164,26 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
     }
   }, [route?.params?.blinkMessage, appointments]);
 
-  const handleStopBlink = (index) => {
-    if (blinkingAppointments.includes(index)) {
-      setBlinkingAppointments(prev => prev.filter(id => id !== index));
+  useEffect(() => {
+    if (blinkingAppointments.length > 0 && filteredAppointments.length > 0) {
+      const targetId = blinkingAppointments[0];
+      const targetIndex = filteredAppointments.findIndex(app => (app._id === targetId || app.id === targetId));
+      if (targetIndex !== -1 && flatListRef.current) {
+        setTimeout(() => {
+          flatListRef.current?.scrollToIndex({
+            index: targetIndex,
+            animated: true,
+            viewPosition: 0.5
+          });
+        }, 500);
+      }
+    }
+  }, [blinkingAppointments, filteredAppointments]);
+
+  const handleStopBlink = (item) => {
+    const itemId = item._id || item.id;
+    if (blinkingAppointments.includes(itemId)) {
+      setBlinkingAppointments(prev => prev.filter(id => id !== itemId));
       if (blinkingAppointments.length <= 1) {
         blinkAnim.setValue(1);
         blinkAnim.stopAnimation();
@@ -179,7 +219,8 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
   };
 
   const renderAppointment = ({ item, index }) => {
-    const isBlinking = blinkingAppointments.includes(index);
+    const itemId = item._id || item.id;
+    const isBlinking = blinkingAppointments.includes(itemId);
     
     // Status styles
     let statusBg = '#FFF8E1'; // Pending
@@ -206,7 +247,7 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
     }
     
     return (
-      <TouchableOpacity activeOpacity={1} onPress={() => handleStopBlink(index)}>
+      <TouchableOpacity activeOpacity={1} onPress={() => handleStopBlink(item)}>
         <Animated.View style={[styles.card, isBlinking && { borderColor: '#5F76FE', borderWidth: 2 }]}>
           
           <View style={styles.cardTop}>
@@ -247,6 +288,15 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
 
           <View style={{borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 15}}>
             <View style={styles.infoRow}>
+              <View style={[styles.infoIconBox, { backgroundColor: '#FF9F43' }]}>
+                <Icon name="account-outline" size={16} color="#fff" />
+              </View>
+              <Text style={styles.infoLabel}>Patient Name</Text>
+              <Text style={styles.infoColon}>:</Text>
+              <Text style={styles.infoValue}>{item.patient_name || item.patientName || 'Patient'}</Text>
+            </View>
+
+            <View style={styles.infoRow}>
               <View style={[styles.infoIconBox, { backgroundColor: '#0984e3' }]}>
                 <Icon name="identifier" size={16} color="#fff" />
               </View>
@@ -276,7 +326,8 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
           
           {String(item.video_call).toLowerCase() === 'yes' && (
             <TouchableOpacity 
-              style={styles.videoCallButton} 
+              style={[styles.videoCallButton, (statusStr.toLowerCase() === 'completed' || statusStr.toLowerCase() === 'pending') && { backgroundColor: '#ccc' }]} 
+              disabled={statusStr.toLowerCase() === 'completed' || statusStr.toLowerCase() === 'pending'}
               onPress={() => {
                 navigation.navigate('VideoCall', {
                   bookingId: item._id || item.id,
@@ -300,38 +351,68 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <Image source={require('../assets/user.png')} style={styles.userImage} />
-          <View style={styles.textContainer}>
-            <Text style={styles.greeting}>{texts?.greeting || 'Hi'} {user?.name || "Patient"},</Text>
-            <Text style={styles.subGreeting}>My Appointments / எனது முன்பதிவுகள்</Text>
-          </View>
+        <View style={styles.headerActionLeft}>
+          <TouchableOpacity onPress={() => navigation && navigation.goBack()} style={styles.backArrowBtn}>
+            <Icon name="arrow-left" size={24} color="#1C3E55" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitleText}>My Appointments / எனது முன்பதிவுகள்</Text>
         </View>
       </View>
 
       <View style={styles.container}>
         {loading ? (
           <ActivityIndicator size="large" color="#5F76FE" style={{ marginTop: 50 }} />
-        ) : appointments.length > 0 ? (
-          <FlatList
-            ref={flatListRef}
-            data={appointments}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={renderAppointment}
-            contentContainerStyle={{ paddingBottom: 10 }}
-            showsVerticalScrollIndicator={false}
-            onScrollToIndexFailed={(info) => {
-              const wait = new Promise(resolve => setTimeout(resolve, 500));
-              wait.then(() => {
-                flatListRef.current?.scrollToIndex({ index: info.index, animated: true, viewPosition: 0.5 });
-              });
-            }}
-          />
         ) : (
-          <View style={styles.emptyContainer}>
-            <Icon name="calendar-remove" size={80} color="#ccc" />
-            <Text style={styles.emptyText}>No appointments found / முன்பதிவுகள் இல்லை</Text>
-          </View>
+          <>
+            <View style={styles.tabContainer}>
+              <TouchableOpacity
+                style={[styles.tabBtn, activeTab === 'Pending' && styles.activeTabBtn]}
+                onPress={() => setActiveTab('Pending')}
+              >
+                <Text style={[styles.tabText, activeTab === 'Pending' && styles.activeTabText]}>Pending</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tabBtn, activeTab === 'Approved' && styles.activeTabBtn]}
+                onPress={() => setActiveTab('Approved')}
+              >
+                <Text style={[styles.tabText, activeTab === 'Approved' && styles.activeTabText]}>Approved</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tabBtn, activeTab === 'Completed' && styles.activeTabBtn]}
+                onPress={() => setActiveTab('Completed')}
+              >
+                <Text style={[styles.tabText, activeTab === 'Completed' && styles.activeTabText]}>Completed</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tabBtn, activeTab === 'Cancelled' && styles.activeTabBtn]}
+                onPress={() => setActiveTab('Cancelled')}
+              >
+                <Text style={[styles.tabText, activeTab === 'Cancelled' && styles.activeTabText]}>Cancelled</Text>
+              </TouchableOpacity>
+            </View>
+
+            {filteredAppointments.length > 0 ? (
+              <FlatList
+                ref={flatListRef}
+                data={filteredAppointments}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={renderAppointment}
+                contentContainerStyle={{ paddingBottom: 10 }}
+                showsVerticalScrollIndicator={false}
+                onScrollToIndexFailed={(info) => {
+                  const wait = new Promise(resolve => setTimeout(resolve, 500));
+                  wait.then(() => {
+                    flatListRef.current?.scrollToIndex({ index: info.index, animated: true, viewPosition: 0.5 });
+                  });
+                }}
+              />
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Icon name="calendar-remove" size={80} color="#ccc" />
+                <Text style={styles.emptyText}>No {activeTab.toLowerCase()} appointments / முன்பதிவுகள் இல்லை</Text>
+              </View>
+            )}
+          </>
         )}
       </View>
     </SafeAreaView>
@@ -349,13 +430,45 @@ const styles = StyleSheet.create({
     paddingBottom: 15,
     backgroundColor: '#fff',
   },
-  userInfo: { flexDirection: 'row', alignItems: 'center' },
-  userImage: { width: 45, height: 45, borderRadius: 22.5, backgroundColor: '#eee', marginRight: 12 },
-  textContainer: { justifyContent: 'center' },
-  greeting: { fontSize: 16, fontWeight: 'bold', color: '#000' },
-  subGreeting: { fontSize: 13, color: '#5F76FE', fontWeight: 'bold', marginTop: 2 },
+  headerActionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  backArrowBtn: {
+    padding: 4,
+  },
+  headerTitleText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1C3E55',
+  },
 
   container: { flex: 1, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 70 },
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  activeTabBtn: {
+    borderBottomWidth: 3,
+    borderBottomColor: '#5F76FE',
+  },
+  tabText: {
+    color: '#999',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  activeTabText: {
+    color: '#5F76FE',
+  },
 
   card: {
     position: 'relative',
@@ -389,7 +502,7 @@ const styles = StyleSheet.create({
 
   infoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   infoIconBox: { width: 28, height: 28, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-  infoLabel: { fontSize: 13, color: '#555', width: 80 },
+  infoLabel: { fontSize: 13, color: '#555', width: 95 },
   infoColon: { fontSize: 13, color: '#555', marginRight: 15 },
   infoValue: { fontSize: 13, color: '#1C3E55', flex: 1, fontWeight: '600' },
   

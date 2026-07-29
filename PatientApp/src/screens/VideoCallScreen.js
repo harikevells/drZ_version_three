@@ -458,28 +458,6 @@ export default function VideoCallScreen({ route, navigation }) {
             </TouchableOpacity>
           </View>
         </View>
-        {/* Hidden WebView to play the ringtone */}
-        <View style={{ width: 1, height: 1, opacity: 0 }}>
-          <WebView
-            source={{
-              html: `
-                <html>
-                  <body>
-                    <audio id="ringtone" src="https://actions.google.com/sounds/v1/alarms/phone_alerts_and_rings.ogg" loop autoplay></audio>
-                    <script>
-                      var audio = document.getElementById('ringtone');
-                      audio.play().catch(function(e) {
-                        console.log('Autoplay block:', e);
-                      });
-                    </script>
-                  </body>
-                </html>
-              `
-            }}
-            mediaPlaybackRequiresUserAction={false}
-            allowsInlineMediaPlayback={true}
-          />
-        </View>
       </SafeAreaView>
     );
   }

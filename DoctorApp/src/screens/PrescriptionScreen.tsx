@@ -228,7 +228,7 @@ export default function PrescriptionScreen() {
 
             <View style={styles.separator} />
 
-            <View style={[styles.inputGroup, { zIndex: 3 }]}>
+            <View style={[styles.inputGroup, { zIndex: 4 }]}>
               <Text style={styles.label}>Medicine Name</Text>
               <SearchableDropdown
                 data={medicineOptions}
@@ -239,7 +239,7 @@ export default function PrescriptionScreen() {
               />
             </View>
 
-            <View style={[styles.inputGroup, { zIndex: 2 }]}>
+            <View style={[styles.inputGroup, { zIndex: 3 }]}>
               <Text style={styles.label}>Timing</Text>
               <View style={styles.multiSelectContainer}>
                 <View style={styles.tagsContainer}>
@@ -293,7 +293,7 @@ export default function PrescriptionScreen() {
               )}
             </View>
 
-            <View style={[styles.inputGroup, { zIndex: 1 }]}>
+            <View style={[styles.inputGroup, { zIndex: 2 }]}>
               <Text style={styles.label}>Intake</Text>
               <SearchableDropdown
                 data={intakeOptions.map(i => ({ ...i, displayLabel: i.intake || i.title }))}
@@ -307,7 +307,7 @@ export default function PrescriptionScreen() {
               </Text>
             </View>
 
-            <View style={styles.inputGroup}>
+            <View style={[styles.inputGroup, { zIndex: 1 }]}>
               <Text style={styles.label}>Days</Text>
               <TextInput
                 style={styles.input}
@@ -417,6 +417,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 15,
+    position: 'relative',
   },
   label: {
     position: 'absolute',

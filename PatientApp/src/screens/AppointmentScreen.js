@@ -47,11 +47,11 @@ const AppointmentScreen = ({ navigation }) => {
           const AsyncStorage = require('@react-native-async-storage/async-storage').default;
           const readPushIdsStr = await AsyncStorage.getItem('readPushNotificationIds');
           const readPushIds = readPushIdsStr ? JSON.parse(readPushIdsStr) : [];
-          
+
           const pushUnread = (pushRes.data || []).filter(pn => {
             return !readPushIds.includes(pn._id || pn.id);
           }).length;
-          
+
           setUnreadCount(normalUnread + pushUnread);
         } catch (error) {
           console.log("Error fetching notifications count", error);
@@ -290,7 +290,9 @@ const AppointmentScreen = ({ navigation }) => {
 const { width, height } = Dimensions.get('window');
 
 const scaleFont = (size) => {
-  const newSize = size * (width / 375);
+  const isTablet = width >= 600;
+  const factor = isTablet ? (width / 375) * 0.75 : (width / 375);
+  const newSize = size * factor;
   if (Platform.OS === 'ios') {
     return Math.round(PixelRatio.roundToNearestPixel(newSize));
   } else {
@@ -348,7 +350,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'transparent',
     borderRadius: 10,
-    paddingVertical: height * 0.025,
+    paddingVertical: height * 0.027,
     paddingHorizontal: width * 0.005,
     alignItems: 'center',
     width: '100%',
@@ -380,7 +382,7 @@ const styles = StyleSheet.create({
   // Footer Website Styles
   footerWebsiteContainer: { marginTop: height * 0.06, alignItems: 'center' },
   footerWebsiteTitle: { fontSize: scaleFont(16), color: '#333', fontWeight: 'bold', marginBottom: 5 },
-  footerWebsiteLink: { fontSize: scaleFont(16), color: '#0d71b3ff', textDecorationLine: 'underline', width: 250 },
+  footerWebsiteLink: { fontSize: scaleFont(16), color: '#0d71b3ff', textDecorationLine: 'underline', width: width >= 600 ? 'auto' : 250 },
   websiteRow: {
     flexDirection: 'row',
     alignItems: 'center',
