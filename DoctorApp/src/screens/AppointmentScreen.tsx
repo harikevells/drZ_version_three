@@ -42,6 +42,17 @@ const formatTimeSlot = (timeStr: string) => {
   return `${str} to ${dHrs}.${eMinsStr}${eAmpm}`;
 };
 
+const parseDateStr = (dateStr: string) => {
+  if (!dateStr) return null;
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+  }
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) return d;
+  return null;
+};
+
 export default function AppointmentScreen({ route }: any) {
   const [parseableDate, setParseableDate] = useState(false);
   const [fromDateInput, setFromDateInput] = useState('');
@@ -72,6 +83,32 @@ export default function AppointmentScreen({ route }: any) {
   const [cancelVisible, setCancelVisible] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [expandedPrescriptions, setExpandedPrescriptions] = useState<Record<string, boolean>>({});
+
+  const filteredAppointments = appointments.filter(app => {
+    if (!app.status) return false;
+    const s = app.status.toLowerCase();
+
+    let matchesTab = false;
+    if (activeTab === 'Pending') {
+      matchesTab = s === 'pending' || s === 'rescheduled';
+    } else {
+      matchesTab = s === activeTab.toLowerCase();
+    }
+    if (!matchesTab) return false;
+
+    if (appliedFromDate || appliedToDate) {
+      const appDate = parseDateStr(app.appointment_date);
+      const start = parseDateStr(appliedFromDate);
+      const end = parseDateStr(appliedToDate);
+
+      if (appDate) {
+        if (start && appDate < start) return false;
+        if (end && appDate > end) return false;
+      }
+    }
+
+    return true;
+  });
 
   const fetchAppointments = async (showLoading = true) => {
     try {
@@ -260,16 +297,7 @@ export default function AppointmentScreen({ route }: any) {
     }
   };
 
-  const parseDateStr = (dateStr: string) => {
-    if (!dateStr) return null;
-    const parts = dateStr.split('/');
-    if (parts.length === 3) {
-      return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-    }
-    const d = new Date(dateStr);
-    if (!isNaN(d.getTime())) return d;
-    return null;
-  };
+
 
   const handleOkPress = () => {
     setAppliedFromDate(fromDateInput);
@@ -313,31 +341,7 @@ export default function AppointmentScreen({ route }: any) {
     setShowCalendar(null);
   };
 
-  const filteredAppointments = appointments.filter(app => {
-    if (!app.status) return false;
-    const s = app.status.toLowerCase();
 
-    let matchesTab = false;
-    if (activeTab === 'Pending') {
-      matchesTab = s === 'pending' || s === 'rescheduled';
-    } else {
-      matchesTab = s === activeTab.toLowerCase();
-    }
-    if (!matchesTab) return false;
-
-    if (appliedFromDate || appliedToDate) {
-      const appDate = parseDateStr(app.appointment_date);
-      const start = parseDateStr(appliedFromDate);
-      const end = parseDateStr(appliedToDate);
-
-      if (appDate) {
-        if (start && appDate < start) return false;
-        if (end && appDate > end) return false;
-      }
-    }
-
-    return true;
-  });
 
   if (loading) {
     return (

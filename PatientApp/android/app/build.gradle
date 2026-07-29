@@ -80,7 +80,7 @@ android {
 
     namespace "com.drzapp"
     defaultConfig {
-        applicationId "com.drz.patientss"
+        applicationId "com.drz.patientapps"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 2

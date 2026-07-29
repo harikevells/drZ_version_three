@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, PermissionsAndroid, Platform, Alert, SafeAreaView } from 'react-native';
+import { ZegoUIKitPrebuiltCall, ONE_ON_ONE_VIDEO_CALL_CONFIG } from '@zegocloud/zego-uikit-prebuilt-call-rn';
 import { WebView } from 'react-native-webview';
 import Icon from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
@@ -15,15 +16,22 @@ export default function VideoCallScreen({ route, navigation }) {
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [seconds, setSeconds] = useState(0);
   const [networkQuality, setNetworkQuality] = useState('High Network');
+  const [callStatus, setCallStatus] = useState(route.params?.isPatientInitiated ? 'calling' : 'accepted');
 
   const webViewRef = useRef(null);
+  const hasEnded = useRef(false);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setSeconds((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    let timer;
+    if (callStatus === 'accepted') {
+      timer = setInterval(() => {
+        setSeconds((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [callStatus]);
 
   const formatDuration = (totalSeconds) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -91,34 +99,93 @@ export default function VideoCallScreen({ route, navigation }) {
     checkAndRequestPermissions();
   }, []);
 
+  // Call initiation from Patient to Doctor
+  useEffect(() => {
+    const initiateCall = async () => {
+      if (route.params?.isPatientInitiated && bookingId) {
+        try {
+          console.log('Initiating patient call for booking:', bookingId);
+          // Set call status to 'calling' in Firebase DB via backend
+          await axios.put(`${API_BASE_URL}/push-notifications/call-status`, {
+            bookingId,
+            status: 'calling',
+          });
+
+          // Send push notification to doctor via backend
+          await axios.post(`${API_BASE_URL}/push-notifications/send-call-to-doctor`, {
+            bookingId,
+            roomId,
+            doctorName,
+            patientName: route.params?.patientName || 'Patient'
+          });
+        } catch (error) {
+          console.log('Error initiating patient call:', error.message);
+        }
+      }
+    };
+
+    initiateCall();
+  }, [bookingId, route.params?.isPatientInitiated]);
+
   // 2. Poll the backend for call status changes
   useEffect(() => {
     let intervalId;
+    let timeoutId;
 
-    if (bookingId) {
+    if (bookingId && callStatus !== 'ended' && callStatus !== 'rejected') {
       intervalId = setInterval(async () => {
         try {
           const response = await axios.get(`${API_BASE_URL}/push-notifications/call-status/${bookingId}`);
-          if (response.data && (response.data.status === 'ended' || response.data.status === 'rejected')) {
-            console.log('Call ended by remote user, exiting VideoCallScreen.');
+          const currentStatus = response.data?.status;
+
+          if (currentStatus === 'accepted') {
+            setCallStatus('accepted');
+          } else if (currentStatus === 'rejected') {
+            setCallStatus('rejected');
             clearInterval(intervalId);
-            Alert.alert('Call Ended', 'The call has been terminated.', [
+            Alert.alert('Call Declined / அழைப்பு நிராகரிக்கப்பட்டது', 'The doctor has declined the call. / மருத்துவர் அழைப்பை நிராகரித்துவிட்டார்.', [
               { text: 'OK', onPress: () => navigation.goBack() }
+            ]);
+          } else if (currentStatus === 'ended') {
+            setCallStatus('ended');
+            clearInterval(intervalId);
+            Alert.alert('Call Ended / அழைப்பு முடிந்தது', 'The call has been terminated. / அழைப்பு நிறுத்தப்பட்டது.', [
+              { text: 'OK', onPress: () => handleEndCall() }
             ]);
           }
         } catch (error) {
           console.log('Error polling call status:', error.message);
         }
-      }, 3000);
+      }, 2000);
+
+      if (callStatus === 'calling') {
+        timeoutId = setTimeout(async () => {
+          clearInterval(intervalId);
+          try {
+            await axios.put(`${API_BASE_URL}/push-notifications/call-status`, {
+              bookingId,
+              status: 'ended',
+            });
+          } catch (e) {
+            console.log('Error ending call on timeout:', e.message);
+          }
+          Alert.alert('No Answer / பதில் இல்லை', 'The doctor did not answer the call. / மருத்துவர் அழைப்பை ஏற்கவில்லை.', [
+            { text: 'OK', onPress: () => navigation.goBack() }
+          ]);
+        }, 35000);
+      }
     }
 
     return () => {
       if (intervalId) clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [bookingId]);
+  }, [bookingId, callStatus]);
 
   // 3. Local End Call Handler
   const handleEndCall = async () => {
+    if (hasEnded.current) return;
+    hasEnded.current = true;
     try {
       await axios.put(`${API_BASE_URL}/push-notifications/call-status`, {
         bookingId,
@@ -127,17 +194,23 @@ export default function VideoCallScreen({ route, navigation }) {
     } catch (error) {
       console.log('Error ending call:', error.message);
     }
-    navigation.goBack();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Dashboard', params: { screen: 'AppointmentTab' } }],
+    });
   };
 
-  // 4. Handle Jitsi page redirects
+  // 4. Handle redirects (Jitsi/MiroTalk)
   const handleNavigationStateChange = (navState) => {
     const url = navState.url;
     console.log('WebView URL:', url);
     if (
-      url === 'https://meet.ffmuc.net/' ||
+      url === 'https://meet.greenhost.net/' ||
       url.includes('close.html') ||
-      url.includes('static/close')
+      url.includes('static/close') ||
+      url === 'https://p2p.mirotalk.com/' ||
+      url.includes('new-room') ||
+      url.includes('leave')
     ) {
       handleEndCall();
     }
@@ -147,24 +220,19 @@ export default function VideoCallScreen({ route, navigation }) {
     if (webViewRef.current) {
       const jsCode = `
         (function() {
-          var successfullyToggled = false;
-          var micBtn = document.querySelector('div[aria-label*="Mute"], div[aria-label*="mute"], button[aria-label*="Mute"], button[aria-label*="mute"], [data-testid="audio-mute"]');
+          var micBtn = document.querySelector('button[id*="audio"], button[id*="Audio"], button[id*="mic"], button[id*="Mic"], div[aria-label*="Mute"], div[aria-label*="mute"], button[aria-label*="Mute"], button[aria-label*="mute"], [data-testid="audio-mute"]');
           if (micBtn) {
             micBtn.click();
-            successfullyToggled = true;
           }
-          if (!successfullyToggled && window.APP && window.APP.conference) {
-            try {
-              var isMuted = window.APP.conference.isLocalAudioMuted();
-              window.APP.conference.muteAudio(!isMuted);
-              successfullyToggled = true;
-            } catch(e) {}
-          }
-          if (!successfullyToggled) {
-            var event = new KeyboardEvent('keydown', { key: 'm', code: 'KeyM', keyCode: 77, which: 77, bubbles: true });
-            document.dispatchEvent(event);
+          var localVideo = document.querySelector('video[muted], video.muted, video[id*="local"], video[id*="my"], [class*="local"] video');
+          if (localVideo && localVideo.srcObject) {
+            var audioTracks = localVideo.srcObject.getAudioTracks();
+            audioTracks.forEach(function(track) {
+              track.enabled = ${isMuted ? 'true' : 'false'};
+            });
           }
         })();
+        true;
       `;
       webViewRef.current.injectJavaScript(jsCode);
       setIsMuted(!isMuted);
@@ -175,24 +243,19 @@ export default function VideoCallScreen({ route, navigation }) {
     if (webViewRef.current) {
       const jsCode = `
         (function() {
-          var successfullyToggled = false;
-          var videoBtn = document.querySelector('div[aria-label*="camera"], div[aria-label*="Camera"], button[aria-label*="camera"], button[aria-label*="Camera"], [data-testid="video-mute"]');
+          var videoBtn = document.querySelector('button[id*="video"], button[id*="Video"], button[id*="camera"], button[id*="Camera"], div[aria-label*="camera"], div[aria-label*="Camera"], button[aria-label*="camera"], button[aria-label*="Camera"], [data-testid="video-mute"]');
           if (videoBtn) {
             videoBtn.click();
-            successfullyToggled = true;
           }
-          if (!successfullyToggled && window.APP && window.APP.conference) {
-            try {
-              var isMuted = window.APP.conference.isLocalVideoMuted();
-              window.APP.conference.muteVideo(!isMuted);
-              successfullyToggled = true;
-            } catch(e) {}
-          }
-          if (!successfullyToggled) {
-            var event = new KeyboardEvent('keydown', { key: 'v', code: 'KeyV', keyCode: 86, which: 86, bubbles: true });
-            document.dispatchEvent(event);
+          var localVideo = document.querySelector('video[muted], video.muted, video[id*="local"], video[id*="my"], [class*="local"] video');
+          if (localVideo && localVideo.srcObject) {
+            var videoTracks = localVideo.srcObject.getVideoTracks();
+            videoTracks.forEach(function(track) {
+              track.enabled = ${isVideoOff ? 'true' : 'false'};
+            });
           }
         })();
+        true;
       `;
       webViewRef.current.injectJavaScript(jsCode);
       setIsVideoOff(!isVideoOff);
@@ -203,62 +266,17 @@ export default function VideoCallScreen({ route, navigation }) {
     if (webViewRef.current) {
       const jsCode = `
         (function() {
-          var successfullySwitched = false;
-          
-          // 1. Try Jitsi Redux TOGGLE_CAMERA
+          var swapBtn = document.querySelector('button[id*="swap"], button[id*="switch"], button[id*="flip"], [class*="swap"], [class*="switch"], [class*="flip"]');
+          if (swapBtn) {
+            swapBtn.click();
+          }
           if (window.APP && window.APP.store) {
             try {
               window.APP.store.dispatch({ type: 'TOGGLE_CAMERA' });
-              successfullySwitched = true;
-            } catch(e) {
-              console.warn('TOGGLE_CAMERA failed: ', e);
-            }
-          }
-          
-          // 2. Try Jitsi Redux SET_CAMERA_FACING_MODE
-          if (!successfullySwitched && window.APP && window.APP.store) {
-            try {
-              var mediaState = window.APP.store.getState()['features/base/media'];
-              var currentFacingMode = mediaState && mediaState.video ? mediaState.video.facingMode : 'user';
-              var nextFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-              window.APP.store.dispatch({
-                type: 'SET_CAMERA_FACING_MODE',
-                cameraFacingMode: nextFacingMode
-              });
-              successfullySwitched = true;
-            } catch(e) {
-              console.warn('SET_CAMERA_FACING_MODE failed: ', e);
-            }
-          }
-          
-          // 3. Try Jitsi Redux SET_VIDEO_INPUT_DEVICE
-          if (!successfullySwitched && window.APP && window.APP.store && navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-            navigator.mediaDevices.enumerateDevices()
-              .then(function(devices) {
-                var videoDevices = devices.filter(function(d) { return d.kind === 'videoinput'; });
-                if (videoDevices.length > 1) {
-                  var currentState = window.APP.store.getState();
-                  var currentDeviceId = currentState['features/base/devices'] ? currentState['features/base/devices'].videoInputDeviceId : null;
-                  var currentIndex = -1;
-                  for (var i = 0; i < videoDevices.length; i++) {
-                    if (videoDevices[i].deviceId === currentDeviceId) {
-                      currentIndex = i;
-                      break;
-                    }
-                  }
-                  var nextIndex = (currentIndex + 1) % videoDevices.length;
-                  var nextDeviceId = videoDevices[nextIndex].deviceId;
-                  window.APP.store.dispatch({
-                    type: 'SET_VIDEO_INPUT_DEVICE',
-                    deviceId: nextDeviceId
-                  });
-                }
-              })
-              .catch(function(err) {
-                console.warn('Error in fallback switch camera: ', err);
-              });
+            } catch(e) {}
           }
         })();
+        true;
       `;
       webViewRef.current.injectJavaScript(jsCode);
     }
@@ -277,34 +295,42 @@ export default function VideoCallScreen({ route, navigation }) {
     );
   }
 
-  // Construct Jitsi URL hiding native toolbars, timers, and subject headers
+  // Construct MiroTalk P2P URL
   const targetRoom = roomId || `drz_${bookingId}`;
-  const displayNameParam = encodeURIComponent('"Patient"');
-  const jitsiUrl = `https://meet.ffmuc.net/${targetRoom}#userInfo.displayName=${displayNameParam}&config.prejoinPageEnabled=false&config.analytics.disabled=true&config.startWithAudioMuted=false&config.startWithVideoMuted=false&config.toolbarButtons=[]&config.disableHeader=true&config.hideConferenceSubject=true&config.hideConferenceTimer=true&config.tileViewEnabled=false&config.filmStripOnly=false&config.p2p.enabled=false&config.disableDeepLinking=true&interfaceConfig.MOBILE_APP_PROMO=false`;
+  const mirotalkUrl = `https://p2p.mirotalk.com/join?room=${targetRoom}&name=Patient&audio=1&video=1`;
 
   const autoJoinJS = `
     (function() {
-      var lastVideoTime = 0;
-      var lastVideoTimeUpdate = Date.now();
+      // 1a. Play Calling Ringtone if patient initiated the call
+      var isPatientInitiated = ${route.params?.isPatientInitiated ? 'true' : 'false'};
+      var ringtone = null;
+      if (isPatientInitiated) {
+        ringtone = document.getElementById('calling-ringtone');
+        if (!ringtone) {
+          ringtone = document.createElement('audio');
+          ringtone.id = 'calling-ringtone';
+          ringtone.src = 'https://actions.google.com/sounds/v1/alarms/phone_alerts_and_rings.ogg';
+          ringtone.loop = true;
+          document.body.appendChild(ringtone);
+        }
+        ringtone.play().catch(function(e) { console.log('Ringtone autoplay blocked/failed: ', e); });
+      }
 
-      // 1. Inject Custom CSS for local video preview positioning (top right floating box)
-      var style = document.getElementById('custom-local-video-style');
+      // 1. Inject Custom CSS to layout video elements:
+      // - Muted local video at top-left PIP
+      // - Remote video full-screen background
+      // - Hide all Web UI buttons, panels and navigation headers
+      var style = document.getElementById('custom-webrtc-style');
       if (!style) {
         style = document.createElement('style');
-        style.id = 'custom-local-video-style';
+        style.id = 'custom-webrtc-style';
         style.type = 'text/css';
         style.innerHTML = ' \
-          .filmstrip, .filmstrip__videos, .filmstrip-container, #filmstripLocalVideoContainer { \
-            display: block !important; \
-            visibility: visible !important; \
-            opacity: 1 !important; \
-            background: transparent !important; \
-            background-color: transparent !important; \
-            border: none !important; \
-            box-shadow: none !important; \
-            pointer-events: none !important; \
+          body, html, #meet, #root, .room { \
+            background: #000 !important; \
+            overflow: hidden !important; \
           } \
-          #filmstripLocalVideo, [id*="LocalVideo"], [id*="localVideo"], .local-video { \
+          video[muted], video.muted, video[id*="local"], video[id*="my"], [class*="local"] video { \
             position: fixed !important; \
             top: 20px !important; \
             right: 20px !important; \
@@ -314,195 +340,97 @@ export default function VideoCallScreen({ route, navigation }) {
             border-radius: 12px !important; \
             border: 2px solid #ffffff !important; \
             box-shadow: 0px 4px 15px rgba(0,0,0,0.5) !important; \
-            overflow: hidden !important; \
+            object-fit: cover !important; \
             display: block !important; \
             visibility: visible !important; \
             opacity: 1 !important; \
-            pointer-events: auto !important; \
           } \
-          #filmstripLocalVideo video, [id*="LocalVideo"] video, [id*="localVideo"] video, .local-video video { \
+          video:not([muted]), video:not(.muted):not([id*="local"]):not([id*="my"]) { \
+            position: fixed !important; \
+            top: 0 !important; \
+            left: 0 !important; \
             width: 100% !important; \
             height: 100% !important; \
+            z-index: 1 !important; \
             object-fit: cover !important; \
+            display: block !important; \
+            visibility: visible !important; \
+            opacity: 1 !important; \
           } \
-          .filmstrip__video-container:not(#filmstripLocalVideo) { \
+          #controlPanel, .control-panel, #header, .header, #buttons, .buttons, .toolbar, #toolbar, button, footer, #footer, .footer, \
+          #action-menu, .action-menu, #left-menu, #right-menu, .left-menu, .right-menu, .watermark, #watermark, #buttonsBar { \
             display: none !important; \
+            visibility: hidden !important; \
+            height: 0 !important; \
+            width: 0 !important; \
+            opacity: 0 !important; \
+            pointer-events: none !important; \
           } \
         ';
         document.head.appendChild(style);
       }
 
-      // 2. Auto-Join loop
-      var joinInterval = setInterval(function() {
-        var joinBtn = document.querySelector('button[aria-label*="Join"], div[aria-label*="Join"], button[class*="join"], .join-btn');
-        if (joinBtn) {
-          joinBtn.click();
-          clearInterval(joinInterval);
-          return;
-        }
-        var buttons = document.querySelectorAll('button, div[role="button"]');
-        for (var i = 0; i < buttons.length; i++) {
-          var txt = buttons[i].textContent || buttons[i].innerText;
-          if (txt && txt.toLowerCase().indexOf('join') !== -1) {
-            buttons[i].click();
-            clearInterval(joinInterval);
-            break;
+      // 2. Loop to keep element parent containers positioned correctly
+      setInterval(function() {
+        try {
+          var mutedVideo = document.querySelector('video[muted], video.muted');
+          if (mutedVideo) {
+            var container = mutedVideo.parentElement;
+            if (container && container !== document.body && container.tagName !== 'BODY') {
+              container.style.setProperty('position', 'fixed', 'important');
+              container.style.setProperty('top', '20px', 'important');
+              container.style.setProperty('right', '20px', 'important');
+              container.style.removeProperty('left');
+              container.style.setProperty('width', '100px', 'important');
+              container.style.setProperty('height', '150px', 'important');
+              container.style.setProperty('z-index', '999999', 'important');
+            }
           }
-        }
-      }, 200);
+        } catch (e) {}
+      }, 500);
 
-      // 3. Safe One-Time Auto-Unmute Video/Audio to start streams correctly without toggle loops
-      if (!window.hasAttemptedAutoUnmute) {
-        window.hasAttemptedAutoUnmute = true;
-        setTimeout(function() {
-          if (window.APP && window.APP.store) {
-            try {
-              var mediaState = window.APP.store.getState()['features/base/media'];
-              
-              var isVideoMuted = mediaState && mediaState.video ? mediaState.video.muted : true;
-              if (isVideoMuted) {
-                try {
-                  window.APP.store.dispatch({ type: 'SET_VIDEO_MUTED', muted: false });
-                } catch(err) {}
-                var videoBtn = document.querySelector('div[aria-label*="camera"], div[aria-label*="Camera"], button[aria-label*="camera"], button[aria-label*="Camera"], [data-testid="video-mute"]');
-                if (videoBtn) {
-                  videoBtn.click();
-                } else if (window.APP.conference && typeof window.APP.conference.muteVideo === 'function') {
-                  window.APP.conference.muteVideo(false);
-                }
-              }
-
-              var isAudioMuted = mediaState && mediaState.audio ? mediaState.audio.muted : true;
-              if (isAudioMuted) {
-                try {
-                  window.APP.store.dispatch({ type: 'SET_AUDIO_MUTED', muted: false });
-                } catch(err) {}
-                var micBtn = document.querySelector('div[aria-label*="Mute"], div[aria-label*="mute"], button[aria-label*="Mute"], button[aria-label*="mute"], [data-testid="audio-mute"]');
-                if (micBtn) {
-                  micBtn.click();
-                } else if (window.APP.conference && typeof window.APP.conference.muteAudio === 'function') {
-                  window.APP.conference.muteAudio(false);
-                }
-              }
-            } catch(e) {}
+      // 3. Ringtone control when remote participant has connected
+      var lastVideoTime = 0;
+      var lastVideoTimeUpdate = Date.now();
+      var checkConnectionInterval = setInterval(function() {
+        var remoteVideo = document.querySelector('video:not([muted])');
+        if (remoteVideo) {
+          if (isPatientInitiated && ringtone && !ringtone.paused) {
+            ringtone.pause();
           }
-        }, 3000);
-      }
-
-      // 4. Auto-Pin Remote Participant & Disable Tile View to force remote video full screen
-      var pinInterval = setInterval(function() {
-        if (window.APP && window.APP.store) {
-          try {
-            var state = window.APP.store.getState();
-            
-            // 4a. Disable tile view if enabled
-            var videoLayout = state['features/video-layout'];
-            var tileViewEnabled = videoLayout ? videoLayout.tileViewEnabled : true;
-            if (tileViewEnabled) {
-              window.APP.store.dispatch({
-                type: 'SET_TILE_VIEW',
-                enabled: false
-              });
-            }
-
-            // 4b. Find and pin remote participant
-            var participants = state['features/base/participants'];
-            var remoteId = null;
-            for (var id in participants) {
-              if (participants[id] && !participants[id].local) {
-                remoteId = id;
-                break;
-              }
-            }
-            
-            if (remoteId) {
-              var pinnedState = state['features/pinned-participants'];
-              var isPinned = false;
-              if (pinnedState) {
-                if (Array.isArray(pinnedState)) {
-                  isPinned = pinnedState.indexOf(remoteId) !== -1;
-                } else if (typeof pinnedState === 'object') {
-                  isPinned = pinnedState.pinnedId === remoteId || (pinnedState.ids && pinnedState.ids.indexOf(remoteId) !== -1);
-                }
-              }
-              if (!isPinned) {
-                if (window.APP.conference && typeof window.APP.conference.pinParticipant === 'function') {
-                  try {
-                    window.APP.conference.pinParticipant(remoteId);
-                  } catch(err) {}
-                }
-                window.APP.store.dispatch({
-                  type: 'PIN_PARTICIPANT',
-                  id: remoteId,
-                  participantId: remoteId
-                });
-              }
-            }
-          } catch(e) {}
+        } else {
+          if (isPatientInitiated && ringtone && ringtone.paused) {
+            ringtone.play().catch(function(e) {});
+          }
         }
       }, 1000);
 
-      // 5. Network Quality monitor loop
+      // 4. Network Quality monitor loop
       var netQualityInterval = setInterval(function() {
         var quality = 'High Network';
-        
-        // Check 1: WebRTC/Browser Connection Info
         var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         if (conn) {
           var rtt = conn.rtt || 0;
           var downlink = conn.downlink || 10;
           var effectiveType = conn.effectiveType || '4g';
-          
           if (effectiveType === '2g' || rtt > 400 || downlink < 1.0) {
             quality = 'Poor Network';
           } else if (effectiveType === '3g' || rtt > 150 || downlink < 3.0) {
             quality = 'Medium Network';
           }
         }
-        
-        // Check 2: Jitsi Connection State fallback
-        if (window.APP && window.APP.conference) {
-          try {
-            var connectionState = window.APP.conference.getConnectionState();
-            if (connectionState === 'interrupted' || connectionState === 'failed') {
+
+        var remoteVideo = document.querySelector('video:not([muted])');
+        if (remoteVideo && remoteVideo.readyState >= 2 && !remoteVideo.paused && !remoteVideo.ended) {
+          var curTime = remoteVideo.currentTime;
+          if (curTime === lastVideoTime) {
+            if (Date.now() - lastVideoTimeUpdate > 3000) {
               quality = 'Poor Network';
             }
-          } catch(e) {}
-        }
-
-        // Check 3: Detect Frozen/Hung Video Element (remote participant)
-        var remoteVideos = document.querySelectorAll('video');
-        var isRemoteVideoFrozen = false;
-        for (var i = 0; i < remoteVideos.length; i++) {
-          var vid = remoteVideos[i];
-          // Skip local video inside filmstripLocalVideo
-          var isLocal = false;
-          var parent = vid.parentElement;
-          while (parent) {
-            if (parent.id === 'filmstripLocalVideo' || (parent.className && parent.className.indexOf('local') !== -1)) {
-              isLocal = true;
-              break;
-            }
-            parent = parent.parentElement;
+          } else {
+            lastVideoTime = curTime;
+            lastVideoTimeUpdate = Date.now();
           }
-          if (isLocal) continue;
-          
-          // Check if remote video is frozen
-          if (vid.readyState >= 2 && !vid.paused && !vid.ended) {
-            var curTime = vid.currentTime;
-            if (curTime === lastVideoTime) {
-              if (Date.now() - lastVideoTimeUpdate > 3000) {
-                isRemoteVideoFrozen = true;
-              }
-            } else {
-              lastVideoTime = curTime;
-              lastVideoTimeUpdate = Date.now();
-            }
-          }
-        }
-        
-        if (isRemoteVideoFrozen) {
-          quality = 'Poor Network';
         }
 
         if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === 'function') {
@@ -512,103 +440,63 @@ export default function VideoCallScreen({ route, navigation }) {
           }));
         }
       }, 2000);
-
-      // Clear join interval after 12 seconds
-      setTimeout(function() {
-        clearInterval(joinInterval);
-      }, 12000);
     })();
     true;
   `;
 
+  if (callStatus === 'calling') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <View style={styles.callingWrapper}>
+            <Text style={styles.callingTitle}>Calling Doctor...</Text>
+            <Text style={styles.callingName}>{doctorName ? `Dr. ${doctorName}` : 'Doctor'}</Text>
+            <ActivityIndicator size="large" color="#0D6EFD" style={{ marginVertical: 40 }} />
+            <TouchableOpacity style={styles.declineBtn} onPress={handleEndCall}>
+              <Icon name="call" size={28} color="#FFF" style={styles.declineIcon} />
+              <Text style={styles.declineText}>Cancel Call</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        {/* Hidden WebView to play the ringtone */}
+        <View style={{ width: 1, height: 1, opacity: 0 }}>
+          <WebView
+            source={{
+              html: `
+                <html>
+                  <body>
+                    <audio id="ringtone" src="https://actions.google.com/sounds/v1/alarms/phone_alerts_and_rings.ogg" loop autoplay></audio>
+                    <script>
+                      var audio = document.getElementById('ringtone');
+                      audio.play().catch(function(e) {
+                        console.log('Autoplay block:', e);
+                      });
+                    </script>
+                  </body>
+                </html>
+              `
+            }}
+            mediaPlaybackRequiresUserAction={false}
+            allowsInlineMediaPlayback={true}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.webviewContainer}>
-        {/* Debug Room ID Banner */}
-        <View style={{ position: 'absolute', top: 80, left: 20, zIndex: 100, backgroundColor: 'rgba(0,0,0,0.6)', padding: 8, borderRadius: 5 }}>
-          <Text style={{ color: '#FFF', fontSize: 12, fontWeight: 'bold' }}>Room: {targetRoom}</Text>
-        </View>
-
-        <WebView
-          ref={webViewRef}
-          source={{ uri: jitsiUrl }}
-          style={{ flex: 1 }}
-          originWhitelist={['*']}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          mediaPlaybackRequiresUserAction={false}
-          allowsInlineMediaPlayback={true}
-          onLoadEnd={() => setLoading(false)}
-          onNavigationStateChange={handleNavigationStateChange}
-          permissionGrantingBehavior="grant"
-          mediaCapturePermissionGrantType="grant"
-          androidHardwareAccelerationDisabled={false}
-          onPermissionRequest={(request) => {
-            request.grant(request.resources);
-          }}
-          onError={(syntheticEvent) => {
-            const { nativeEvent } = syntheticEvent;
-            console.warn('WebView error: ', nativeEvent);
-          }}
-          onMessage={(event) => {
-            try {
-              const data = JSON.parse(event.nativeEvent.data);
-              if (data.type === 'network_quality') {
-                setNetworkQuality(data.quality);
-              }
-            } catch(e) {}
-          }}
-          userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36"
-          injectedJavaScript={autoJoinJS}
-        />
-
-        {loading && (
-          <View style={styles.absoluteLoading}>
-            <ActivityIndicator size="large" color="#0D6EFD" />
-            <Text style={styles.loadingText}>Connecting to video server...</Text>
-          </View>
-        )}
-
-        {/* Floating Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={handleEndCall}>
-          <Icon name="chevron-back" size={28} color="#FFF" />
-        </TouchableOpacity>
-
-        {/* Call Info Overlay (Name, Duration, Network Quality) */}
-        {!loading && (
-          <View style={styles.callInfoOverlay}>
-            <Text style={styles.participantNameText}>
-              {doctorName ? `Dr. ${doctorName}` : 'Doctor'}
-            </Text>
-            <Text style={styles.durationText}>
-              {formatDuration(seconds)}
-            </Text>
-            <View style={[styles.networkBadge, getNetworkBadgeStyle(networkQuality)]}>
-              <Icon name={getNetworkIcon(networkQuality)} size={12} color="#FFF" style={{ marginRight: 5 }} />
-              <Text style={styles.networkBadgeText}>{networkQuality}</Text>
-            </View>
-          </View>
-        )}
-
-        {/* Custom Bottom Control Bar */}
-        <View style={styles.bottomControls}>
-          <TouchableOpacity style={styles.controlBtn} onPress={switchCamera}>
-            <Icon name="camera-reverse" size={24} color="#FFF" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.controlBtn, isVideoOff && styles.activeControlBtn]} onPress={toggleVideo}>
-            <Icon name={isVideoOff ? "videocam-off" : "videocam"} size={24} color="#FFF" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.controlBtn, styles.hangupBtn]} onPress={handleEndCall}>
-            <Icon name="call" size={28} color="#FFF" style={styles.hangupIcon} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.controlBtn, isMuted && styles.activeControlBtn]} onPress={toggleMic}>
-            <Icon name={isMuted ? "mic-off" : "mic"} size={24} color="#FFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ZegoUIKitPrebuiltCall
+        appID={2091131945}
+        appSign="46a681c87a00d96aa657cddec71f437e6b8647ed1ba5b8ed96bbd99766cb1e1e"
+        userID={`pat_${bookingId}`}
+        userName={route.params?.patientName || "Patient"}
+        callID={targetRoom}
+        config={{
+          ...ONE_ON_ONE_VIDEO_CALL_CONFIG,
+          onCallEnd: handleEndCall,
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -732,5 +620,41 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  callingWrapper: {
+    alignItems: 'center',
+    width: '80%',
+  },
+  callingTitle: {
+    color: '#0D6EFD',
+    fontSize: 14,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    marginBottom: 10,
+  },
+  callingName: {
+    color: '#FFF',
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  declineBtn: {
+    backgroundColor: '#FF3B30',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 30,
+    elevation: 4,
+  },
+  declineIcon: {
+    transform: [{ rotate: '135deg' }],
+    marginRight: 10,
+  },
+  declineText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

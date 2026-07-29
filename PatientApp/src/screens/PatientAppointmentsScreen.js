@@ -278,7 +278,14 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
             <TouchableOpacity 
               style={styles.videoCallButton} 
               onPress={() => {
-                Alert.alert("Video Call / வீடியோ கால்", "Video call will start at the scheduled time. / வீடியோ கால் குறிப்பிட்ட நேரத்தில் தொடங்கப்படும்.");
+                navigation.navigate('VideoCall', {
+                  bookingId: item._id || item.id,
+                  roomId: `drz_${item._id || item.id}`,
+                  doctorName: item.doctor_name || item.doctor || 'Doctor',
+                  patientName: item.patient_name || 'Patient',
+                  patientMobile: item.login_mobile,
+                  isPatientInitiated: true
+                });
               }}
             >
               <Icon name="video" size={24} color="#fff" />

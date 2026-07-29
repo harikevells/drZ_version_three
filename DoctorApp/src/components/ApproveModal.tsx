@@ -73,9 +73,8 @@ const styles = StyleSheet.create({
   message: {
     fontSize: 14,
     color: '#333',
-    textAlign: 'center',
     marginBottom: 25,
-     width:'100%',
+    width:'100%',
     textAlign:'center'
   },
   buttonRow: {
