@@ -63,6 +63,7 @@ const updateDoctor = async (req, res) => {
         doctor.experience = req.body.experience;
         doctor.email = req.body.email;
         doctor.mobile = req.body.mobile;
+        doctor.fees = req.body.fees;
         doctor.activeStatus = req.body.activeStatus;
 
         // Only update password if a new one is provided
