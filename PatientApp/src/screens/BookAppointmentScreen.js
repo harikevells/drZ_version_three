@@ -13,12 +13,14 @@ import { Calendar } from 'react-native-calendars';
 import { AuthContext } from '../context/AuthContext';
 import { LanguageContext } from '../context/LanguageContext';
 import { useIsFocused } from '@react-navigation/native';
+import { WebView } from 'react-native-webview';
 
 // EmailJS credentials removed as we now use our custom backend endpoint
 
 // Important: If using Android Emulator, use '10.0.2.2'. If using Wired USB Debugging, use 'localhost'. If using Wi-Fi, use your local IP address.
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL, RAZORPAY_KEY_ID } from '../config';
 const BASE_URL = API_BASE_URL;
+
 
 const parseTimeStringToMinutes = (timeStr) => {
   try {
@@ -132,6 +134,11 @@ const BookAppointmentScreen = ({ navigation }) => {
   const [gender, setGender] = useState('Male');
   const [selectedCategory, setSelectedCategory] = useState(null); // Used for Dropdown value
 
+  // Payment State
+  const [paymentMethod, setPaymentMethod] = useState('Razorpay'); // 'Razorpay' or 'Cash'
+  const [showRazorpayModal, setShowRazorpayModal] = useState(false);
+  const [pendingBookingPayload, setPendingBookingPayload] = useState(null);
+
   // UI State
   const [isVideoCall, setIsVideoCall] = useState(false);
   const [isFocus, setIsFocus] = useState(false); // Used for Dropdown focus state
@@ -151,6 +158,15 @@ const BookAppointmentScreen = ({ navigation }) => {
   const [availableDoctorsForDate, setAvailableDoctorsForDate] = useState([]);
   const [dateSchedules, setDateSchedules] = useState([]);
   const [bookedByDoctor, setBookedByDoctor] = useState({});
+
+  const getSelectedDoctorFee = () => {
+    if (!selectedDoctor) return 0;
+    const doc = allDoctors.find(d => 
+      (d._id === selectedDoctor._id || d.id === selectedDoctor._id || d.doctorName === selectedDoctor.name)
+    );
+    return doc?.fees || selectedDoctor?.fees || 0;
+  };
+
 
   const formatDate = (rawDate) => {
     const d = new Date(rawDate);
@@ -360,19 +376,22 @@ const BookAppointmentScreen = ({ navigation }) => {
       Alert.alert("Required / தேவை", "Please enter age.\nவயதை உள்ளிடவும்.");
       return;
     }
-    // WhatsApp Validation Removed - Optional
-    // if (!whatsapp.trim() || whatsapp.length < 10) {
-    //   Alert.alert("Required / தேவை", "Please enter valid WhatsApp number.\nசரியான வாட்ஸ்அப் எண்ணை உள்ளிடவும்.");
-    //   return;
-    // }
     if (!selectedCategory) {
       Alert.alert("Required / தேவை", "Please select a category.\nபிரிவைத் தேர்ந்தெடுக்கவும்.");
       return;
     }
+    if (!selectedDoctor) {
+      Alert.alert("Required / தேவை", "Please select a doctor.\nமருத்துவரைத் தேர்ந்தெடுக்கவும்.");
+      return;
+    }
+    if (selectedTimes.length === 0) {
+      Alert.alert("Required / தேவை", "Please select an appointment timing.\nநேரத்தைத் தேர்ந்தெடுக்கவும்.");
+      return;
+    }
 
-    setSendingEmail(true);
+    const consultFee = getSelectedDoctorFee();
 
-    const payload = {
+    const basePayload = {
       patient_name: patientName,
       patient_age: age,
       patient_gender: gender,
@@ -383,8 +402,25 @@ const BookAppointmentScreen = ({ navigation }) => {
       appointment_date: formatDate(date),
       appointment_time: selectedTimes.length > 0 ? selectedTimes.join(', ') : "Not Selected",
       video_call: isVideoCall ? "Yes" : "No",
+      consultation_fee: consultFee,
     };
 
+    if (paymentMethod === 'Razorpay') {
+      setPendingBookingPayload(basePayload);
+      setShowRazorpayModal(true);
+    } else {
+      const finalPayload = {
+        ...basePayload,
+        payment_id: 'CASH_' + Date.now(),
+        payment_method: 'Cash',
+        payment_status: 'Pending',
+      };
+      await executeBooking(finalPayload);
+    }
+  };
+
+  const executeBooking = async (payload) => {
+    setSendingEmail(true);
     try {
       const response = await axios.post(`${BASE_URL}/api/emails/book`, payload, {
         headers: {
@@ -398,7 +434,7 @@ const BookAppointmentScreen = ({ navigation }) => {
           [{ text: "OK", onPress: () => navigation.navigate('Dashboard') }]
         );
       } else {
-        Alert.alert("Error", "Something went wrong sending the email.");
+        Alert.alert("Error", "Something went wrong sending the appointment request.");
       }
     } catch (error) {
       console.error("Booking Error:", error);
@@ -406,9 +442,112 @@ const BookAppointmentScreen = ({ navigation }) => {
         ? `Status: ${error.response.status}\n${JSON.stringify(error.response.data)}`
         : error.message;
       Alert.alert("Failed", `Booking failed.\n${errorMessage}`);
+    } finally {
+      setSendingEmail(false);
     }
-    finally { setSendingEmail(false); }
   };
+
+  const generateRazorpayHTML = () => {
+    const consultFee = pendingBookingPayload?.consultation_fee || getSelectedDoctorFee() || 0;
+    const amountInPaise = Math.round(Number(consultFee) * 100);
+    const keyId = RAZORPAY_KEY_ID || 'rzp_test_SfkV0cySd3CwyQ';
+    const patientMobile = whatsapp || user?.contactNumber || user?.mobile || '';
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+          }
+          .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1C3E55;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          p { color: #555; font-size: 15px; font-weight: 500; }
+        </style>
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+      </head>
+      <body>
+        <div class="loader"></div>
+        <p>Connecting to Razorpay...</p>
+        <script>
+          var options = {
+            "key": "${keyId}",
+            "amount": ${amountInPaise},
+            "currency": "INR",
+            "name": "DrZ",
+            "description": "Doctor Consultation Fee",
+            "prefill": {
+              "name": "${(patientName || '').replace(/"/g, '\\"')}",
+              "contact": "${(patientMobile || '').replace(/"/g, '\\"')}"
+            },
+            "theme": {
+              "color": "#1C3E55"
+            },
+            "handler": function (response) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                status: 'SUCCESS',
+                payment_id: response.razorpay_payment_id
+              }));
+            },
+            "modal": {
+              "ondismiss": function() {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  status: 'CANCELLED'
+                }));
+              }
+            }
+          };
+          var rzp1 = new Razorpay(options);
+          window.onload = function() {
+            rzp1.open();
+          };
+        </script>
+      </body>
+      </html>
+    `;
+  };
+
+  const handleRazorpayWebMessage = async (event) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.status === 'SUCCESS') {
+        setShowRazorpayModal(false);
+        const finalPayload = {
+          ...pendingBookingPayload,
+          payment_id: data.payment_id,
+          payment_method: 'Razorpay',
+          payment_status: 'Paid',
+        };
+        await executeBooking(finalPayload);
+      } else if (data.status === 'CANCELLED') {
+        setShowRazorpayModal(false);
+        Alert.alert("Payment Cancelled", "Payment process was cancelled. Appointment was not booked.");
+      }
+    } catch (e) {
+      console.log("Razorpay WebView message error:", e);
+    }
+  };
+
   const handleLogoutPress = () => setShowLogoutModal(true);
   const confirmLogout = () => { setShowLogoutModal(false); logout(); };
 
@@ -593,7 +732,8 @@ const BookAppointmentScreen = ({ navigation }) => {
 
                     const formattedDoctors = docsForCategory.map(doc => ({
                       _id: doc._id || doc.id,
-                      name: doc.doctorName
+                      name: doc.doctorName,
+                      fees: doc.fees || 0
                     }));
                     setDoctorList(formattedDoctors);
                     setSelectedDoctor(null);
@@ -647,6 +787,55 @@ const BookAppointmentScreen = ({ navigation }) => {
                     />
                   )}
                 />
+              </View>
+
+              {/* 4.6 DOCTOR CONSULTATION FEE */}
+              {selectedDoctor && (
+                <View style={styles.section}>
+                  <View style={styles.labelRow}>
+                    <Text style={styles.label}>Doctor Consultation Fee</Text>
+                    <Text style={styles.labelTamil}>மருத்துவர் ஆலோசனை கட்டணம்</Text>
+                  </View>
+                  <View style={styles.feeCard}>
+                    <View style={styles.feeLeft}>
+                      <Icon name="cash-multiple" size={24} color="#1C3E55" />
+                      <Text style={styles.feeTitle}>Consult Fee / கட்டணம்</Text>
+                    </View>
+                    <Text style={styles.feeAmount}>₹{getSelectedDoctorFee()}</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* 4.7 PAYMENT METHOD */}
+              <View style={styles.section}>
+                <View style={styles.labelRow}>
+                  <Text style={styles.label}>Select Payment Method</Text>
+                  <Text style={styles.labelTamil}>பணம் செலுத்தும் முறையை தேர்ந்தெடுக்கவும்</Text>
+                </View>
+
+                <View style={styles.paymentMethodRow}>
+                  <TouchableOpacity
+                    style={[styles.paymentBtn, paymentMethod === 'Razorpay' && styles.paymentBtnActive]}
+                    onPress={() => setPaymentMethod('Razorpay')}
+                    activeOpacity={0.8}
+                  >
+                    <Icon name="credit-card-outline" size={20} color={paymentMethod === 'Razorpay' ? '#fff' : '#1C3E55'} />
+                    <Text style={[styles.paymentBtnText, paymentMethod === 'Razorpay' && styles.paymentBtnTextActive]}>
+                      Razorpay (Online)
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.paymentBtn, paymentMethod === 'Cash' && styles.paymentBtnActive]}
+                    onPress={() => setPaymentMethod('Cash')}
+                    activeOpacity={0.8}
+                  >
+                    <Icon name="cash" size={20} color={paymentMethod === 'Cash' ? '#fff' : '#1C3E55'} />
+                    <Text style={[styles.paymentBtnText, paymentMethod === 'Cash' && styles.paymentBtnTextActive]}>
+                      Pay at Clinic (நேரடி)
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* 6. AVAILABLE TIMINGS */}
@@ -719,6 +908,7 @@ const BookAppointmentScreen = ({ navigation }) => {
         </ScrollView>
       </KeyboardAvoidingView>
 
+
       {/* NAVBAR */}
       {/* <View style={styles.navbar}>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Dashboard')}>
@@ -739,6 +929,31 @@ const BookAppointmentScreen = ({ navigation }) => {
           <Text style={[styles.navText, { fontSize: 10 }]}> ஆம்புலன்ஸ்</Text>
         </TouchableOpacity>
       </View> */}
+
+      {/* Razorpay Modal */}
+      <Modal visible={showRazorpayModal} transparent={false} animationType="slide" onRequestClose={() => setShowRazorpayModal(false)}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee', backgroundColor: '#F8F9FA' }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1C3E55' }}>Razorpay Payment / ஆன்லைன் செலுத்தல்</Text>
+            <TouchableOpacity onPress={() => { setShowRazorpayModal(false); Alert.alert("Cancelled", "Payment process cancelled."); }}>
+              <Icon name="close" size={26} color="#333" />
+            </TouchableOpacity>
+          </View>
+          <WebView
+            originWhitelist={['*']}
+            source={{ html: generateRazorpayHTML() }}
+            onMessage={handleRazorpayWebMessage}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            startInLoadingState={true}
+            renderLoading={() => (
+              <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+                <ActivityIndicator size="large" color="#1C3E55" />
+              </View>
+            )}
+          />
+        </SafeAreaView>
+      </Modal>
 
       {/* Logout Modal */}
       <Modal visible={showLogoutModal} transparent={true} animationType="fade" onRequestClose={() => setShowLogoutModal(false)}>
@@ -762,6 +977,7 @@ const BookAppointmentScreen = ({ navigation }) => {
     </SafeAreaView>
   );
 };
+
 
 const { width } = Dimensions.get('window');
 
@@ -938,7 +1154,39 @@ const styles = StyleSheet.create({
   cancelBtn: { backgroundColor: '#f0f0f0', borderWidth: 1, borderColor: '#ccc' },
   logoutBtn: { backgroundColor: '#E74C3C' },
   cancelText: { color: '#333', fontWeight: 'bold' },
-  logoutText: { color: '#fff', fontWeight: 'bold' }
+  logoutText: { color: '#fff', fontWeight: 'bold' },
+
+  // Fee Card & Payment Method
+  feeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F0F4F8',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#D0DCE5',
+  },
+  feeLeft: { flexDirection: 'row', alignItems: 'center' },
+  feeTitle: { fontSize: 15, fontWeight: '700', color: '#1C3E55', marginLeft: 10 },
+  feeAmount: { fontSize: 20, fontWeight: 'bold', color: '#359E0E' },
+  paymentMethodRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  paymentBtn: {
+    flex: 0.48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
+    backgroundColor: '#FAFAFA',
+  },
+  paymentBtnActive: { backgroundColor: '#1C3E55', borderColor: '#1C3E55' },
+  paymentBtnText: { marginLeft: 8, fontSize: 13, fontWeight: '700', color: '#1C3E55' },
+  paymentBtnTextActive: { color: '#fff' },
 });
+
 
 export default BookAppointmentScreen;

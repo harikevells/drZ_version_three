@@ -15,7 +15,11 @@ const sendBookingEmail = async (req, res) => {
             doctor_name,
             appointment_date,
             appointment_time,
-            video_call
+            video_call,
+            consultation_fee,
+            payment_id,
+            payment_method,
+            payment_status
         } = req.body;
 
         const departmentTranslations = {
@@ -67,6 +71,10 @@ const sendBookingEmail = async (req, res) => {
             appointment_date,
             appointment_time,
             video_call,
+            consultation_fee: consultation_fee || 0,
+            payment_id: payment_id || 'N/A',
+            payment_method: payment_method || 'N/A',
+            payment_status: payment_status || 'Pending',
             status: 'Pending'
         });
         await newAppointment.save();
@@ -128,6 +136,10 @@ const sendBookingEmail = async (req, res) => {
                             <p><strong>Date:</strong> ${appointment_date}</p>
                             <p><strong>Time:</strong> ${appointment_time}</p>
                             <p><strong>Video Call:</strong> ${video_call}</p>
+                            <p><strong>Consultation Fee:</strong> ₹${consultation_fee || 0}</p>
+                            <p><strong>Payment Method:</strong> ${payment_method || 'N/A'}</p>
+                            <p><strong>Payment Status:</strong> ${payment_status || 'Pending'}</p>
+                            <p><strong>Payment ID:</strong> ${payment_id || 'N/A'}</p>
                         `
                     };
 

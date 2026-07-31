@@ -28,6 +28,7 @@ const DoctorManagement = () => {
     email: '',
     mobile: '',
     password: '',
+    fees: '',
     activeStatus: true
   });
   const [editingId, setEditingId] = useState(null);
@@ -122,6 +123,7 @@ const DoctorManagement = () => {
         email: '',
         mobile: '',
         password: '',
+        fees: '',
         activeStatus: true
       });
       setEditingId(null);
@@ -141,6 +143,7 @@ const DoctorManagement = () => {
       email: doctor.email,
       mobile: doctor.mobile,
       password: doctor.password || '',
+      fees: doctor.fees || '',
       activeStatus: doctor.activeStatus === 1 || doctor.activeStatus === true || doctor.activeStatus === 'true'
     });
     setEditingId(doctor.id);
@@ -221,6 +224,11 @@ const DoctorManagement = () => {
             </div>
             
             <div className="form-group">
+              <label>Consult Fee</label>
+              <input type="text" name="fees" placeholder="500" value={formData.fees} onChange={handleInputChange} required />
+            </div>
+            
+            <div className="form-group">
               <label>Password</label>
               <div className="password-input-wrapper">
                 <input 
@@ -268,6 +276,7 @@ const DoctorManagement = () => {
                     email: '',
                     mobile: '',
                     password: '',
+                    fees: '',
                     activeStatus: true
                   });
                 }}
@@ -299,7 +308,7 @@ const DoctorManagement = () => {
               <th>Experience</th>
               <th>Email</th>
               <th>Mobile</th>
-              <th>Status</th>
+              <th>Consult Fee</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -327,9 +336,7 @@ const DoctorManagement = () => {
                 <td>{doctor.experience}</td>
                 <td>{doctor.email}</td>
                 <td>{doctor.mobile}</td>
-                <td className={doctor.activeStatus ? 'status-active' : 'status-inactive'}>
-                  {doctor.activeStatus ? 'Active' : 'Inactive'}
-                </td>
+                <td>₹{doctor.fees || 0}</td>
                 <td className="actions-cell">
                   <button className="action-btn" onClick={() => handleEdit(doctor)}>
                     <FaEdit />

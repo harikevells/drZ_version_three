@@ -314,6 +314,17 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
               <Text style={styles.infoValue}>{item.treatment_category || 'N/A'}</Text>
             </View>
 
+            <View style={styles.infoRow}>
+              <View style={[styles.infoIconBox, { backgroundColor: '#2ED573' }]}>
+                <Icon name="cash-multiple" size={16} color="#fff" />
+              </View>
+              <Text style={styles.infoLabel}>Consult Fee</Text>
+              <Text style={styles.infoColon}>:</Text>
+              <Text style={[styles.infoValue, { fontWeight: 'bold', color: '#2ED573' }]}>
+                ₹{item.consultation_fee || 0} ({item.payment_status || 'Pending'})
+              </Text>
+            </View>
+
             <View style={[styles.infoRow, { marginBottom: 0 }]}>
               <View style={[styles.infoIconBox, { backgroundColor: '#FF7675' }]}>
                 <Icon name="video-outline" size={16} color="#fff" />
@@ -323,6 +334,7 @@ const PatientAppointmentsScreen = ({ navigation, route }) => {
               <Text style={styles.infoValue}>{item.video_call || 'No'}</Text>
             </View>
           </View>
+
           
           {String(item.video_call).toLowerCase() === 'yes' && (
             <TouchableOpacity 

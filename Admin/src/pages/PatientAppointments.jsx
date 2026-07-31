@@ -14,26 +14,26 @@ const formatTimeSlot = (timeStr) => {
   if (!timeStr) return '';
   const str = String(timeStr).trim();
   if (str.toLowerCase().includes('to') || str.includes('-')) return str;
-  
+
   const match = str.match(/(\d+)[:.](\d+)\s*(am|pm)/i);
   if (!match) return str;
-  
+
   let hrs = parseInt(match[1], 10);
   const mins = parseInt(match[2], 10);
   const ampm = match[3].toLowerCase();
-  
+
   let hrs24 = hrs;
   if (ampm === 'pm' && hrs24 < 12) hrs24 += 12;
   if (ampm === 'am' && hrs24 === 12) hrs24 = 0;
-  
+
   let eMins = mins;
   let eHrs = hrs24 + 1;
   if (eHrs >= 24) { eHrs -= 24; }
-  
+
   const eAmpm = eHrs >= 12 ? 'pm' : 'am';
   let dHrs = eHrs % 12;
   if (dHrs === 0) dHrs = 12;
-  
+
   const eMinsStr = eMins < 10 ? '0' + eMins : eMins;
   return `${str} to ${dHrs}.${eMinsStr}${eAmpm}`;
 };
@@ -57,15 +57,15 @@ const PatientAppointments = () => {
   const matchDate = (itemDate, selectedDate) => {
     if (!selectedDate) return true;
     if (!itemDate) return false;
-    
+
     const [y, m, d] = selectedDate.split('-');
     const selectedDDMMYYYY = `${d}/${m}/${y}`;
     const selectedDDMMDotYYYY = `${d}/${m}.${y}`;
     const selectedDDMMDotYYYYAlt = `${parseInt(d, 10)}/${parseInt(m, 10)}.${y}`;
     const selectedDDMMYYYYAlt = `${parseInt(d, 10)}/${parseInt(m, 10)}/${y}`;
-    
+
     const cleanItemDate = String(itemDate).replace(/\s+/g, '');
-    
+
     return (
       cleanItemDate === selectedDate ||
       cleanItemDate === selectedDDMMYYYY ||
@@ -81,21 +81,21 @@ const PatientAppointments = () => {
     if (!matchDate(appt.appointment_date, dateFilter)) {
       return false;
     }
-    
+
     const search = searchTerm.toLowerCase().trim();
     if (!search) return true;
-    
+
     const patientName = String(appt.patient_name || '').toLowerCase();
     const docNameClean = String(removeTamil(appt.doctor_name)).toLowerCase();
     const docNameRaw = String(appt.doctor_name || '').toLowerCase();
     const bookingId = String(appt.booking_id || appt.id || appt._id || '').toLowerCase();
     const status = String(appt.status || 'Pending').toLowerCase();
-    
+
     return (
-      patientName.includes(search) || 
-      docNameClean.includes(search) || 
-      docNameRaw.includes(search) || 
-      bookingId.includes(search) || 
+      patientName.includes(search) ||
+      docNameClean.includes(search) ||
+      docNameRaw.includes(search) ||
+      bookingId.includes(search) ||
       status.includes(search)
     );
   });
@@ -114,7 +114,7 @@ const PatientAppointments = () => {
     try {
       const token = sessionStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      
+
       const [apptRes, docsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/emails/all-appointments`, config),
         fetch(`${API_BASE_URL}/doctors`, config)
@@ -150,17 +150,17 @@ const PatientAppointments = () => {
       <div className="header-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', gap: '15px', flexWrap: 'wrap' }}>
         <h2>Patient Appointments</h2>
         <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <input 
-            type="date" 
-            value={dateFilter} 
-            onChange={(e) => setDateFilter(e.target.value)} 
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
             style={{ padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '14px', outline: 'none', color: '#4b5563' }}
           />
-          <input 
-            type="text" 
-            placeholder="Search..." 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             style={{ padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '14px', width: '250px', outline: 'none' }}
           />
         </div>
@@ -210,7 +210,7 @@ const PatientAppointments = () => {
               </tbody>
             </table>
 
-            <Pagination 
+            <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
@@ -312,6 +312,24 @@ const PatientAppointments = () => {
                   <span className="detail-value">{selectedAppointment.video_call || 'No'}</span>
                 </div>
                 <div className="detail-row">
+                  <span className="detail-label">Consult Fee:</span>
+                  <span className="detail-value" style={{ fontWeight: 'bold', color: '#2563eb' }}>
+                    ₹{selectedAppointment.consultation_fee || 0}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Payment Method:</span>
+                  <span className="detail-value">{selectedAppointment.payment_method || 'N/A'}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Payment Status:</span>
+                  <span className="detail-value">{selectedAppointment.payment_status || 'Pending'}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Payment ID:</span>
+                  <span className="detail-value">{selectedAppointment.payment_id || 'N/A'}</span>
+                </div>
+                <div className="detail-row">
                   <span className="detail-label">Status:</span>
                   <span className={`detail-value status-text ${(selectedAppointment.status || 'Pending').toLowerCase()}`}>
                     {selectedAppointment.status || 'Pending'}
@@ -319,7 +337,8 @@ const PatientAppointments = () => {
                 </div>
               </div>
             </div>
-            
+
+
             {selectedAppointment.prescription && selectedAppointment.prescription.length > 0 && (
               <div style={{ padding: '0 25px 25px 25px' }}>
                 <h4 className="column-title">Prescription Details</h4>
