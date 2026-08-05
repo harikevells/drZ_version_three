@@ -468,7 +468,7 @@ const BookAppointmentScreen = ({ navigation }) => {
     }
   };
 
-  const generateRazorpayHTML = () => {
+  const generateRazorpayHTML = (orderId) => {
     const consultFee = pendingBookingPayload?.consultation_fee || getSelectedDoctorFee() || 0;
     const amountInPaise = Math.round(Number(consultFee) * 100);
     const keyId = RAZORPAY_KEY_ID || 'rzp_test_SfkV0cySd3CwyQ';
@@ -517,7 +517,7 @@ const BookAppointmentScreen = ({ navigation }) => {
             "currency": "INR",
             "name": "DrZ",
             "description": "Doctor Consultation Fee",
-            "order_id": "${razorpayOrderId || ''}",
+            "order_id": "${orderId || ''}",
             "prefill": {
               "name": "${(patientName || '').replace(/"/g, '\\"')}",
               "contact": "${(patientMobile || '').replace(/"/g, '\\"')}"
@@ -968,19 +968,21 @@ const BookAppointmentScreen = ({ navigation }) => {
               <Icon name="close" size={26} color="#333" />
             </TouchableOpacity>
           </View>
-          <WebView
-            originWhitelist={['*']}
-            source={{ html: generateRazorpayHTML() }}
-            onMessage={handleRazorpayWebMessage}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            startInLoadingState={true}
-            renderLoading={() => (
-              <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-                <ActivityIndicator size="large" color="#1C3E55" />
-              </View>
-            )}
-          />
+          {showRazorpayModal && razorpayOrderId && (
+            <WebView
+              originWhitelist={['*']}
+              source={{ html: generateRazorpayHTML(razorpayOrderId) }}
+              onMessage={handleRazorpayWebMessage}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              startInLoadingState={true}
+              renderLoading={() => (
+                <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+                  <ActivityIndicator size="large" color="#1C3E55" />
+                </View>
+              )}
+            />
+          )}
         </SafeAreaView>
       </Modal>
 
