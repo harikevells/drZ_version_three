@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt, FaChevronDown, FaChevronUp, FaPills, FaListUl, FaClock, FaPrescriptionBottle, FaUsers } from 'react-icons/fa';
+import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt, FaChevronDown, FaChevronUp, FaPills, FaListUl, FaClock, FaPrescriptionBottle, FaUsers, FaCreditCard } from 'react-icons/fa';
 import './Layout.css';
 import logoImage from '../assets/DoctorlogoApp1.png';
 import adminImage from '../assets/adminimage.png';
@@ -72,6 +72,10 @@ const Layout = () => {
           <NavLink to="/patient" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
             <FaUserInjured className="nav-icon" />
             <span>Appointment</span>
+          </NavLink>
+          <NavLink to="/payment" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+            <FaCreditCard className="nav-icon" />
+            <span>Payment Details</span>
           </NavLink>
           <NavLink to="/patient-list" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
             <FaUsers className="nav-icon" />

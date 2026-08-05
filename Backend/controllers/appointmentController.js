@@ -83,6 +83,45 @@ const updateAppointmentStatus = async (req, res) => {
     }
 };
 
+const updatePaymentStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { payment_status } = req.body; 
+        
+        const appointment = await Appointment.findByIdAndUpdate(id, { payment_status }, { new: true });
+        if (!appointment) return res.status(404).json({ error: 'Appointment not found' });
+        
+        // Notification for Refunds
+        if (payment_status && payment_status.toLowerCase() === 'refunds' && appointment.login_mobile) {
+            await createNotification(
+                'patient',
+                appointment.login_mobile,
+                'Payment Refunded',
+                `Your amount for Booking ID ${appointment.booking_id || ''} was refunded.`,
+                'payment_refund'
+            );
+        }
+        
+        res.json(appointment);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const updatePaymentMethod = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { payment_method } = req.body; 
+        
+        const appointment = await Appointment.findByIdAndUpdate(id, { payment_method }, { new: true });
+        if (!appointment) return res.status(404).json({ error: 'Appointment not found' });
+        
+        res.json(appointment);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 const updateAppointmentPrescription = async (req, res) => {
     try {
         const { id } = req.params;
@@ -311,4 +350,4 @@ const getAdminDashboard = async (req, res) => {
     }
 };
 
-module.exports = { getDoctorDashboard, updateAppointmentStatus, updateAppointmentPrescription, getAllDoctorAppointments, getBookedTimingsByDate, exportDoctorAppointments, getAdminDashboard };
+module.exports = { getDoctorDashboard, updateAppointmentStatus, updatePaymentStatus, updatePaymentMethod, updateAppointmentPrescription, getAllDoctorAppointments, getBookedTimingsByDate, exportDoctorAppointments, getAdminDashboard };

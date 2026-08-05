@@ -13,8 +13,7 @@ import { Calendar } from 'react-native-calendars';
 import { AuthContext } from '../context/AuthContext';
 import { LanguageContext } from '../context/LanguageContext';
 import { useIsFocused } from '@react-navigation/native';
-import { WebView } from 'react-native-webview';
-
+import RazorpayCheckout from 'react-native-razorpay';
 // EmailJS credentials removed as we now use our custom backend endpoint
 
 // Important: If using Android Emulator, use '10.0.2.2'. If using Wired USB Debugging, use 'localhost'. If using Wi-Fi, use your local IP address.
@@ -136,9 +135,7 @@ const BookAppointmentScreen = ({ navigation }) => {
 
   // Payment State
   const [paymentMethod, setPaymentMethod] = useState('Cash'); // 'Razorpay' or 'Cash'
-  const [showRazorpayModal, setShowRazorpayModal] = useState(false);
   const [pendingBookingPayload, setPendingBookingPayload] = useState(null);
-  const [razorpayOrderId, setRazorpayOrderId] = useState(null);
 
   // UI State
   const [isVideoCall, setIsVideoCall] = useState(false);
@@ -403,7 +400,7 @@ const BookAppointmentScreen = ({ navigation }) => {
       appointment_date: formatDate(date),
       appointment_time: selectedTimes.length > 0 ? selectedTimes.join(', ') : "Not Selected",
       video_call: isVideoCall ? "Yes" : "No",
-      consultation_fee: consultFee,
+      consultation_fee: Number(consultFee) || 0,
     };
 
     if (paymentMethod === 'Razorpay') {
@@ -418,8 +415,39 @@ const BookAppointmentScreen = ({ navigation }) => {
         const amountInPaise = Math.round(Number(consultFee) * 100);
         const orderRes = await axios.post(`${BASE_URL}/api/razorpay/create-order`, { amount: amountInPaise });
         if(orderRes.data && orderRes.data.id) {
-          setRazorpayOrderId(orderRes.data.id);
-          setShowRazorpayModal(true);
+          const orderId = orderRes.data.id;
+          const keyId = RAZORPAY_KEY_ID || 'rzp_test_TBHWixI1texlea';
+          const patientMobile = whatsapp || user?.contactNumber || user?.mobile || '';
+
+          var options = {
+            description: 'Doctor Consultation Fee',
+            image: 'https://cdn.pixabay.com/photo/2021/11/20/03/16/doctor-6810750_1280.png',
+            currency: 'INR',
+            key: keyId,
+            amount: amountInPaise,
+            name: 'DrZ',
+            order_id: orderId,
+            prefill: {
+              contact: patientMobile,
+              name: patientName,
+            },
+            theme: { color: '#1C3E55' }
+          };
+
+          RazorpayCheckout.open(options).then(async (data) => {
+            // Success
+            const finalPayload = {
+              ...basePayload,
+              payment_id: data.razorpay_payment_id,
+              payment_method: 'Razorpay',
+              payment_status: 'Paid',
+            };
+            await executeBooking(finalPayload);
+          }).catch((error) => {
+            // Error
+            Alert.alert('Payment Failed', `Error: ${error.description || 'Payment was cancelled or failed.'}`);
+          });
+
         } else {
            Alert.alert("Error", "Could not generate order ID for payment.");
         }
@@ -452,7 +480,7 @@ const BookAppointmentScreen = ({ navigation }) => {
         Alert.alert(
           "Success / வெற்றி",
           "Appointment Request Sent Successfully!\nஉங்கள் முன்பதிவு கோரிக்கை அனுப்பப்பட்டது.",
-          [{ text: "OK", onPress: () => navigation.navigate('Dashboard') }]
+          [{ text: "OK", onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] }) }]
         );
       } else {
         Alert.alert("Error", "Something went wrong sending the appointment request.");
@@ -465,115 +493,6 @@ const BookAppointmentScreen = ({ navigation }) => {
       Alert.alert("Failed", `Booking failed.\n${errorMessage}`);
     } finally {
       setSendingEmail(false);
-    }
-  };
-
-  const generateRazorpayHTML = (orderId) => {
-    const consultFee = pendingBookingPayload?.consultation_fee || getSelectedDoctorFee() || 0;
-    const amountInPaise = Math.round(Number(consultFee) * 100);
-    const keyId = RAZORPAY_KEY_ID || 'rzp_test_SfkV0cySd3CwyQ';
-    const patientMobile = whatsapp || user?.contactNumber || user?.mobile || '';
-
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-        <style>
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f8f9fa;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-          }
-          .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #1C3E55;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
-          }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-          p { color: #555; font-size: 15px; font-weight: 500; }
-        </style>
-      </head>
-      <body>
-        <div class="loader"></div>
-        <p>Connecting to Razorpay...</p>
-        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-        <script>
-          var options = {
-            "key": "${keyId}",
-            "amount": ${amountInPaise},
-            "currency": "INR",
-            "name": "DrZ",
-            "description": "Doctor Consultation Fee",
-            "order_id": "${orderId || ''}",
-            "prefill": {
-              "name": "${(patientName || '').replace(/"/g, '\\"')}",
-              "contact": "${(patientMobile || '').replace(/"/g, '\\"')}"
-            },
-            "theme": {
-              "color": "#1C3E55"
-            },
-            "handler": function (response) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                status: 'SUCCESS',
-                payment_id: response.razorpay_payment_id
-              }));
-            },
-            "modal": {
-              "ondismiss": function() {
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                  status: 'CANCELLED'
-                }));
-              }
-            }
-          };
-
-          function openRazorpay() {
-            if (typeof window.Razorpay !== 'undefined') {
-              var rzp1 = new window.Razorpay(options);
-              rzp1.open();
-            } else {
-              setTimeout(openRazorpay, 200);
-            }
-          }
-          
-          openRazorpay();
-        </script>
-      </body>
-      </html>
-    `;
-  };
-
-  const handleRazorpayWebMessage = async (event) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      if (data.status === 'SUCCESS') {
-        setShowRazorpayModal(false);
-        const finalPayload = {
-          ...pendingBookingPayload,
-          payment_id: data.payment_id,
-          payment_method: 'Razorpay',
-          payment_status: 'Paid',
-        };
-        await executeBooking(finalPayload);
-      } else if (data.status === 'CANCELLED') {
-        setShowRazorpayModal(false);
-        Alert.alert("Payment Cancelled", "Payment process was cancelled. Appointment was not booked.");
-      }
-    } catch (e) {
-      console.log("Razorpay WebView message error:", e);
     }
   };
 
@@ -958,61 +877,6 @@ const BookAppointmentScreen = ({ navigation }) => {
           <Text style={[styles.navText, { fontSize: 10 }]}> ஆம்புலன்ஸ்</Text>
         </TouchableOpacity>
       </View> */}
-
-      {/* Razorpay Modal */}
-      <Modal visible={showRazorpayModal} transparent={false} animationType="slide" onRequestClose={() => setShowRazorpayModal(false)}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee', backgroundColor: '#F8F9FA' }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1C3E55' }}>Razorpay Payment / ஆன்லைன் செலுத்தல்</Text>
-            <TouchableOpacity onPress={() => { setShowRazorpayModal(false); Alert.alert("Cancelled", "Payment process cancelled."); }}>
-              <Icon name="close" size={26} color="#333" />
-            </TouchableOpacity>
-          </View>
-          {showRazorpayModal && razorpayOrderId && (
-            <WebView
-              originWhitelist={['*']}
-              source={{ html: generateRazorpayHTML(razorpayOrderId) }}
-              onMessage={handleRazorpayWebMessage}
-              javaScriptEnabled={true}
-              domStorageEnabled={true}
-              startInLoadingState={true}
-              mixedContentMode="always"
-              thirdPartyCookiesEnabled={true}
-              allowFileAccess={true}
-              allowUniversalAccessFromFileURLs={true}
-              javaScriptCanOpenWindowsAutomatically={true}
-              injectedJavaScript={`
-                window.open = function(url) {
-                  window.location.href = url;
-                  return window;
-                };
-                true;
-              `}
-              onShouldStartLoadWithRequest={(request) => {
-                const url = request.url;
-                if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('about:blank')) {
-                  Linking.canOpenURL(url).then((supported) => {
-                    if (supported) {
-                      Linking.openURL(url);
-                    } else {
-                      Alert.alert('Error', 'App not installed to handle this payment method.');
-                    }
-                  }).catch(() => {
-                     // Ignore errors for unhandled schemes to prevent crashes
-                  });
-                  return false; // Prevent WebView from loading the intent URL
-                }
-                return true; // Allow http/https URLs
-              }}
-              renderLoading={() => (
-                <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-                  <ActivityIndicator size="large" color="#1C3E55" />
-                </View>
-              )}
-            />
-          )}
-        </SafeAreaView>
-      </Modal>
 
       {/* Logout Modal */}
       <Modal visible={showLogoutModal} transparent={true} animationType="fade" onRequestClose={() => setShowLogoutModal(false)}>
