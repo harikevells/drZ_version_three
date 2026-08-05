@@ -135,9 +135,10 @@ const BookAppointmentScreen = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState(null); // Used for Dropdown value
 
   // Payment State
-  const [paymentMethod, setPaymentMethod] = useState('Razorpay'); // 'Razorpay' or 'Cash'
+  const [paymentMethod, setPaymentMethod] = useState('Cash'); // 'Razorpay' or 'Cash'
   const [showRazorpayModal, setShowRazorpayModal] = useState(false);
   const [pendingBookingPayload, setPendingBookingPayload] = useState(null);
+  const [razorpayOrderId, setRazorpayOrderId] = useState(null);
 
   // UI State
   const [isVideoCall, setIsVideoCall] = useState(false);
@@ -406,8 +407,28 @@ const BookAppointmentScreen = ({ navigation }) => {
     };
 
     if (paymentMethod === 'Razorpay') {
+      if (consultFee <= 0) {
+        Alert.alert("Invalid Fee / தவறான கட்டணம்", "Online payment requires a fee greater than 0. Please select 'Pay at Clinic' (நேரடி).\n\nஆன்லைன் செலுத்துதலுக்கு கட்டணம் 0 ஐ விட அதிகமாக இருக்க வேண்டும்.");
+        return;
+      }
       setPendingBookingPayload(basePayload);
-      setShowRazorpayModal(true);
+      
+      try {
+        setSendingEmail(true);
+        const amountInPaise = Math.round(Number(consultFee) * 100);
+        const orderRes = await axios.post(`${BASE_URL}/api/razorpay/create-order`, { amount: amountInPaise });
+        if(orderRes.data && orderRes.data.id) {
+          setRazorpayOrderId(orderRes.data.id);
+          setShowRazorpayModal(true);
+        } else {
+           Alert.alert("Error", "Could not generate order ID for payment.");
+        }
+      } catch (err) {
+         console.error(err);
+         Alert.alert("Error", "Failed to generate Razorpay order.");
+      } finally {
+         setSendingEmail(false);
+      }
     } else {
       const finalPayload = {
         ...basePayload,
@@ -484,11 +505,11 @@ const BookAppointmentScreen = ({ navigation }) => {
           }
           p { color: #555; font-size: 15px; font-weight: 500; }
         </style>
-        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
       </head>
       <body>
         <div class="loader"></div>
         <p>Connecting to Razorpay...</p>
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <script>
           var options = {
             "key": "${keyId}",
@@ -496,6 +517,7 @@ const BookAppointmentScreen = ({ navigation }) => {
             "currency": "INR",
             "name": "DrZ",
             "description": "Doctor Consultation Fee",
+            "order_id": "${razorpayOrderId || ''}",
             "prefill": {
               "name": "${(patientName || '').replace(/"/g, '\\"')}",
               "contact": "${(patientMobile || '').replace(/"/g, '\\"')}"
@@ -517,10 +539,17 @@ const BookAppointmentScreen = ({ navigation }) => {
               }
             }
           };
-          var rzp1 = new Razorpay(options);
-          window.onload = function() {
-            rzp1.open();
-          };
+
+          function openRazorpay() {
+            if (typeof window.Razorpay !== 'undefined') {
+              var rzp1 = new window.Razorpay(options);
+              rzp1.open();
+            } else {
+              setTimeout(openRazorpay, 200);
+            }
+          }
+          
+          openRazorpay();
         </script>
       </body>
       </html>

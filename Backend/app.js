@@ -42,5 +42,7 @@ app.use('/api/medicines', medicineRoutes);
 app.use('/api/medicine-timings', medicineTimingRoutes);
 app.use('/api/medicine-intakes', medicineIntakeRoutes);
 app.use('/api/medicine-days', medicineDayRoutes);
+const razorpayRoutes = require('./routes/razorpayRoutes');
+app.use('/api/razorpay', razorpayRoutes);
 
 module.exports = app;
