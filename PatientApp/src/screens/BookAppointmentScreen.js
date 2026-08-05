@@ -976,6 +976,34 @@ const BookAppointmentScreen = ({ navigation }) => {
               javaScriptEnabled={true}
               domStorageEnabled={true}
               startInLoadingState={true}
+              mixedContentMode="always"
+              thirdPartyCookiesEnabled={true}
+              allowFileAccess={true}
+              allowUniversalAccessFromFileURLs={true}
+              javaScriptCanOpenWindowsAutomatically={true}
+              injectedJavaScript={`
+                window.open = function(url) {
+                  window.location.href = url;
+                  return window;
+                };
+                true;
+              `}
+              onShouldStartLoadWithRequest={(request) => {
+                const url = request.url;
+                if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('about:blank')) {
+                  Linking.canOpenURL(url).then((supported) => {
+                    if (supported) {
+                      Linking.openURL(url);
+                    } else {
+                      Alert.alert('Error', 'App not installed to handle this payment method.');
+                    }
+                  }).catch(() => {
+                     // Ignore errors for unhandled schemes to prevent crashes
+                  });
+                  return false; // Prevent WebView from loading the intent URL
+                }
+                return true; // Allow http/https URLs
+              }}
               renderLoading={() => (
                 <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
                   <ActivityIndicator size="large" color="#1C3E55" />
