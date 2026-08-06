@@ -7,9 +7,10 @@ import Pagination from '../components/Pagination';
 import './DoctorManagement.css';
 
 const DEPARTMENT_OPTIONS = [
-  'Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics', 
+  'General', 'General Medicine', 'Cardiology', 'Neurology','Psychotherapy', 'Orthopedics', 'Pediatrics', 
   'Dermatology', 'General Surgery', 'Psychiatry', 'Gynecology',
-  'Oncology', 'Ophthalmology', 'Urology', 'ENT', 'Dentistry', 'Radiology'
+  'Oncology', 'Ophthalmology', 'Urology', 'ENT', 'Dentistry', 'Radiology',
+  
 ];
 
 const removeTamil = (text) => {

@@ -323,7 +323,10 @@ const BookAppointmentScreen = ({ navigation }) => {
         'ENT': 'காது மூக்கு தொண்டை',
         'Dentistry': 'பல் மருத்துவம்',
         'Radiology': 'கதிரியக்கவியல்',
-        'General Physician': 'பொது மருத்துவர்'
+        'General Physician': 'பொது மருத்துவர்',
+        'General': 'பொது',
+        'General Medicine': 'பொது மருத்துவம்',
+        'Psychotherapy': 'உளவியல் சிகிச்சை'
       };
 
       const departments = Array.from(uniqueDepts);

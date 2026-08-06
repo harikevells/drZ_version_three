@@ -12,6 +12,7 @@ const medicineRoutes = require('./routes/medicineRoutes');
 const medicineTimingRoutes = require('./routes/medicineTimingRoutes');
 const medicineIntakeRoutes = require('./routes/medicineIntakeRoutes');
 const medicineDayRoutes = require('./routes/medicineDayRoutes');
+const accountRoutes = require('./routes/accountRoutes');
 
 const app = express();
 
@@ -44,5 +45,6 @@ app.use('/api/medicine-intakes', medicineIntakeRoutes);
 app.use('/api/medicine-days', medicineDayRoutes);
 const razorpayRoutes = require('./routes/razorpayRoutes');
 app.use('/api/razorpay', razorpayRoutes);
+app.use('/api/accounts', accountRoutes);
 
 module.exports = app;

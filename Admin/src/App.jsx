@@ -13,6 +13,8 @@ import MedicineTime from './pages/MedicineTime';
 import MedicineIntake from './pages/MedicineIntake';
 import PatientList from './pages/PatientList';
 import Payment from './Payment/Payment';
+import Revenue from './Payment/Revenue';
+import PharmarcyCreattion from './Pharmarcy/PharmarcyCreattion';
 
 const ProtectedRoute = ({ element }) => {
   const token = sessionStorage.getItem('token');
@@ -63,12 +65,14 @@ function App() {
           <Route path="schedule" element={<Schedule />} />
           <Route path="patient" element={<PatientAppointments />} />
           <Route path="payment" element={<Payment />} />
+          <Route path="revenue" element={<Revenue />} />
           <Route path="patient-list" element={<PatientList />} />
           <Route path="notifications" element={<Notification />} />
           <Route path="medical-camp" element={<MedicalCamp />} />
           <Route path="medi" element={<Medi />} />
           <Route path="medicine-time" element={<MedicineTime />} />
           <Route path="medicine-intake" element={<MedicineIntake />} />
+          <Route path="pharmarcy-creation" element={<PharmarcyCreattion />} />
         </Route>
       </Routes>
     </Router>

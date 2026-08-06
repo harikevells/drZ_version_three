@@ -11,6 +11,7 @@ const Layout = () => {
   const navigate = useNavigate();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isMedicineOpen, setIsMedicineOpen] = useState(false);
+  const [isRevenueOpen, setIsRevenueOpen] = useState(false);
 
   const handleLogout = () => {
     sessionStorage.removeItem('token');
@@ -73,10 +74,7 @@ const Layout = () => {
             <FaUserInjured className="nav-icon" />
             <span>Appointment</span>
           </NavLink>
-          <NavLink to="/payment" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-            <FaCreditCard className="nav-icon" />
-            <span>Payment Details</span>
-          </NavLink>
+
           <NavLink to="/patient-list" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
             <FaUsers className="nav-icon" />
             <span>Patient List</span>
@@ -86,7 +84,7 @@ const Layout = () => {
             <span>Push Message</span>
           </NavLink>
           <div 
-            className={`nav-item ${['/medi', '/medicine-time', '/medicine-intake'].includes(location.pathname) ? 'active' : ''}`}
+            className={`nav-item ${['/medi', '/medicine-time', '/medicine-intake', '/pharmarcy-creation'].includes(location.pathname) ? 'active' : ''}`}
             onClick={() => setIsMedicineOpen(!isMedicineOpen)}
             style={{ cursor: 'pointer', justifyContent: 'space-between' }}
           >
@@ -110,6 +108,35 @@ const Layout = () => {
               <NavLink to="/medicine-intake" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
                 <FaPrescriptionBottle className="nav-icon" style={{ fontSize: '14px' }} />
                 <span style={{ fontSize: '13px' }}>Medicine Intake</span>
+              </NavLink>
+              <NavLink to="/pharmarcy-creation" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaUsers className="nav-icon" style={{ fontSize: '14px' }} />
+                <span style={{ fontSize: '13px' }}>Clinical Services</span>
+              </NavLink>
+            </div>
+          )}
+
+          <div 
+            className={`nav-item ${['/payment', '/revenue'].includes(location.pathname) ? 'active' : ''}`}
+            onClick={() => setIsRevenueOpen(!isRevenueOpen)}
+            style={{ cursor: 'pointer', justifyContent: 'space-between' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <FaCreditCard className="nav-icon" />
+              <span>Revenue Management</span>
+            </div>
+            {isRevenueOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+          </div>
+          
+          {isRevenueOpen && (
+            <div className="sub-nav" style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <NavLink to="/payment" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaCreditCard className="nav-icon" style={{ fontSize: '14px' }} />
+                <span style={{ fontSize: '13px' }}>Payment Details</span>
+              </NavLink>
+              <NavLink to="/revenue" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaTachometerAlt className="nav-icon" style={{ fontSize: '14px' }} />
+                <span style={{ fontSize: '13px' }}>Revenue Details</span>
               </NavLink>
             </div>
           )}

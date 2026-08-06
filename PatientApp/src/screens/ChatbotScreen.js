@@ -1239,7 +1239,8 @@ const ChatbotScreen = ({ navigation }) => {
         "Urology": "சிறுநீரகவியல்",
         "Oncology": "புற்றுநோயியல்",
         "Radiology": "கதிரியக்கவியல்",
-        "Others": "மற்றவை"
+        "Others": "மற்றவை",
+        "Psychotherapy": "உளவியல் சிகிச்சை"
       };
       const deptOptions = Array.from(depts).map((d, index) => {
         const englishPart = d.split('/')[0].trim();
@@ -1519,7 +1520,8 @@ const ChatbotScreen = ({ navigation }) => {
             "Urology": "சிறுநீரகவியல்",
             "Oncology": "புற்றுநோயியல்",
             "Radiology": "கதிரியக்கவியல்",
-            "Others": "மற்றவை"
+            "Others": "மற்றவை",
+            "Psychotherapy": "உளவியல் சிகிச்சை"
           };
 
           const deptOptions = Array.from(depts).map((d, index) => {
@@ -2004,7 +2006,8 @@ const ChatbotScreen = ({ navigation }) => {
               "Urology": "சிறுநீரகவியல்",
               "Oncology": "புற்றுநோயியல்",
               "Radiology": "கதிரியக்கவியல்",
-              "Others": "மற்றவை"
+              "Others": "மற்றவை",
+              "Psychotherapy": "உளவியல் சிகிச்சை"
             };
             const deptOptions = Array.from(depts).map((d, index) => {
               const englishPart = d.split('/')[0].trim();

@@ -113,7 +113,7 @@ const Login = () => {
               </span>
             </div>
             
-            <div className="form-actions">
+            <div style={{justifyContent:'space-between'}} className="form-actions">
               <label className="remember-me">
                 <input type="checkbox" defaultChecked /> Remember Me
               </label>
