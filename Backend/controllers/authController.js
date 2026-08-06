@@ -9,10 +9,14 @@ const login = async (req, res) => {
         const user = await User.findOne({ email });
         if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
+        if (user.activeStatus === false || user.activeStatus === 'false') {
+            return res.status(403).json({ error: 'Account is inactive' });
+        }
+
         const isMatch = await user.matchPassword(password);
         if (isMatch) {
-            const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET || 'supersecret123', { expiresIn: '1d' });
-            res.json({ token, user: { email: user.email } });
+            const token = jwt.sign({ id: user._id, email: user.email, role: user.role || 'Admin' }, process.env.JWT_SECRET || 'supersecret123', { expiresIn: '1d' });
+            res.json({ token, user: { email: user.email, role: user.role || 'Admin', userName: user.userName || 'Admin' } });
         } else {
             res.status(401).json({ error: 'Invalid credentials' });
         }

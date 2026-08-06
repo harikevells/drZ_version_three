@@ -20,6 +20,8 @@ const Login = () => {
     e.preventDefault();
     if (email.toLowerCase() === 'admin@drz.com' && password === 'Admin@123') {
       sessionStorage.setItem('token', 'static-admin-token');
+      sessionStorage.setItem('role', 'Admin');
+      sessionStorage.setItem('userName', 'Admin');
       sessionStorage.setItem('loginTimestamp', new Date().getTime().toString());
       navigate('/dashboard');
       return;
@@ -30,10 +32,17 @@ const Login = () => {
         password
       });
       sessionStorage.setItem('token', response.data.token);
+      sessionStorage.setItem('role', response.data.user.role || 'Admin');
+      sessionStorage.setItem('userName', response.data.user.userName || 'Admin');
       sessionStorage.setItem('loginTimestamp', new Date().getTime().toString());
-      navigate('/dashboard');
+      
+      if (response.data.user.role === 'Pharmacy') {
+        navigate('/medi');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
-      setError('Invalid username or password');
+      setError(err.response?.data?.error || 'Invalid username or password');
     }
   };
 

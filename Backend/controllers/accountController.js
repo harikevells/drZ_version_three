@@ -2,7 +2,7 @@ const Account = require('../models/Account');
 
 const getAccounts = async (req, res) => {
     try {
-        const accounts = await Account.find({});
+        const accounts = await Account.find({ role: { $in: ['Pharmacy', 'Lab', 'Scan'] } });
         res.json(accounts);
     } catch (err) {
         res.status(500).json({ error: err.message });

@@ -75,6 +75,14 @@
   /* Match mockup blue */
   flex: 1;
   border-top-right-radius: 50px;
+  overflow-y: auto;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.sidebar-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {

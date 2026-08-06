@@ -13,8 +13,13 @@ const Layout = () => {
   const [isMedicineOpen, setIsMedicineOpen] = useState(false);
   const [isRevenueOpen, setIsRevenueOpen] = useState(false);
 
+  const userRole = sessionStorage.getItem('role') || 'Admin';
+  const userName = sessionStorage.getItem('userName') || 'Admin';
+
   const handleLogout = () => {
     sessionStorage.removeItem('token');
+    sessionStorage.removeItem('role');
+    sessionStorage.removeItem('userName');
     sessionStorage.removeItem('loginTimestamp');
     navigate('/login');
   };
@@ -23,6 +28,9 @@ const Layout = () => {
   const location = useLocation();
 
   useEffect(() => {
+    if (userRole === 'Pharmacy' && (location.pathname === '/dashboard' || location.pathname === '/')) {
+      navigate('/medi');
+    }
     fetchUnreadCount();
 
     const handleUpdate = (e) => {
@@ -37,7 +45,7 @@ const Layout = () => {
     return () => {
       window.removeEventListener('notification-updated', handleUpdate);
     };
-  }, [location.pathname]); // Refresh count when navigation changes
+  }, [location.pathname, userRole]); // Refresh count when navigation changes
 
   const fetchUnreadCount = async () => {
     try {
@@ -58,87 +66,96 @@ const Layout = () => {
         </div>
         
         <nav className="sidebar-nav">
-          <NavLink to="/dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-            <FaTachometerAlt className="nav-icon" />
-            <span>Dashboard</span>
-          </NavLink>
-          <NavLink to="/dr-management" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-            <FaUserMd className="nav-icon" />
-            <span>DR Management</span>
-          </NavLink>
-          <NavLink to="/schedule" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-            <FaCalendarCheck className="nav-icon" />
-            <span>Schedule</span>
-          </NavLink>
-          <NavLink to="/patient" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-            <FaUserInjured className="nav-icon" />
-            <span>Appointment</span>
-          </NavLink>
+          {userRole === 'Pharmacy' ? (
+            <NavLink to="/medi" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <FaListUl className="nav-icon" />
+              <span>Medicine Create</span>
+            </NavLink>
+          ) : (
+            <>
+              <NavLink to="/dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaTachometerAlt className="nav-icon" />
+                <span>Dashboard</span>
+              </NavLink>
+              <NavLink to="/dr-management" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaUserMd className="nav-icon" />
+                <span>DR Management</span>
+              </NavLink>
+              <NavLink to="/schedule" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaCalendarCheck className="nav-icon" />
+                <span>Schedule</span>
+              </NavLink>
+              <NavLink to="/patient" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaUserInjured className="nav-icon" />
+                <span>Appointment</span>
+              </NavLink>
 
-          <NavLink to="/patient-list" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-            <FaUsers className="nav-icon" />
-            <span>Patient List</span>
-          </NavLink>
-          <NavLink to="/medical-camp" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-            <FaBell className="nav-icon" />
-            <span>Push Message</span>
-          </NavLink>
-          <div 
-            className={`nav-item ${['/medi', '/medicine-time', '/medicine-intake', '/pharmarcy-creation'].includes(location.pathname) ? 'active' : ''}`}
-            onClick={() => setIsMedicineOpen(!isMedicineOpen)}
-            style={{ cursor: 'pointer', justifyContent: 'space-between' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <FaPills className="nav-icon" />
-              <span>Medicine Management</span>
-            </div>
-            {isMedicineOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
-          </div>
-          
-          {isMedicineOpen && (
-            <div className="sub-nav" style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <NavLink to="/medi" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-                <FaListUl className="nav-icon" style={{ fontSize: '14px' }} />
-                <span style={{ fontSize: '13px' }}>Medicine Create</span>
+              <NavLink to="/patient-list" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaUsers className="nav-icon" />
+                <span>Patient List</span>
               </NavLink>
-              <NavLink to="/medicine-time" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-                <FaClock className="nav-icon" style={{ fontSize: '14px' }} />
-                <span style={{ fontSize: '13px' }}>Medicine Time</span>
+              <NavLink to="/medical-camp" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaBell className="nav-icon" />
+                <span>Push Message</span>
               </NavLink>
-              <NavLink to="/medicine-intake" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-                <FaPrescriptionBottle className="nav-icon" style={{ fontSize: '14px' }} />
-                <span style={{ fontSize: '13px' }}>Medicine Intake</span>
-              </NavLink>
-              <NavLink to="/pharmarcy-creation" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-                <FaUsers className="nav-icon" style={{ fontSize: '14px' }} />
-                <span style={{ fontSize: '13px' }}>Clinical Services</span>
-              </NavLink>
-            </div>
-          )}
+              <div 
+                className={`nav-item ${['/medi', '/medicine-time', '/medicine-intake', '/pharmarcy-creation'].includes(location.pathname) ? 'active' : ''}`}
+                onClick={() => setIsMedicineOpen(!isMedicineOpen)}
+                style={{ cursor: 'pointer', justifyContent: 'space-between' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <FaPills className="nav-icon" />
+                  <span>Medicine Management</span>
+                </div>
+                {isMedicineOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+              </div>
+              
+              {isMedicineOpen && (
+                <div className="sub-nav" style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <NavLink to="/medi" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                    <FaListUl className="nav-icon" style={{ fontSize: '14px' }} />
+                    <span style={{ fontSize: '13px' }}>Medicine Create</span>
+                  </NavLink>
+                  <NavLink to="/medicine-time" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                    <FaClock className="nav-icon" style={{ fontSize: '14px' }} />
+                    <span style={{ fontSize: '13px' }}>Medicine Time</span>
+                  </NavLink>
+                  <NavLink to="/medicine-intake" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                    <FaPrescriptionBottle className="nav-icon" style={{ fontSize: '14px' }} />
+                    <span style={{ fontSize: '13px' }}>Medicine Intake</span>
+                  </NavLink>
+                  <NavLink to="/pharmarcy-creation" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                    <FaUsers className="nav-icon" style={{ fontSize: '14px' }} />
+                    <span style={{ fontSize: '13px' }}>Clinical Services</span>
+                  </NavLink>
+                </div>
+              )}
 
-          <div 
-            className={`nav-item ${['/payment', '/revenue'].includes(location.pathname) ? 'active' : ''}`}
-            onClick={() => setIsRevenueOpen(!isRevenueOpen)}
-            style={{ cursor: 'pointer', justifyContent: 'space-between' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <FaCreditCard className="nav-icon" />
-              <span>Revenue Management</span>
-            </div>
-            {isRevenueOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
-          </div>
-          
-          {isRevenueOpen && (
-            <div className="sub-nav" style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <NavLink to="/payment" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-                <FaCreditCard className="nav-icon" style={{ fontSize: '14px' }} />
-                <span style={{ fontSize: '13px' }}>Payment Details</span>
-              </NavLink>
-              <NavLink to="/revenue" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-                <FaTachometerAlt className="nav-icon" style={{ fontSize: '14px' }} />
-                <span style={{ fontSize: '13px' }}>Revenue Details</span>
-              </NavLink>
-            </div>
+              <div 
+                className={`nav-item ${['/payment', '/revenue'].includes(location.pathname) ? 'active' : ''}`}
+                onClick={() => setIsRevenueOpen(!isRevenueOpen)}
+                style={{ cursor: 'pointer', justifyContent: 'space-between' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <FaCreditCard className="nav-icon" />
+                  <span>Revenue Management</span>
+                </div>
+                {isRevenueOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+              </div>
+              
+              {isRevenueOpen && (
+                <div className="sub-nav" style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <NavLink to="/payment" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                    <FaCreditCard className="nav-icon" style={{ fontSize: '14px' }} />
+                    <span style={{ fontSize: '13px' }}>Payment Details</span>
+                  </NavLink>
+                  <NavLink to="/revenue" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                    <FaTachometerAlt className="nav-icon" style={{ fontSize: '14px' }} />
+                    <span style={{ fontSize: '13px' }}>Revenue Details</span>
+                  </NavLink>
+                </div>
+              )}
+            </>
           )}
         </nav>
       </aside>
@@ -148,8 +165,8 @@ const Layout = () => {
         {/* Top Header */}
         <header className="topbar">
           <div className="topbar-welcome">
-            <h2>Welcome,Admin</h2>
-            <p>Super admin For DrZ...</p>
+            <h2>Welcome, {userName}</h2>
+            <p>{userRole} For DrZ...</p>
           </div>
           <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <div style={{ display: 'flex', gap: '15px' }}>
@@ -171,7 +188,7 @@ const Layout = () => {
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '10px' }}>
-              <span style={{ fontWeight: '600', fontSize: '18px', color: '#1f2937' }}>Admin</span>
+              <span style={{ fontWeight: '600', fontSize: '18px', color: '#1f2937' }}>{userRole}</span>
               <img 
                 src={adminImage} 
                 alt="Admin Avatar" 

@@ -1,2 +1,2 @@
 const createModel = require('./FirestoreModel');
-module.exports = createModel('accounts');
+module.exports = createModel('users');
