@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt, FaChevronDown, FaChevronUp, FaPills, FaListUl, FaClock, FaPrescriptionBottle, FaUsers, FaCreditCard } from 'react-icons/fa';
+import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt, FaChevronDown, FaChevronUp, FaPills, FaListUl, FaClock, FaPrescriptionBottle, FaUsers, FaCreditCard, FaFileInvoiceDollar } from 'react-icons/fa';
 import './Layout.css';
 import logoImage from '../assets/DoctorlogoApp1.png';
 import adminImage from '../assets/adminimage.png';
@@ -29,7 +29,10 @@ const Layout = () => {
 
   useEffect(() => {
     if (userRole === 'Pharmacy' && (location.pathname === '/dashboard' || location.pathname === '/')) {
-      navigate('/medi');
+      navigate('/pharmacy-dashboard');
+    }
+    if (userRole !== 'Pharmacy' && location.pathname === '/pharmacy-dashboard') {
+      navigate('/dashboard');
     }
     fetchUnreadCount();
 
@@ -67,10 +70,20 @@ const Layout = () => {
         
         <nav className="sidebar-nav">
           {userRole === 'Pharmacy' ? (
-            <NavLink to="/medi" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
-              <FaListUl className="nav-icon" />
-              <span>Medicine Create</span>
-            </NavLink>
+            <>
+              <NavLink to="/pharmacy-dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaTachometerAlt className="nav-icon" />
+                <span>Dashboard</span>
+              </NavLink>
+              <NavLink to="/medi" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaListUl className="nav-icon" />
+                <span>Medicine Create</span>
+              </NavLink>
+              <NavLink to="/purchase-medicine" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaFileInvoiceDollar className="nav-icon" />
+                <span>Medicine Billing</span>
+              </NavLink>
+            </>
           ) : (
             <>
               <NavLink to="/dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>

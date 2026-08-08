@@ -37,7 +37,7 @@ const Login = () => {
       sessionStorage.setItem('loginTimestamp', new Date().getTime().toString());
       
       if (response.data.user.role === 'Pharmacy') {
-        navigate('/medi');
+        navigate('/pharmacy-dashboard');
       } else {
         navigate('/dashboard');
       }

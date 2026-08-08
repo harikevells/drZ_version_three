@@ -15,6 +15,8 @@ import PatientList from './pages/PatientList';
 import Payment from './Payment/Payment';
 import Revenue from './Payment/Revenue';
 import PharmarcyCreattion from './Pharmarcy/PharmarcyCreattion';
+import PharmacyDashboard from './Pharmarcy/pharmarcyDashboard/PharmacyDashboard';
+import PurchaseMedicine from './Pharmarcy/PurchaseMedicine';
 
 const ProtectedRoute = ({ element }) => {
   const token = sessionStorage.getItem('token');
@@ -41,12 +43,13 @@ const ProtectedRoute = ({ element }) => {
 const PublicRoute = ({ element }) => {
   const token = sessionStorage.getItem('token');
   const loginTime = sessionStorage.getItem('loginTimestamp');
+  const role = sessionStorage.getItem('role');
   if (token && loginTime) {
     const now = new Date().getTime();
     const timeElapsed = now - parseInt(loginTime, 10);
     const twentyFourHours = 24 * 60 * 60 * 1000;
     if (timeElapsed <= twentyFourHours) {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to={role === 'Pharmacy' ? "/pharmacy-dashboard" : "/dashboard"} replace />;
     }
   }
   return element;
@@ -61,6 +64,7 @@ function App() {
         <Route path="/" element={<ProtectedRoute element={<Layout />} />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="pharmacy-dashboard" element={<PharmacyDashboard />} />
           <Route path="dr-management" element={<DoctorManagement />} />
           <Route path="schedule" element={<Schedule />} />
           <Route path="patient" element={<PatientAppointments />} />
@@ -70,6 +74,7 @@ function App() {
           <Route path="notifications" element={<Notification />} />
           <Route path="medical-camp" element={<MedicalCamp />} />
           <Route path="medi" element={<Medi />} />
+          <Route path="purchase-medicine" element={<PurchaseMedicine />} />
           <Route path="medicine-time" element={<MedicineTime />} />
           <Route path="medicine-intake" element={<MedicineIntake />} />
           <Route path="pharmarcy-creation" element={<PharmarcyCreattion />} />
