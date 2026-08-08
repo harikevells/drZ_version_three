@@ -83,6 +83,10 @@ const Layout = () => {
                 <FaFileInvoiceDollar className="nav-icon" />
                 <span>Medicine Billing</span>
               </NavLink>
+              <NavLink to="/billing-medicine" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                <FaFileInvoiceDollar className="nav-icon" />
+                <span>Billing Medicine</span>
+              </NavLink>
             </>
           ) : (
             <>

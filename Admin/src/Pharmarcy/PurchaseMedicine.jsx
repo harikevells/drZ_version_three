@@ -16,10 +16,13 @@ const PurchaseMedicine = () => {
   const [appointmentsList, setAppointmentsList] = useState([]);
   const [doctorsList, setDoctorsList] = useState([]);
 
-  // Multi-Appointment Draft Bills State (Stores state per apptId)
   const [draftBills, setDraftBills] = useState({});
   const [selectedApptId, setSelectedApptId] = useState('');
   const [completedApptIds, setCompletedApptIds] = useState([]);
+  const [cancelledApptIds, setCancelledApptIds] = useState(() => {
+    const saved = localStorage.getItem('cancelledBillingApptIds');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // Active Bill State (Displayed on UI & Sheet)
   const [billNo, setBillNo] = useState(`MB-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(10000 + Math.random() * 90000)}`);
@@ -132,7 +135,7 @@ const PurchaseMedicine = () => {
             age: appt.patient_age ? `${appt.patient_age} Years` : '45 Years',
             gender: appt.patient_gender || 'Male',
             mobileNo: appt.whatsapp_number || appt.login_mobile || '',
-            treatmentCategory: appt.department || appt.treatmentCategory || 'General Medicine',
+            treatmentCategory: appt.treatment_category || appt.department || appt.treatmentCategory || 'General Medicine',
             consultingDoctor: appt.doctor_name || 'Dr. Vijay Kumar MD',
             consultFee: parseFloat(appt.consultation_fee || appt.consultFee || 300),
             paymentMethod: appt.payment_method || appt.paymentMethod || 'UPI / Cash',
@@ -144,9 +147,16 @@ const PurchaseMedicine = () => {
 
         setDraftBills(initialDrafts);
 
-        // Load first appointment if available
-        if (appts.length > 0) {
-          const firstId = appts[0]._id || appts[0].id || 'appt_0';
+        // Load first appointment if available (filtering out cancelled ones)
+        const activeAppts = appts.filter(appt => {
+          const apptId = appt._id || appt.id || '';
+          const savedCancelled = localStorage.getItem('cancelledBillingApptIds');
+          const cancelledIds = savedCancelled ? JSON.parse(savedCancelled) : [];
+          return !cancelledIds.includes(apptId);
+        });
+
+        if (activeAppts.length > 0) {
+          const firstId = activeAppts[0]._id || activeAppts[0].id || 'appt_0';
           switchAppointment(firstId, initialDrafts[firstId]);
         }
       }
@@ -341,12 +351,44 @@ const PurchaseMedicine = () => {
       // Dynamically update UI inventory stock
       setInventoryMedicines(updatedInventory);
 
+      // Save billing invoice data to backend
+      const totalMedicineAmt = medicineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+      const subTotalWithConsult = totalMedicineAmt + parseFloat(consultFee || 0);
+      const taxAmt = ((subTotalWithConsult - discount) * (taxPercent / 100));
+      const totalPayableCalc = Math.max(0, subTotalWithConsult - discount + taxAmt);
+
+      const billData = {
+        billNo,
+        billDate,
+        appointmentId: selectedApptId || '',
+        appointmentNo,
+        patientName,
+        age,
+        gender,
+        mobileNo,
+        treatmentCategory,
+        consultingDoctor,
+        consultFee: parseFloat(consultFee || 0),
+        paymentMethod,
+        medicineItems,
+        discount: parseFloat(discount || 0),
+        taxPercent: parseFloat(taxPercent || 0),
+        totalMedicineAmount: totalMedicineAmt,
+        taxAmount: taxAmt,
+        totalPayable: totalPayableCalc,
+        status: 'Completed'
+      };
+
+      const token = sessionStorage.getItem('token');
+      const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      await axios.post(`${API_BASE_URL}/billings`, billData, authHeader);
+
       // Mark current appointment as completed
       if (selectedApptId && !completedApptIds.includes(selectedApptId)) {
         setCompletedApptIds(prev => [...prev, selectedApptId]);
       }
 
-      alert('Billing completed successfully! Medicine inventory stock has been reduced dynamically.');
+      alert('Billing completed and saved successfully! Medicine inventory stock has been reduced dynamically.');
     } catch (error) {
       console.error('Error completing billing:', error);
       alert('An error occurred while updating medicine stock.');
@@ -379,12 +421,39 @@ const PurchaseMedicine = () => {
     return inWords(n) + ' Rupees Only';
   };
 
-  // Reset / Clear Items for current appointment
+  // Reset / Clear Items for current appointment (Fresh Page)
   const handleResetBill = () => {
+    setSelectedApptId('');
+    setAppointmentNo('');
+    setPatientName('');
+    setAge('');
+    setGender('Male');
+    setMobileNo('');
+    setTreatmentCategory('General Medicine');
+    setConsultingDoctor('Dr. Vijay Kumar MD');
+    setConsultFee(0);
     setBillNo(`MB-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(10000 + Math.random() * 90000)}`);
     setMedicineItems([]);
     setDiscount(0);
     setTaxPercent(0);
+  };
+
+  // Remove an appointment draft from the pending queue and persist cancellation
+  const handleRemoveFromQueue = (e, apptId) => {
+    e.stopPropagation();
+    setCancelledApptIds(prev => {
+      const next = [...prev, apptId];
+      localStorage.setItem('cancelledBillingApptIds', JSON.stringify(next));
+      return next;
+    });
+    setDraftBills(prev => {
+      const next = { ...prev };
+      delete next[apptId];
+      return next;
+    });
+    if (selectedApptId === apptId) {
+      handleResetBill();
+    }
   };
 
   // Print Bill (Prints ONLY printable-bill-sheet)
@@ -406,6 +475,8 @@ const PurchaseMedicine = () => {
       return;
     }
 
+    document.body.classList.add('is-generating-pdf');
+
     const opt = {
       margin: 0.2,
       filename: `${billNo}_Invoice.pdf`,
@@ -417,8 +488,10 @@ const PurchaseMedicine = () => {
     const triggerPdf = () => {
       if (window.html2pdf) {
         window.html2pdf().set(opt).from(element).save().then(() => {
+          document.body.classList.remove('is-generating-pdf');
           setDownloading(false);
         }).catch(() => {
+          document.body.classList.remove('is-generating-pdf');
           setDownloading(false);
           handlePrintBill();
         });
@@ -427,13 +500,16 @@ const PurchaseMedicine = () => {
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
         script.onload = () => {
           window.html2pdf().set(opt).from(element).save().then(() => {
+            document.body.classList.remove('is-generating-pdf');
             setDownloading(false);
           }).catch(() => {
+            document.body.classList.remove('is-generating-pdf');
             setDownloading(false);
             handlePrintBill();
           });
         };
         script.onerror = () => {
+          document.body.classList.remove('is-generating-pdf');
           setDownloading(false);
           handlePrintBill();
         };
@@ -441,12 +517,15 @@ const PurchaseMedicine = () => {
       }
     };
 
-    triggerPdf();
+    // Small delay to ensure CSS styles are fully calculated/applied before html2pdf captures it
+    setTimeout(triggerPdf, 150);
   };
 
-  // Filter queue: ONLY show appointments where medicines are added (>0) OR currently active selected!
+  // Filter queue: ONLY show appointments where medicines are added (>0) OR currently active selected, and NOT completed/cancelled!
   const activeQueueAppointments = appointmentsList.filter(appt => {
     const apptId = appt._id || appt.id;
+    if (completedApptIds.includes(apptId)) return false;
+    if (cancelledApptIds.includes(apptId)) return false;
     const draft = draftBills[apptId];
     const hasMeds = draft && Array.isArray(draft.medicineItems) && draft.medicineItems.length > 0;
     return hasMeds || apptId === selectedApptId;
@@ -462,15 +541,15 @@ const PurchaseMedicine = () => {
             <h2>Medicine Billing & Prescription Invoice</h2>
             <p className="sub-header-appt-status">
               {appointmentNo ? (
-                <>Active Billing: <strong>{appointmentNo}</strong> ({patientName}) {completedApptIds.includes(selectedApptId) ? <span className="status-tag-done">✓ Billed & Completed</span> : <span className="status-tag-pending">⏳ Billing In Progress</span>}</>
+                <>Active Billing: <strong>{appointmentNo}</strong> ({patientName}) {completedApptIds.includes(selectedApptId) ? <span className="status-tag-done">✓ Billed & Completed</span> : <span className="status-tag-pending">⏳ Pending</span>}</>
               ) : 'Select an appointment to bill medicines'}
             </p>
           </div>
         </div>
 
         <div className="action-buttons-group">
-          <button className="btn-action btn-reset" onClick={handleResetBill} title="Clear Items">
-            <FaUndo /> <span>Clear Current</span>
+          <button className="btn-action btn-reset" onClick={handleResetBill} title="New Bill">
+            <FaPlus /> <span>New</span>
           </button>
           <button className="btn-action btn-complete" onClick={handleCompleteBilling} disabled={completing} title="Complete Billing & Deduct Stock">
             <FaCheckCircle /> <span>{completing ? 'Completing...' : 'Complete Billing'}</span>
@@ -478,7 +557,7 @@ const PurchaseMedicine = () => {
           <button className="btn-action btn-print" onClick={handlePrintBill} title="Print Invoice">
             <FaPrint /> <span>Print Bill</span>
           </button>
-          <button className="btn-action btn-download" onClick={handleDownloadPDF} disabled={downloading} title="Download PDF">
+          <button className="btn-action btn-download" onClick={handleDownloadPDF} disabled={downloading || !selectedApptId || !completedApptIds.includes(selectedApptId)} title="Download PDF">
             <FaDownload /> <span>{downloading ? 'Downloading...' : 'Download PDF'}</span>
           </button>
         </div>
@@ -510,6 +589,27 @@ const PurchaseMedicine = () => {
                   <span className="pill-name">{appt.patient_name}</span>
                   {itemCount > 0 && <span className="pill-badge-count">{itemCount} Meds</span>}
                   {isDone ? <FaCheckCircle className="icon-done" /> : <FaClock className="icon-pending" />}
+                  <span 
+                    className="pill-cancel-btn" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveFromQueue(e, apptId);
+                    }}
+                    style={{
+                      marginLeft: '8px',
+                      cursor: 'pointer',
+                      color: isSelected ? '#ffffff' : '#ef4444',
+                      opacity: 0.7,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
+                  >
+                    <FaTimes size={12} />
+                  </span>
                 </button>
               );
             })}
@@ -525,11 +625,16 @@ const PurchaseMedicine = () => {
             <label>Select Patient Appointment:</label>
             <select value={selectedApptId} onChange={(e) => switchAppointment(e.target.value)}>
               <option value="">Select Appointment...</option>
-              {appointmentsList.map((a, idx) => (
-                <option key={idx} value={a._id || a.id || `appt_${idx}`}>
-                  {a.booking_id ? `APT-${a.booking_id}` : `APT-${idx + 1}`} - {a.patient_name} ({a.department || 'General'})
-                </option>
-              ))}
+              {appointmentsList
+                .filter(a => {
+                  const apptId = a._id || a.id;
+                  return !cancelledApptIds.includes(apptId);
+                })
+                .map((a, idx) => (
+                  <option key={idx} value={a._id || a.id || `appt_${idx}`}>
+                    {a.booking_id ? `APT-${a.booking_id}` : `APT-${idx + 1}`} - {a.patient_name} ({a.treatment_category || a.department || 'General'})
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -915,7 +1020,7 @@ const PurchaseMedicine = () => {
           <div className="summary-box signature-qr-box">
             <div className="signature-area">
               <div className="signature-line">
-                <span className="sig-handwriting">Dr. Vijay Kumar</span>
+                <span className="sig-handwriting">{consultingDoctor ? (consultingDoctor.toLowerCase().startsWith('dr') ? consultingDoctor : `Dr. ${consultingDoctor}`) : 'Dr. Vijay Kumar'}</span>
               </div>
               <p className="dr-sig-name">{consultingDoctor || 'Dr. Vijay Kumar MD'}</p>
               <p className="dr-reg-no">Reg No : 12345</p>

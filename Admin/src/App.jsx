@@ -17,6 +17,7 @@ import Revenue from './Payment/Revenue';
 import PharmarcyCreattion from './Pharmarcy/PharmarcyCreattion';
 import PharmacyDashboard from './Pharmarcy/pharmarcyDashboard/PharmacyDashboard';
 import PurchaseMedicine from './Pharmarcy/PurchaseMedicine';
+import BillingMedicine from './Pharmarcy/BillingMedicine';
 
 const ProtectedRoute = ({ element }) => {
   const token = sessionStorage.getItem('token');
@@ -75,6 +76,7 @@ function App() {
           <Route path="medical-camp" element={<MedicalCamp />} />
           <Route path="medi" element={<Medi />} />
           <Route path="purchase-medicine" element={<PurchaseMedicine />} />
+          <Route path="billing-medicine" element={<BillingMedicine />} />
           <Route path="medicine-time" element={<MedicineTime />} />
           <Route path="medicine-intake" element={<MedicineIntake />} />
           <Route path="pharmarcy-creation" element={<PharmarcyCreattion />} />
