@@ -399,7 +399,7 @@ const Medi = () => {
                         <td>{med.medicineName}</td>
                         <td>{med.category}</td>
                         <td>{med.brandName}</td>
-                        <td className={`stock-${stockStatus.color}`} style={{fontWeight: 600, color: stockStatus.color}}>{stockStatus.label}</td>
+                        <td style={{ fontWeight: 600, color: stockStatus.color, textAlign: 'center' }}>{stockStatus.label}</td>
                         <td>{parseFloat(med.sellingPrice).toFixed(2)}</td>
                         <td className={med.activeStatus ? 'status-active' : 'status-inactive'}>
                           {med.activeStatus ? 'Active' : 'Inactive'}

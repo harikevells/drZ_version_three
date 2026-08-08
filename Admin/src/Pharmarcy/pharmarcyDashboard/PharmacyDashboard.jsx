@@ -17,12 +17,11 @@ const PharmacyDashboard = () => {
     totalMedicines: 0,
     availableStock: 0,
     lowStockAlert: 0,
+    outOfStock: 0,
     expiredMedicines: 0,
     todaysSales: 0,
-    todaysPurchase: 0,
     todaysProfit: 0,
     salesGrowth: '0%',
-    purchaseGrowth: '0%',
     profitGrowth: '0%'
   });
 
@@ -107,26 +106,39 @@ const PharmacyDashboard = () => {
 
       const inStockCount = Math.max(0, totalMeds - lowStockCount - outOfStockCount - expiredCount);
 
-      // 2. Fetch Sales Data
-      const salesRes = await axios.get(`${API_BASE_URL}/emails/all-appointments`, authHeader).catch(() => ({ data: [] }));
-      const appointments = Array.isArray(salesRes.data) ? salesRes.data : [];
+      // 2. Fetch Billings for today's actual Sales & Profit
+      const billingsRes = await axios.get(`${API_BASE_URL}/billings`, authHeader).catch(() => ({ data: [] }));
+      const billings = Array.isArray(billingsRes.data) ? billingsRes.data : [];
+
+      const todayStr = today.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/');
+      const todayISO = today.toISOString().slice(0, 10); // YYYY-MM-DD
 
       let todaysSalesTotal = 0;
+      let todaysSalesCount = 0;
       const dateSalesMap = {};
 
-      appointments.forEach((appt) => {
-        const fee = parseFloat(appt.consultation_fee || appt.amount || appt.price) || 500;
-        const apptDate = appt.appointment_date || appt.createdAt || '';
-        
-        todaysSalesTotal += fee;
+      billings.forEach((bill) => {
+        const billDateStr = String(bill.billDate || '');
+        // Match by date string containing today's date in any format
+        const billDateObj = billDateStr ? new Date(billDateStr) : null;
+        const billDateISO = billDateObj && !isNaN(billDateObj) ? billDateObj.toISOString().slice(0, 10) : '';
+        const isToday = billDateISO === todayISO || billDateStr.startsWith(todayISO);
 
-        if (apptDate) {
-          dateSalesMap[apptDate] = (dateSalesMap[apptDate] || 0) + fee;
+        const payable = parseFloat(bill.totalPayable || 0);
+        if (isToday) {
+          todaysSalesTotal += payable;
+          todaysSalesCount++;
+        }
+
+        // For chart — group by date
+        if (billDateISO) {
+          dateSalesMap[billDateISO] = (dateSalesMap[billDateISO] || 0) + payable;
         }
       });
 
-      let todaysPurchaseTotal = Math.round(totalPurchaseVal * 0.15);
-      const todaysProfitTotal = Math.max(0, todaysSalesTotal - todaysPurchaseTotal);
+      // Profit = Sales - estimated cost (medicine purchase price * qty used)
+      // Simple estimate: profit is ~30% of sales as cost is ~70%
+      const todaysProfitTotal = Math.round(todaysSalesTotal * 0.30);
 
       const calcGrowth = (val) => val > 0 ? `+${((val % 15) + 5).toFixed(1)}%` : '+0%';
 
@@ -134,12 +146,11 @@ const PharmacyDashboard = () => {
         totalMedicines: totalMeds,
         availableStock: totalStockCount,
         lowStockAlert: lowStockCount,
+        outOfStock: outOfStockCount,
         expiredMedicines: expiredCount,
         todaysSales: todaysSalesTotal,
-        todaysPurchase: todaysPurchaseTotal,
         todaysProfit: todaysProfitTotal,
         salesGrowth: calcGrowth(todaysSalesTotal),
-        purchaseGrowth: calcGrowth(todaysPurchaseTotal),
         profitGrowth: calcGrowth(todaysProfitTotal)
       });
 

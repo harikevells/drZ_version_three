@@ -1,20 +1,19 @@
 import React from 'react';
-import { FaCapsules, FaBoxOpen, FaExclamationTriangle, FaCalendarTimes, FaCalendarAlt, FaShoppingCart, FaShoppingBag, FaRupeeSign } from 'react-icons/fa';
+import { FaCapsules, FaBoxOpen, FaExclamationTriangle, FaCalendarTimes, FaCalendarAlt, FaShoppingCart, FaTimesCircle, FaRupeeSign } from 'react-icons/fa';
 import './PharmacyStatCards.css';
 
 const PharmacyStatCards = ({ stats, selectedDate, onDateChange }) => {
   // Fallback defaults matching design image if not dynamically passed
   const {
-    totalMedicines = 1245,
-    availableStock = 8763,
-    lowStockAlert = 32,
-    expiredMedicines = 18,
-    todaysSales = 24850,
-    todaysPurchase = 15300,
-    todaysProfit = 9550,
-    salesGrowth = '+12.5%',
-    purchaseGrowth = '+8.3%',
-    profitGrowth = '+15.7%'
+    totalMedicines = 0,
+    availableStock = 0,
+    lowStockAlert = 0,
+    outOfStock = 0,
+    expiredMedicines = 0,
+    todaysSales = 0,
+    todaysProfit = 0,
+    salesGrowth = '+0%',
+    profitGrowth = '+0%'
   } = stats || {};
 
   return (
@@ -111,16 +110,19 @@ const PharmacyStatCards = ({ stats, selectedDate, onDateChange }) => {
           </div>
         </div>
 
-        {/* Card 2: Today's Purchase */}
+        {/* Card 2: Out of Stock */}
         <div className="financial-stat-card">
-          <div className="financial-icon-box icon-bag-blue">
-            <FaShoppingBag size={22} />
+          <div className="financial-icon-box icon-bag-blue" style={{ background: 'linear-gradient(135deg, #fee2e2, #fecaca)' }}>
+            <FaTimesCircle size={22} color="#dc2626" />
           </div>
           <div className="financial-content">
-            <span className="financial-label">Today's Purchase</span>
-            <h2 className="financial-value">₹ {todaysPurchase.toLocaleString('en-IN')}</h2>
-            <div className="trend-badge trend-blue">
-              <span>{purchaseGrowth} vs yesterday ↗</span>
+            <span className="financial-label">Out of Stock</span>
+            <h2 className="financial-value" style={{ color: outOfStock > 0 ? '#dc2626' : '#15803d' }}>
+              {outOfStock}
+              <span style={{ fontSize: '13px', fontWeight: '500', color: '#64748b', marginLeft: '6px' }}>medicines</span>
+            </h2>
+            <div className="trend-badge" style={{ background: outOfStock > 0 ? '#fee2e2' : '#dcfce7', color: outOfStock > 0 ? '#dc2626' : '#15803d' }}>
+              <span>{outOfStock > 0 ? '⚠ Needs restocking' : '✓ All stocked'}</span>
             </div>
           </div>
         </div>

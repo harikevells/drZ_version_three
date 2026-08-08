@@ -15,7 +15,9 @@ import {
   FaCheck, 
   FaQrcode, 
   FaFileInvoiceDollar,
-  FaSpinner
+  FaSpinner,
+  FaEye,
+  FaTimes
 } from 'react-icons/fa';
 import logoImage from '../assets/DoctorlogoApp1.png';
 import './PurchaseMedicine.css'; // Reuse our perfected A4 layout styles!
@@ -28,6 +30,10 @@ const BillingMedicine = () => {
   // States for generating PDF off-screen
   const [selectedBill, setSelectedBill] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
+
+  // States for viewing billing details in popup
+  const [selectedBillForView, setSelectedBillForView] = useState(null);
+  const [showBillPopup, setShowBillPopup] = useState(false);
 
   useEffect(() => {
     fetchBillings();
@@ -186,48 +192,75 @@ const BillingMedicine = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: '700' }}>
-                  <th style={{ padding: '12px 16px' }}>Bill No</th>
-                  <th style={{ padding: '12px 16px' }}>Bill Date</th>
-                  <th style={{ padding: '12px 16px' }}>Appointment No</th>
-                  <th style={{ padding: '12px 16px' }}>Patient Name</th>
-                  <th style={{ padding: '12px 16px' }}>Age/Gender</th>
-                  <th style={{ padding: '12px 16px' }}>Doctor Name</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right' }}>Total Payable</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Bill No</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Bill Date</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Appointment No</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Patient Name</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Age/Gender</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Doctor Name</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Payment Method</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Total Payable</th>
                   <th style={{ padding: '12px 16px', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody style={{ color: '#334155' }}>
                 {filteredBillings.map((bill, idx) => (
                   <tr key={bill._id || bill.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: '600', color: '#0f172a' }}>{bill.billNo}</td>
-                    <td style={{ padding: '12px 16px' }}>{bill.billDate}</td>
-                    <td style={{ padding: '12px 16px', fontWeight: '500' }}>{bill.appointmentNo || '-'}</td>
-                    <td style={{ padding: '12px 16px', fontWeight: '600', color: '#2563eb' }}>{bill.patientName}</td>
-                    <td style={{ padding: '12px 16px' }}>{bill.age || '-'} / {bill.gender || '-'}</td>
-                    <td style={{ padding: '12px 16px' }}>{bill.consultingDoctor}</td>
-                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '700', color: '#0f172a' }}>₹ {parseFloat(bill.totalPayable || 0).toFixed(2)}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', color: '#0f172a' }}>{bill.billNo}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>{bill.billDate}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '500' }}>{bill.appointmentNo || '-'}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', color: '#2563eb' }}>{bill.patientName}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>{bill.age || '-'} / {bill.gender || '-'}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>{bill.consultingDoctor}</td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      <button
-                        onClick={() => handleDownloadPDF(bill)}
-                        disabled={downloadingId === (bill._id || bill.id)}
-                        style={{
-                          background: '#2563eb',
-                          color: '#ffffff',
-                          border: 'none',
-                          padding: '6px 12px',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          opacity: downloadingId === (bill._id || bill.id) ? 0.7 : 1
-                        }}
-                      >
-                        <FaDownload size={11} />
-                        <span>{downloadingId === (bill._id || bill.id) ? 'Downloading...' : 'PDF'}</span>
-                      </button>
+                      <span className={`payment-method-badge ${String(bill.paymentMethod || '').toLowerCase()}`}>
+                        {bill.paymentMethod || '-'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '700', color: '#0f172a' }}>₹ {parseFloat(bill.totalPayable || 0).toFixed(2)}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                        <button
+                          onClick={() => { setSelectedBillForView(bill); setShowBillPopup(true); }}
+                          style={{
+                            background: '#10b981',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '12px',
+                            fontWeight: '600'
+                          }}
+                        >
+                          <FaEye size={12} />
+                          <span>View</span>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadPDF(bill)}
+                          disabled={downloadingId === (bill._id || bill.id)}
+                          style={{
+                            background: '#2563eb',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            opacity: downloadingId === (bill._id || bill.id) ? 0.7 : 1
+                          }}
+                        >
+                          <FaDownload size={11} />
+                          <span>{downloadingId === (bill._id || bill.id) ? 'Downloading...' : 'PDF'}</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -497,6 +530,112 @@ const BillingMedicine = () => {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* BILL DETAILS POPUP MODAL (Requested by User)                             */}
+      {/* ========================================================================= */}
+      {showBillPopup && selectedBillForView && (
+        <div className="bill-popup-overlay no-print" onClick={() => { setShowBillPopup(false); setSelectedBillForView(null); }}>
+          <div className="bill-popup-content" onClick={(e) => e.stopPropagation()}>
+            <div className="popup-header">
+              <h3>Invoice Details - {selectedBillForView.billNo}</h3>
+              <button className="popup-close-btn" onClick={() => { setShowBillPopup(false); setSelectedBillForView(null); }}>
+                <FaTimes />
+              </button>
+            </div>
+            
+            <div className="popup-body">
+              {/* Header Info */}
+              <div className="popup-info-grid">
+                <div>
+                  <p><strong>Bill Date:</strong> {selectedBillForView.billDate}</p>
+                  <p><strong>Appointment No:</strong> {selectedBillForView.appointmentNo || 'N/A'}</p>
+                  <p><strong>Patient Name:</strong> {selectedBillForView.patientName}</p>
+                  <p><strong>Age / Gender:</strong> {selectedBillForView.age} / {selectedBillForView.gender}</p>
+                </div>
+                <div>
+                  <p><strong>Mobile No:</strong> {selectedBillForView.mobileNo}</p>
+                  <p><strong>Consulting Doctor:</strong> {selectedBillForView.consultingDoctor}</p>
+                  <p><strong>Treatment Category:</strong> {selectedBillForView.treatmentCategory || 'General Medicine'}</p>
+                  <p><strong>Payment Method:</strong> {selectedBillForView.paymentMethod}</p>
+                </div>
+              </div>
+
+              {/* Medicines Table */}
+              <h4 className="popup-section-title">Prescribed Medicines</h4>
+              <div className="popup-table-container">
+                <table className="popup-meds-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Medicine Name</th>
+                      <th>Strength</th>
+                      <th>(M-A-E-N)</th>
+                      <th>Intake</th>
+                      <th>Duration</th>
+                      <th>Qty</th>
+                      <th>Rate</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedBillForView.medicineItems && selectedBillForView.medicineItems.length > 0 ? (
+                      selectedBillForView.medicineItems.map((item, mIdx) => (
+                        <tr key={item.id || mIdx}>
+                          <td>{mIdx + 1}</td>
+                          <td style={{ fontWeight: '600' }}>{item.medicineName}</td>
+                          <td>{item.strength}</td>
+                          <td>
+                            {(item.timing?.morning ? '1' : '0')} - {(item.timing?.afternoon ? '1' : '0')} - {(item.timing?.evening ? '1' : '0')} - {(item.timing?.night ? '1' : '0')}
+                          </td>
+                          <td>{item.intake}</td>
+                          <td>{item.duration} Days</td>
+                          <td style={{ fontWeight: 'bold' }}>{item.qty}</td>
+                          <td>₹ {parseFloat(item.rate || 0).toFixed(2)}</td>
+                          <td style={{ fontWeight: 'bold' }}>₹ {parseFloat(item.amount || 0).toFixed(2)}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="9" style={{ textAlign: 'center', padding: '10px' }}>No medicines billed.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Cost Summary */}
+              <div className="popup-summary-area">
+                <div className="popup-summary-row">
+                  <span>Total Medicine Amount:</span>
+                  <strong>₹ {parseFloat(selectedBillForView.totalMedicineAmount !== undefined ? selectedBillForView.totalMedicineAmount : (parseFloat(selectedBillForView.totalPayable || 0) - parseFloat(selectedBillForView.consultFee || 0) + parseFloat(selectedBillForView.discount || 0) - (selectedBillForView.taxAmount || 0))).toFixed(2)}</strong>
+                </div>
+                <div className="popup-summary-row">
+                  <span>Consultation Fee:</span>
+                  <strong>₹ {parseFloat(selectedBillForView.consultFee || 0).toFixed(2)}</strong>
+                </div>
+                <div className="popup-summary-row">
+                  <span>Discount:</span>
+                  <strong>₹ {parseFloat(selectedBillForView.discount || 0).toFixed(2)}</strong>
+                </div>
+                <div className="popup-summary-row">
+                  <span>Tax (GST {selectedBillForView.taxPercent || 0}%):</span>
+                  <strong>₹ {parseFloat(selectedBillForView.taxAmount !== undefined ? selectedBillForView.taxAmount : ((parseFloat(selectedBillForView.totalPayable || 0) - parseFloat(selectedBillForView.discount || 0)) * (parseFloat(selectedBillForView.taxPercent || 0) / 100))).toFixed(2)}</strong>
+                </div>
+                <div className="popup-summary-row total-payable-row">
+                  <span>Total Payable:</span>
+                  <span className="payable-num">₹ {parseFloat(selectedBillForView.totalPayable || 0).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="popup-footer">
+              <button className="popup-btn-close" onClick={() => { setShowBillPopup(false); setSelectedBillForView(null); }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

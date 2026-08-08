@@ -19,6 +19,8 @@ const PurchaseMedicine = () => {
   const [draftBills, setDraftBills] = useState({});
   const [selectedApptId, setSelectedApptId] = useState('');
   const [completedApptIds, setCompletedApptIds] = useState([]);
+
+
   const [cancelledApptIds, setCancelledApptIds] = useState(() => {
     const saved = localStorage.getItem('cancelledBillingApptIds');
     return saved ? JSON.parse(saved) : [];
@@ -78,6 +80,8 @@ const PurchaseMedicine = () => {
     }
   };
 
+
+
   const fetchAppointmentsAndDoctors = async () => {
     try {
       const token = sessionStorage.getItem('token');
@@ -88,6 +92,7 @@ const PurchaseMedicine = () => {
         axios.get(`${API_BASE_URL}/doctors`, authHeader).catch(() => ({ data: [] }))
       ]);
 
+      const doctors = docRes.data || [];
       if (docRes.data && Array.isArray(docRes.data)) {
         setDoctorsList(docRes.data);
       }
@@ -100,6 +105,9 @@ const PurchaseMedicine = () => {
         const initialDrafts = {};
         appts.forEach((appt, idx) => {
           const apptId = appt._id || appt.id || `appt_${idx}`;
+          const doctorNameFromAppt = appt.doctor_name || '';
+          const docObj = doctors.find(d => String(d.doctorName || '').toLowerCase() === String(doctorNameFromAppt).toLowerCase());
+          const consultFeeFromRegister = docObj ? (parseFloat(docObj.fees) || 300) : (parseFloat(appt.consultation_fee || appt.consultFee || 300));
 
           // Prescriptions mapping if exists
           let initialMeds = [];
@@ -108,20 +116,28 @@ const PurchaseMedicine = () => {
               const timeStr = String(med.timing || '').toLowerCase();
               const matchedInv = (inventoryMedicines || []).find(i => (i.medicineName || i.brandName || '').toLowerCase().includes(String(med.name || '').toLowerCase()));
               const rate = matchedInv ? (parseFloat(matchedInv.sellingPrice) || 15) : 15;
-              const qty = parseInt(med.qty, 10) || 10;
+
+              const hasMorning = timeStr.includes('morn') || timeStr.includes('1-') || timeStr.includes('morning');
+              const hasAfternoon = timeStr.includes('after') || timeStr.includes('noon') || timeStr.includes('-1-');
+              const hasEvening = timeStr.includes('even') || timeStr.includes('1') || timeStr.includes('evening');
+              const hasNight = timeStr.includes('night') || timeStr.includes('-1');
+              const timesPerDay = (hasMorning ? 1 : 0) + (hasAfternoon ? 1 : 0) + (hasEvening ? 1 : 0) + (hasNight ? 1 : 0) || 1;
+              const durationNum = parseInt(med.days || med.duration, 10) || 5;
+              const qty = parseInt(med.qty, 10) || (durationNum * timesPerDay);
+
               return {
                 id: Date.now() + mIdx,
                 inventoryMedId: matchedInv ? (matchedInv._id || matchedInv.id) : null,
                 medicineName: med.name || med.medicineName || `Medicine #${mIdx + 1}`,
                 strength: med.strength || (matchedInv?.category || '500 mg'),
                 timing: {
-                  morning: timeStr.includes('morn') || timeStr.includes('1-') || timeStr.includes('morning'),
-                  afternoon: timeStr.includes('after') || timeStr.includes('noon') || timeStr.includes('-1-'),
-                  evening: timeStr.includes('even') || timeStr.includes('1') || timeStr.includes('evening'),
-                  night: timeStr.includes('night') || timeStr.includes('-1')
+                  morning: hasMorning,
+                  afternoon: hasAfternoon,
+                  evening: hasEvening,
+                  night: hasNight
                 },
                 intake: med.intake || 'After Food',
-                duration: parseInt(med.duration, 10) || 5,
+                duration: durationNum,
                 qty: qty,
                 rate: rate,
                 amount: qty * rate
@@ -137,7 +153,7 @@ const PurchaseMedicine = () => {
             mobileNo: appt.whatsapp_number || appt.login_mobile || '',
             treatmentCategory: appt.treatment_category || appt.department || appt.treatmentCategory || 'General Medicine',
             consultingDoctor: appt.doctor_name || 'Dr. Vijay Kumar MD',
-            consultFee: parseFloat(appt.consultation_fee || appt.consultFee || 300),
+            consultFee: consultFeeFromRegister,
             paymentMethod: appt.payment_method || appt.paymentMethod || 'UPI / Cash',
             medicineItems: initialMeds,
             discount: 0,
@@ -147,17 +163,19 @@ const PurchaseMedicine = () => {
 
         setDraftBills(initialDrafts);
 
-        // Load first appointment if available (filtering out cancelled ones)
+        // Load first appointment if available (filtering out cancelled ones and showing eligible ones)
         const activeAppts = appts.filter(appt => {
           const apptId = appt._id || appt.id || '';
           const savedCancelled = localStorage.getItem('cancelledBillingApptIds');
           const cancelledIds = savedCancelled ? JSON.parse(savedCancelled) : [];
-          return !cancelledIds.includes(apptId);
+          const statusLower = String(appt.status || '').toLowerCase();
+          const isEligibleStatus = statusLower && statusLower !== 'cancelled' && statusLower !== 'canceled';
+          return isEligibleStatus && !cancelledIds.includes(apptId);
         });
 
         if (activeAppts.length > 0) {
           const firstId = activeAppts[0]._id || activeAppts[0].id || 'appt_0';
-          switchAppointment(firstId, initialDrafts[firstId]);
+          switchAppointment(firstId, initialDrafts[firstId], appts);
         }
       }
     } catch (e) {
@@ -166,8 +184,11 @@ const PurchaseMedicine = () => {
   };
 
   // Switch Active Appointment while preserving previous appointment's draft state
-  const switchAppointment = (newApptId, preloadedDraft = null) => {
-    if (!newApptId) return;
+  const switchAppointment = (newApptId, preloadedDraft = null, listToUse = null) => {
+    if (!newApptId) {
+      handleResetBill();
+      return;
+    }
 
     // 1. Save current active fields into draftBills[selectedApptId]
     if (selectedApptId) {
@@ -194,7 +215,68 @@ const PurchaseMedicine = () => {
     const targetDraft = preloadedDraft || draftBills[newApptId];
     setSelectedApptId(newApptId);
 
-    if (targetDraft) {
+    const currentList = listToUse || appointmentsList;
+    const apptObj = currentList.find(a => (a._id || a.id) === newApptId);
+
+    // Map prescriptions dynamically if apptObj exists
+    let initialMeds = [];
+    if (apptObj && Array.isArray(apptObj.prescription) && apptObj.prescription.length > 0) {
+      initialMeds = apptObj.prescription.map((med, mIdx) => {
+        const timeStr = String(med.timing || '').toLowerCase();
+        const matchedInv = (inventoryMedicines || []).find(i => (i.medicineName || i.brandName || '').toLowerCase().includes(String(med.name || '').toLowerCase()));
+        const rate = matchedInv ? (parseFloat(matchedInv.sellingPrice) || 15) : 15;
+
+        const hasMorning = timeStr.includes('morn') || timeStr.includes('1-') || timeStr.includes('morning');
+        const hasAfternoon = timeStr.includes('after') || timeStr.includes('noon') || timeStr.includes('-1-');
+        const hasEvening = timeStr.includes('even') || timeStr.includes('1') || timeStr.includes('evening');
+        const hasNight = timeStr.includes('night') || timeStr.includes('-1');
+        const timesPerDay = (hasMorning ? 1 : 0) + (hasAfternoon ? 1 : 0) + (hasEvening ? 1 : 0) + (hasNight ? 1 : 0) || 1;
+        const durationNum = parseInt(med.days || med.duration, 10) || 5;
+        const qty = parseInt(med.qty, 10) || (durationNum * timesPerDay);
+
+        return {
+          id: Date.now() + mIdx,
+          inventoryMedId: matchedInv ? (matchedInv._id || matchedInv.id) : null,
+          medicineName: med.name || med.medicineName || `Medicine #${mIdx + 1}`,
+          strength: med.strength || (matchedInv?.category || '500 mg'),
+          timing: {
+            morning: hasMorning,
+            afternoon: hasAfternoon,
+            evening: hasEvening,
+            night: hasNight
+          },
+          intake: med.intake || 'After Food',
+          duration: durationNum,
+          qty: qty,
+          rate: rate,
+          amount: qty * rate
+        };
+      });
+    }
+
+    if (apptObj) {
+      setAppointmentNo(apptObj.booking_id ? `APT-${apptObj.booking_id}` : (targetDraft?.appointmentNo || ''));
+      setPatientName(apptObj.patient_name || targetDraft?.patientName || '');
+      setAge(apptObj.patient_age ? `${apptObj.patient_age} Years` : (targetDraft?.age || '45 Years'));
+      setGender(apptObj.patient_gender || targetDraft?.gender || 'Male');
+      setMobileNo(apptObj.whatsapp_number || apptObj.login_mobile || targetDraft?.mobileNo || '');
+      setTreatmentCategory(apptObj.treatment_category || apptObj.department || targetDraft?.treatmentCategory || 'General Medicine');
+      setConsultingDoctor(apptObj.doctor_name || targetDraft?.consultingDoctor || 'Dr. Vijay Kumar MD');
+
+      const doctorNameFromAppt = apptObj.doctor_name || '';
+      const docObj = doctorsList.find(d => String(d.doctorName || '').toLowerCase() === String(doctorNameFromAppt).toLowerCase());
+      const consultFeeFromRegister = docObj ? (parseFloat(docObj.fees) || 300) : (parseFloat(apptObj.consultation_fee || apptObj.consultFee || 300));
+
+      setConsultFee(consultFeeFromRegister);
+      setPaymentMethod(targetDraft?.paymentMethod || 'Cash');
+
+      const targetMeds = (initialMeds && initialMeds.length > 0)
+        ? initialMeds
+        : ((targetDraft && targetDraft.medicineItems) ? targetDraft.medicineItems : []);
+      setMedicineItems(targetMeds);
+      setDiscount(targetDraft?.discount || 0);
+      setTaxPercent(targetDraft?.taxPercent || 0);
+    } else if (targetDraft) {
       setAppointmentNo(targetDraft.appointmentNo);
       setPatientName(targetDraft.patientName);
       setAge(targetDraft.age);
@@ -202,7 +284,7 @@ const PurchaseMedicine = () => {
       setMobileNo(targetDraft.mobileNo);
       setTreatmentCategory(targetDraft.treatmentCategory);
       setConsultingDoctor(targetDraft.consultingDoctor);
-      setConsultFee(targetDraft.consultFee || 0);
+      setConsultFee(targetDraft.consultFee || 300);
       setPaymentMethod(targetDraft.paymentMethod || 'Cash');
       setMedicineItems(targetDraft.medicineItems || []);
       setDiscount(targetDraft.discount || 0);
@@ -521,14 +603,13 @@ const PurchaseMedicine = () => {
     setTimeout(triggerPdf, 150);
   };
 
-  // Filter queue: ONLY show appointments where medicines are added (>0) OR currently active selected, and NOT completed/cancelled!
+  // Filter queue: ONLY show appointments where medicines are added (>0), and NOT completed/cancelled!
   const activeQueueAppointments = appointmentsList.filter(appt => {
     const apptId = appt._id || appt.id;
     if (completedApptIds.includes(apptId)) return false;
     if (cancelledApptIds.includes(apptId)) return false;
     const draft = draftBills[apptId];
-    const hasMeds = draft && Array.isArray(draft.medicineItems) && draft.medicineItems.length > 0;
-    return hasMeds || apptId === selectedApptId;
+    return draft && Array.isArray(draft.medicineItems) && draft.medicineItems.length > 0;
   });
 
   return (
@@ -556,9 +637,6 @@ const PurchaseMedicine = () => {
           </button>
           <button className="btn-action btn-print" onClick={handlePrintBill} title="Print Invoice">
             <FaPrint /> <span>Print Bill</span>
-          </button>
-          <button className="btn-action btn-download" onClick={handleDownloadPDF} disabled={downloading || !selectedApptId || !completedApptIds.includes(selectedApptId)} title="Download PDF">
-            <FaDownload /> <span>{downloading ? 'Downloading...' : 'Download PDF'}</span>
           </button>
         </div>
       </div>
@@ -589,8 +667,8 @@ const PurchaseMedicine = () => {
                   <span className="pill-name">{appt.patient_name}</span>
                   {itemCount > 0 && <span className="pill-badge-count">{itemCount} Meds</span>}
                   {isDone ? <FaCheckCircle className="icon-done" /> : <FaClock className="icon-pending" />}
-                  <span 
-                    className="pill-cancel-btn" 
+                  <span
+                    className="pill-cancel-btn"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleRemoveFromQueue(e, apptId);
@@ -628,7 +706,9 @@ const PurchaseMedicine = () => {
               {appointmentsList
                 .filter(a => {
                   const apptId = a._id || a.id;
-                  return !cancelledApptIds.includes(apptId);
+                  const statusLower = String(a.status || '').toLowerCase();
+                  const isEligibleStatus = statusLower && statusLower !== 'cancelled' && statusLower !== 'canceled';
+                  return isEligibleStatus && !cancelledApptIds.includes(apptId);
                 })
                 .map((a, idx) => (
                   <option key={idx} value={a._id || a.id || `appt_${idx}`}>
@@ -1045,6 +1125,7 @@ const PurchaseMedicine = () => {
         </div>
 
       </div>
+
     </div>
   );
 };
