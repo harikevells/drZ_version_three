@@ -371,8 +371,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statLabelText: {
-    fontSize: 15,
-    color: '#555',
+    fontSize: 14,
+    color: '#181818ff',
     fontWeight: '600',
     lineHeight: 20,
   },
@@ -419,8 +419,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   avatarImage: {
-    width: 44,
-    height: 44,
+    width: '100%',
+    height: '100%',
   },
   nameAndStatus: {
     flex: 1,
@@ -459,6 +459,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 12,
     color: '#64748B',
+    width:'100%',
     marginLeft: 4,
   },
   actionButtons: {
@@ -546,8 +547,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   recentAvatarImage: {
-    width: 40,
-    height: 40,
+    width: '100%',
+    height: '100%',
   },
   historyDetails: {
     flex: 1,

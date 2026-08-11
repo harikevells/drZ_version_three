@@ -27,9 +27,11 @@ const getDoctorDashboard = async (req, res) => {
 
         for (let i = 0; i < patientRequests.length; i++) {
             if (patientRequests[i].login_mobile) {
-                const pat = await Patient.findOne({ contactNumber: patientRequests[i].login_mobile });
+                const pat = await Patient.findOne({ identifier: patientRequests[i].login_mobile });
+                console.log(`[Dashboard] Checking Pat Req for ${patientRequests[i].login_mobile}: pat found=${!!pat}, hasImage=${!!(pat && pat.profileImage)}`);
                 if (pat && pat.profileImage) {
                     patientRequests[i].profileImage = pat.profileImage;
+                    console.log(`[Dashboard] Attached profileImage for Pat Req!`);
                 }
             }
         }
@@ -40,9 +42,11 @@ const getDoctorDashboard = async (req, res) => {
 
         for (let i = 0; i < recentPatients.length; i++) {
             if (recentPatients[i].login_mobile) {
-                const pat = await Patient.findOne({ contactNumber: recentPatients[i].login_mobile });
+                const pat = await Patient.findOne({ identifier: recentPatients[i].login_mobile });
+                console.log(`[Dashboard] Checking Pat Recent for ${recentPatients[i].login_mobile}: pat found=${!!pat}, hasImage=${!!(pat && pat.profileImage)}`);
                 if (pat && pat.profileImage) {
                     recentPatients[i].profileImage = pat.profileImage;
+                    console.log(`[Dashboard] Attached profileImage for Pat Recent!`);
                 }
             }
         }
