@@ -17,15 +17,27 @@ import {
   FaFileInvoiceDollar,
   FaSpinner,
   FaEye,
-  FaTimes
+  FaTimes,
+  FaChartLine,
+  FaCalendarDay,
+  FaUsers
 } from 'react-icons/fa';
 import logoImage from '../assets/DoctorlogoApp1.png';
+import Pagination from '../components/Pagination';
 import './PurchaseMedicine.css'; // Reuse our perfected A4 layout styles!
 
 const BillingMedicine = () => {
   const [billings, setBillings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const userRole = sessionStorage.getItem('role') || 'Admin';
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, dateFilter]);
   
   // States for generating PDF off-screen
   const [selectedBill, setSelectedBill] = useState(null);
@@ -150,9 +162,66 @@ const BillingMedicine = () => {
     );
   });
 
+  const totalPages = Math.ceil(filteredBillings.length / itemsPerPage);
+  const paginatedBillings = filteredBillings.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  let totalSales = 0;
+  let todaySales = 0;
+  let monthSales = 0;
+  let yearSales = 0;
+  let totalPatients = 0;
+
+  if (userRole === 'Admin') {
+    const referenceDate = dateFilter ? new Date(dateFilter) : new Date();
+    const currDay = referenceDate.getDate();
+    const currMonth = referenceDate.getMonth();
+    const currYear = referenceDate.getFullYear();
+
+    const parseBillDate = (dateStr) => {
+      if (!dateStr) return null;
+      const str = String(dateStr).trim();
+      const ddmmyyyy = str.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+      if (ddmmyyyy) return new Date(`${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`);
+      const d = new Date(str);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    let patientsSet = new Set();
+
+    billings.forEach(bill => {
+      const bDate = parseBillDate(bill.billDate);
+      const totalPayable = parseFloat(bill.totalPayable || 0);
+      const consultFee = parseFloat(bill.consultFee || 0);
+      const medAmt = bill.totalMedicineAmount !== undefined 
+        ? parseFloat(bill.totalMedicineAmount) 
+        : Math.max(0, totalPayable - consultFee);
+
+      if (bill.patientName) {
+        patientsSet.add(bill.patientName.toLowerCase().trim() + (bill.mobileNo || ''));
+      }
+
+      if (bDate) {
+        totalSales += medAmt;
+        if (bDate.getFullYear() === currYear) {
+          yearSales += medAmt;
+          if (bDate.getMonth() === currMonth) {
+            monthSales += medAmt;
+            if (bDate.getDate() === currDay) {
+              todaySales += medAmt;
+            }
+          }
+        }
+      }
+    });
+    totalPatients = patientsSet.size || billings.length;
+  }
+
   return (
-    <div className="bill-page-wrapper">
-      <div className="bill-top-action-bar no-print">
+    <div className="bill-page-wrapper" style={{ width: '100%' }}>
+      <div className="bill-top-action-bar no-print" style={{ boxShadow: 'none', padding: '16px 0' }}>
         <div className="action-bar-title">
           <FaFileInvoiceDollar size={24} color="#2563eb" />
           <div>
@@ -160,21 +229,124 @@ const BillingMedicine = () => {
             <p className="sub-header-appt-status">View and download completed patient medicine billing records</p>
           </div>
         </div>
-      </div>
 
-      {/* Search Bar */}
-      <div className="bill-input-form-card no-print" style={{ marginBottom: '20px', padding: '16px 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc', padding: '8px 16px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
-          <FaSearch color="#64748b" />
-          <input
-            type="text"
-            placeholder="Search by Bill No, Patient Name, or Appointment No..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '14px', color: '#1e293b' }}
-          />
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc', padding: '8px 16px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
+            <FaSearch color="#64748b" />
+            <input
+              type="text"
+              placeholder="Search by Bill No, Patient Name, or Appointment No..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ border: 'none', background: 'transparent', outline: 'none', width: '300px', fontSize: '14px', color: '#1e293b' }}
+            />
+          </div>
+          {userRole === 'Admin' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc', padding: '8px 16px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
+              <FaCalendarAlt color="#64748b" />
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '14px', color: '#1e293b' }}
+              />
+            </div>
+          )}
         </div>
       </div>
+
+      {userRole === 'Admin' && (
+        <div className="pharmacy-stats-wrapper" style={{ marginBottom: '20px', width: '100%' }}>
+          <div className="top-stats-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+            <div className="top-stat-card">
+              <div className="top-card-body" style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '6px', padding: '0' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div className="stat-icon-box" style={{ background: '#e0e7ff', color: '#4338ca' }}><FaChartLine size={24} /></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                      <span className="stat-label" style={{ fontWeight: '600', fontSize: '14px', color: '#64748b', textAlign: 'left' }}>Total Sales</span>
+                      <h2 className="stat-valu" style={{ margin: 0, fontSize: '26px', fontWeight: '800', textAlign: 'left' }}>₹ {Math.round(totalSales).toLocaleString('en-IN')}</h2>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', width: '100%' }}>
+                  <span className="stat-subtext" style={{ color: '#4338ca', fontSize: '12px', fontWeight: '500' }}>All time medicine sales</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="top-stat-card">
+              <div className="top-card-body" style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '6px', padding: '0' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div className="stat-icon-box" style={{ background: '#dcfce7', color: '#15803d' }}><FaCalendarDay size={24} /></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                      <span className="stat-label" style={{ fontWeight: '600', fontSize: '14px', color: '#64748b', textAlign: 'left' }}>Today's Sales</span>
+                      <h2 className="stat-valu" style={{ margin: 0, fontSize: '26px', fontWeight: '800', textAlign: 'left' }}>₹ {Math.round(todaySales).toLocaleString('en-IN')}</h2>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', width: '100%' }}>
+                  <span className="stat-subtext" style={{ color: '#15803d', fontSize: '12px', fontWeight: '500' }}>Today's medicine sales</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="top-stat-card">
+              <div className="top-card-body" style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '6px', padding: '0' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div className="stat-icon-box" style={{ background: '#fef3c7', color: '#b45309' }}><FaCalendarAlt size={22} /></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                      <span className="stat-label" style={{ fontWeight: '600', fontSize: '14px', color: '#64748b', textAlign: 'left' }}>Monthly Sales</span>
+                      <h2 className="stat-valu" style={{ margin: 0, fontSize: '26px', fontWeight: '800', textAlign: 'left' }}>₹ {Math.round(monthSales).toLocaleString('en-IN')}</h2>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', width: '100%' }}>
+                  <span className="stat-subtext" style={{ color: '#b45309', fontSize: '12px', fontWeight: '500' }}>This month's medicine sales</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="top-stat-card">
+              <div className="top-card-body" style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '6px', padding: '0' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div className="stat-icon-box" style={{ background: '#f3e8ff', color: '#7e22ce' }}><FaCalendarAlt size={24} /></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                      <span className="stat-label" style={{ fontWeight: '600', fontSize: '14px', color: '#64748b', textAlign: 'left' }}>Yearly Sales</span>
+                      <h2 className="stat-valu" style={{ margin: 0, fontSize: '26px', fontWeight: '800', textAlign: 'left' }}>₹ {Math.round(yearSales).toLocaleString('en-IN')}</h2>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', width: '100%' }}>
+                  <span className="stat-subtext" style={{ color: '#7e22ce', fontSize: '12px', fontWeight: '500' }}>This year's medicine sales</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="top-stat-card">
+              <div className="top-card-body" style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '6px', padding: '0' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div className="stat-icon-box" style={{ background: '#fce7f3', color: '#be185d' }}><FaUsers size={24} /></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                      <span className="stat-label" style={{ fontWeight: '600', fontSize: '14px', color: '#64748b', textAlign: 'left' }}>Total Patients</span>
+                      <h2 className="stat-valu" style={{ margin: 0, fontSize: '26px', fontWeight: '800', textAlign: 'left' }}>{totalPatients}</h2>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', width: '100%' }}>
+                  <span className="stat-subtext" style={{ color: '#be185d', fontSize: '12px', fontWeight: '500' }}>Patients purchased medicine</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
       {/* Billings Table */}
       <div className="bill-input-form-card no-print" style={{ padding: '0px', overflow: 'hidden' }}>
@@ -199,12 +371,12 @@ const BillingMedicine = () => {
                   <th style={{ padding: '12px 16px', textAlign: 'center' }}>Age/Gender</th>
                   <th style={{ padding: '12px 16px', textAlign: 'center' }}>Doctor Name</th>
                   <th style={{ padding: '12px 16px', textAlign: 'center' }}>Payment Method</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Total Payable</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>{userRole === 'Admin' ? 'Medicine Amount' : 'Total Payable'}</th>
                   <th style={{ padding: '12px 16px', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody style={{ color: '#334155' }}>
-                {filteredBillings.map((bill, idx) => (
+                {paginatedBillings.map((bill, idx) => (
                   <tr key={bill._id || bill.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', color: '#0f172a' }}>{bill.billNo}</td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>{bill.billDate}</td>
@@ -217,7 +389,13 @@ const BillingMedicine = () => {
                         {bill.paymentMethod || '-'}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '700', color: '#0f172a' }}>₹ {parseFloat(bill.totalPayable || 0).toFixed(2)}</td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '700', color: '#0f172a' }}>
+                      ₹ {userRole === 'Admin' 
+                          ? (bill.totalMedicineAmount !== undefined 
+                              ? parseFloat(bill.totalMedicineAmount).toFixed(2) 
+                              : Math.max(0, parseFloat(bill.totalPayable || 0) - parseFloat(bill.consultFee || 0)).toFixed(2))
+                          : parseFloat(bill.totalPayable || 0).toFixed(2)}
+                    </td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
                         <button
@@ -239,27 +417,29 @@ const BillingMedicine = () => {
                           <FaEye size={12} />
                           <span>View</span>
                         </button>
-                        <button
-                          onClick={() => handleDownloadPDF(bill)}
-                          disabled={downloadingId === (bill._id || bill.id)}
-                          style={{
-                            background: '#2563eb',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '6px 12px',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            opacity: downloadingId === (bill._id || bill.id) ? 0.7 : 1
-                          }}
-                        >
-                          <FaDownload size={11} />
-                          <span>{downloadingId === (bill._id || bill.id) ? 'Downloading...' : 'PDF'}</span>
-                        </button>
+                        {userRole !== 'Admin' && (
+                          <button
+                            onClick={() => handleDownloadPDF(bill)}
+                            disabled={downloadingId === (bill._id || bill.id)}
+                            style={{
+                              background: '#2563eb',
+                              color: '#ffffff',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              opacity: downloadingId === (bill._id || bill.id) ? 0.7 : 1
+                            }}
+                          >
+                            <FaDownload size={11} />
+                            <span>{downloadingId === (bill._id || bill.id) ? 'Downloading...' : 'PDF'}</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -269,6 +449,16 @@ const BillingMedicine = () => {
           </div>
         )}
       </div>
+
+      {filteredBillings.length > 0 && (
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filteredBillings.length}
+          itemsPerPage={itemsPerPage}
+        />
+      )}
 
       {/* ========================================================================= */}
       {/* HIDDEN PRINTABLE BILL CANVAS SHEET (Used for generating PDF on-demand)    */}
@@ -610,10 +800,12 @@ const BillingMedicine = () => {
                   <span>Total Medicine Amount:</span>
                   <strong>₹ {parseFloat(selectedBillForView.totalMedicineAmount !== undefined ? selectedBillForView.totalMedicineAmount : (parseFloat(selectedBillForView.totalPayable || 0) - parseFloat(selectedBillForView.consultFee || 0) + parseFloat(selectedBillForView.discount || 0) - (selectedBillForView.taxAmount || 0))).toFixed(2)}</strong>
                 </div>
-                <div className="popup-summary-row">
-                  <span>Consultation Fee:</span>
-                  <strong>₹ {parseFloat(selectedBillForView.consultFee || 0).toFixed(2)}</strong>
-                </div>
+                {userRole !== 'Admin' && (
+                  <div className="popup-summary-row">
+                    <span>Consultation Fee:</span>
+                    <strong>₹ {parseFloat(selectedBillForView.consultFee || 0).toFixed(2)}</strong>
+                  </div>
+                )}
                 <div className="popup-summary-row">
                   <span>Discount:</span>
                   <strong>₹ {parseFloat(selectedBillForView.discount || 0).toFixed(2)}</strong>
@@ -623,8 +815,14 @@ const BillingMedicine = () => {
                   <strong>₹ {parseFloat(selectedBillForView.taxAmount !== undefined ? selectedBillForView.taxAmount : ((parseFloat(selectedBillForView.totalPayable || 0) - parseFloat(selectedBillForView.discount || 0)) * (parseFloat(selectedBillForView.taxPercent || 0) / 100))).toFixed(2)}</strong>
                 </div>
                 <div className="popup-summary-row total-payable-row">
-                  <span>Total Payable:</span>
-                  <span className="payable-num">₹ {parseFloat(selectedBillForView.totalPayable || 0).toFixed(2)}</span>
+                  <span>{userRole === 'Admin' ? 'Total Medicine Amount:' : 'Total Payable:'}</span>
+                  <span className="payable-num">
+                    ₹ {userRole === 'Admin'
+                        ? (selectedBillForView.totalMedicineAmount !== undefined 
+                            ? parseFloat(selectedBillForView.totalMedicineAmount).toFixed(2) 
+                            : Math.max(0, parseFloat(selectedBillForView.totalPayable || 0) - parseFloat(selectedBillForView.consultFee || 0)).toFixed(2))
+                        : parseFloat(selectedBillForView.totalPayable || 0).toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>

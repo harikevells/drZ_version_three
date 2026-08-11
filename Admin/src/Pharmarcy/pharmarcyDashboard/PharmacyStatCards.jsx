@@ -102,7 +102,7 @@ const PharmacyStatCards = ({ stats, selectedDate, onDateChange }) => {
             <FaShoppingCart size={22} />
           </div>
           <div className="financial-content">
-            <span className="financial-label">Today's Sales</span>
+            <span className="financial-label">Total's Profit</span>
             <h2 className="financial-value">₹ {todaysSales.toLocaleString('en-IN')}</h2>
             <div className="trend-badge trend-green">
               <span>{salesGrowth} vs yesterday ↗</span>

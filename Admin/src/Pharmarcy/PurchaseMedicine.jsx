@@ -18,13 +18,12 @@ const PurchaseMedicine = () => {
 
   const [draftBills, setDraftBills] = useState({});
   const [selectedApptId, setSelectedApptId] = useState('');
+  // billedApptIds: loaded dynamically from /billings API (no localStorage)
+  const [billedApptIds, setBilledApptIds] = useState([]);
+  // completedApptIds: tracks print/download-marked completions within the session
   const [completedApptIds, setCompletedApptIds] = useState([]);
 
-
-  const [cancelledApptIds, setCancelledApptIds] = useState(() => {
-    const saved = localStorage.getItem('cancelledBillingApptIds');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [cancelledApptIds, setCancelledApptIds] = useState([]);
 
   // Active Bill State (Displayed on UI & Sheet)
   const [billNo, setBillNo] = useState(`MB-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(10000 + Math.random() * 90000)}`);
@@ -67,7 +66,25 @@ const PurchaseMedicine = () => {
   useEffect(() => {
     fetchInventory();
     fetchAppointmentsAndDoctors();
+    fetchBilledAppointmentIds();
   }, []);
+
+  // Fetch all billings to know which appointmentIds are already billed
+  const fetchBilledAppointmentIds = async () => {
+    try {
+      const token = sessionStorage.getItem('token');
+      const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const res = await axios.get(`${API_BASE_URL}/billings`, authHeader);
+      if (res.data && Array.isArray(res.data)) {
+        const ids = res.data
+          .map(b => b.appointmentId)
+          .filter(id => id && id !== '');
+        setBilledApptIds(ids);
+      }
+    } catch (e) {
+      console.log('Error loading billings:', e);
+    }
+  };
 
   const fetchInventory = async () => {
     try {
@@ -99,6 +116,12 @@ const PurchaseMedicine = () => {
 
       if (apptRes.data && Array.isArray(apptRes.data)) {
         const appts = apptRes.data;
+
+        // DEBUG: log all statuses to diagnose filter issues
+        console.log('[PurchaseMedicine] All appointments from API:', appts.map(a => ({ id: a._id || a.id, booking_id: a.booking_id, status: a.status })));
+        const completedOnes = appts.filter(a => String(a.status || '').trim().toLowerCase() === 'completed');
+        console.log('[PurchaseMedicine] Completed appointments:', completedOnes.map(a => a.booking_id));
+
         setAppointmentsList(appts);
 
         // Build initial draft state for all appointments
@@ -163,14 +186,14 @@ const PurchaseMedicine = () => {
 
         setDraftBills(initialDrafts);
 
-        // Load first appointment if available (filtering out cancelled ones and showing eligible ones)
+        // Load first appointment if available - ONLY show completed appointments
         const activeAppts = appts.filter(appt => {
           const apptId = appt._id || appt.id || '';
           const savedCancelled = localStorage.getItem('cancelledBillingApptIds');
           const cancelledIds = savedCancelled ? JSON.parse(savedCancelled) : [];
-          const statusLower = String(appt.status || '').toLowerCase();
-          const isEligibleStatus = statusLower && statusLower !== 'cancelled' && statusLower !== 'canceled';
-          return isEligibleStatus && !cancelledIds.includes(apptId);
+          const statusLower = String(appt.status || '').trim().toLowerCase();
+          const isCompleted = statusLower === 'completed' || statusLower === 'complete';
+          return isCompleted && !cancelledIds.includes(apptId);
         });
 
         if (activeAppts.length > 0) {
@@ -379,10 +402,10 @@ const PurchaseMedicine = () => {
     setMedicineItems(medicineItems.filter(item => item.id !== id));
   };
 
-  // Mark current appointment billing as complete
+  // Mark current appointment as print/download completed (session only)
   const handleMarkCompleted = () => {
     if (selectedApptId && !completedApptIds.includes(selectedApptId)) {
-      setCompletedApptIds([...completedApptIds, selectedApptId]);
+      setCompletedApptIds(prev => [...prev, selectedApptId]);
     }
   };
 
@@ -465,12 +488,15 @@ const PurchaseMedicine = () => {
       const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       await axios.post(`${API_BASE_URL}/billings`, billData, authHeader);
 
-      // Mark current appointment as completed
-      if (selectedApptId && !completedApptIds.includes(selectedApptId)) {
-        setCompletedApptIds(prev => [...prev, selectedApptId]);
+      // Dynamically mark this appointment as billed (no localStorage)
+      if (selectedApptId && !billedApptIds.includes(selectedApptId)) {
+        setBilledApptIds(prev => [...prev, selectedApptId]);
       }
 
       alert('Billing completed and saved successfully! Medicine inventory stock has been reduced dynamically.');
+
+      // Reset form so billed appointment deselects immediately
+      handleResetBill();
     } catch (error) {
       console.error('Error completing billing:', error);
       alert('An error occurred while updating medicine stock.');
@@ -603,13 +629,13 @@ const PurchaseMedicine = () => {
     setTimeout(triggerPdf, 150);
   };
 
-  // Filter queue: ONLY show appointments where medicines are added (>0), and NOT completed/cancelled!
+  // Filter queue: ONLY show 'completed' status appointments NOT yet billed (dynamic from API)
   const activeQueueAppointments = appointmentsList.filter(appt => {
     const apptId = appt._id || appt.id;
-    if (completedApptIds.includes(apptId)) return false;
+    if (billedApptIds.includes(apptId)) return false;  // Already billed — hide
     if (cancelledApptIds.includes(apptId)) return false;
-    const draft = draftBills[apptId];
-    return draft && Array.isArray(draft.medicineItems) && draft.medicineItems.length > 0;
+    const statusLower = String(appt.status || '').trim().toLowerCase();
+    return statusLower === 'completed' || statusLower === 'complete';
   });
 
   return (
@@ -700,15 +726,17 @@ const PurchaseMedicine = () => {
         <h3 className="form-section-title">Patient & Billing Information</h3>
         <div className="form-grid-3">
           <div className="form-field">
-            <label>Select Patient Appointment:</label>
+            <label>Select Patient Appointment (Completed):</label>
             <select value={selectedApptId} onChange={(e) => switchAppointment(e.target.value)}>
-              <option value="">Select Appointment...</option>
+              <option value="">Select Completed Appointment...</option>
               {appointmentsList
                 .filter(a => {
                   const apptId = a._id || a.id;
-                  const statusLower = String(a.status || '').toLowerCase();
-                  const isEligibleStatus = statusLower && statusLower !== 'cancelled' && statusLower !== 'canceled';
-                  return isEligibleStatus && !cancelledApptIds.includes(apptId);
+                  const statusLower = String(a.status || '').trim().toLowerCase();
+                  const isCompleted = statusLower === 'completed' || statusLower === 'complete';
+                  // Dynamically check against billings API data — no localStorage
+                  const alreadyBilled = billedApptIds.includes(apptId);
+                  return isCompleted && !alreadyBilled;
                 })
                 .map((a, idx) => (
                   <option key={idx} value={a._id || a.id || `appt_${idx}`}>

@@ -142,7 +142,7 @@ input:checked + .toggle-slider:before {
 }
 
 .submit-btn {
-    background-color: #0A2558;
+    background-color: #4f7cf6;
     color: white;
     font-weight: 600;
     padding: 12px 40px;
@@ -154,7 +154,7 @@ input:checked + .toggle-slider:before {
 }
 
 .submit-btn:hover {
-    background-color: #06183c;
+    background-color: #3b63d6;
 }
 
 .list-section-header {

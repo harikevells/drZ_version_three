@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
 import { FaEye, FaTimes } from 'react-icons/fa';
 import Pagination from '../components/Pagination';
+import AdminAppointmentCreate from './AdminAppointmentCreate';
 import './PatientAppointments.css';
 
 const removeTamil = (text) => {
@@ -44,6 +45,7 @@ const PatientAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
@@ -147,227 +149,246 @@ const PatientAppointments = () => {
 
   return (
     <div className="patient-appointments-container">
-      <div className="header-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', gap: '15px', flexWrap: 'wrap' }}>
-        <h2>Patient Appointments</h2>
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <input
-            type="date"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            style={{ padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '14px', outline: 'none', color: '#4b5563' }}
-          />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '14px', width: '250px', outline: 'none' }}
-          />
-        </div>
-      </div>
-
-      <div className="table-container">
-        {loading ? (
-          <p className="loading-text">Loading appointments...</p>
-        ) : (
-          <>
-            <table className="appointments-table">
-              <thead>
-                <tr>
-                  <th>Booking ID</th>
-                  <th>Patient Name</th>
-                  <th>Doctor Name</th>
-                  <th>Appointment Date</th>
-                  <th>Appointment Time</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedAppointments.length > 0 ? paginatedAppointments.map((appt) => (
-                  <tr key={appt.id || appt._id}>
-                    <td>{appt.booking_id || '0000'}</td>
-                    <td>{appt.patient_name}</td>
-                    <td>{removeTamil(appt.doctor_name)}</td>
-                    <td>{appt.appointment_date ? appt.appointment_date.replace(/\s+/g, '') : ''}</td>
-                    <td>{formatTimeSlot(appt.appointment_time)}</td>
-                    <td>
-                      <span className={`status-badge ${(appt.status || 'Pending').toLowerCase()}`}>
-                        {appt.status || 'Pending'}
-                      </span>
-                    </td>
-                    <td>
-                      <button className="view-btn" onClick={() => handleView(appt)}>
-                        <FaEye />
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan="7" className="text-center">No appointments found</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={filteredAppointments.length}
-              itemsPerPage={itemsPerPage}
-            />
-          </>
-        )}
-      </div>
-
-      {isModalOpen && selectedAppointment && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Appointment Details</h3>
-              <button className="close-btn" onClick={closeModal}>
-                <FaTimes />
+      {isCreating ? (
+        <AdminAppointmentCreate
+          onCancel={() => setIsCreating(false)}
+          onSuccess={() => {
+            setIsCreating(false);
+            setLoading(true);
+            fetchAppointmentsAndDoctors();
+          }}
+        />
+      ) : (
+        <>
+          <div className="header-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', gap: '15px', flexWrap: 'wrap' }}>
+            <h2>Patient Appointments</h2>
+            <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                style={{ padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '14px', outline: 'none', color: '#4b5563' }}
+              />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '14px', width: '250px', outline: 'none' }}
+              />
+              <button
+                className="create-btn"
+                onClick={() => setIsCreating(true)}
+              >
+                + Create Appointment
               </button>
             </div>
-            <div className="modal-body-grid">
-              {/* Left Side: Doctor Details */}
-              <div className="detail-column">
-                <h4 className="column-title">Doctor Details</h4>
-                {(() => {
-                  const doctor = doctors.find(d => d.doctorName === selectedAppointment.doctor_name);
-                  if (doctor) {
-                    return (
-                      <>
-                        <div className="detail-row">
-                          <span className="detail-label">Name:</span>
-                          <span className="detail-value">{removeTamil(doctor.doctorName)}</span>
-                        </div>
-                        <div className="detail-row">
-                          <span className="detail-label">Department:</span>
-                          <span className="detail-value">{removeTamil(doctor.department) || 'N/A'}</span>
-                        </div>
-                        <div className="detail-row">
-                          <span className="detail-label">Gender:</span>
-                          <span className="detail-value">{doctor.gender || 'N/A'}</span>
-                        </div>
-                        <div className="detail-row">
-                          <span className="detail-label">Experience:</span>
-                          <span className="detail-value">{doctor.experience || 'N/A'}</span>
-                        </div>
-                        <div className="detail-row">
-                          <span className="detail-label">Mobile:</span>
-                          <span className="detail-value">{doctor.mobile || 'N/A'}</span>
-                        </div>
-                        <div className="detail-row">
-                          <span className="detail-label">Email:</span>
-                          <span className="detail-value">{doctor.email || 'N/A'}</span>
-                        </div>
-                      </>
-                    );
-                  } else {
-                    return (
-                      <div className="detail-row">
-                        <span className="detail-label">Name:</span>
-                        <span className="detail-value">{removeTamil(selectedAppointment.doctor_name)}</span>
-                      </div>
-                    );
-                  }
-                })()}
-              </div>
+          </div>
 
-              {/* Right Side: Patient & Appointment Details */}
-              <div className="detail-column">
-                <h4 className="column-title">Patient & Appointment</h4>
-                <div className="detail-row">
-                  <span className="detail-label">Booking ID:</span>
-                  <span className="detail-value">{selectedAppointment.booking_id || '0000'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Patient Name:</span>
-                  <span className="detail-value">{selectedAppointment.patient_name}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Age/Gender:</span>
-                  <span className="detail-value">{selectedAppointment.patient_age || 'N/A'} / {selectedAppointment.patient_gender || 'N/A'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">WhatsApp:</span>
-                  <span className="detail-value">{selectedAppointment.whatsapp_number || 'N/A'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Login Mobile:</span>
-                  <span className="detail-value">{selectedAppointment.login_mobile || 'N/A'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Date:</span>
-                  <span className="detail-value">{selectedAppointment.appointment_date ? selectedAppointment.appointment_date.replace(/\s+/g, '') : ''}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Time:</span>
-                  <span className="detail-value">{formatTimeSlot(selectedAppointment.appointment_time)}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Video Call:</span>
-                  <span className="detail-value">{selectedAppointment.video_call || 'No'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Consult Fee:</span>
-                  <span className="detail-value" style={{ fontWeight: 'bold', color: '#2563eb' }}>
-                    ₹{selectedAppointment.consultation_fee || 0}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Payment Method:</span>
-                  <span className="detail-value">{selectedAppointment.payment_method || 'N/A'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Payment Status:</span>
-                  <span className="detail-value">{selectedAppointment.payment_status || 'Pending'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Payment ID:</span>
-                  <span className="detail-value">{selectedAppointment.payment_id || 'N/A'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Status:</span>
-                  <span className={`detail-value status-text ${(selectedAppointment.status || 'Pending').toLowerCase()}`}>
-                    {selectedAppointment.status || 'Pending'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-
-            {selectedAppointment.prescription && selectedAppointment.prescription.length > 0 && (
-              <div style={{ padding: '0 25px 25px 25px' }}>
-                <h4 className="column-title">Prescription Details</h4>
-                <div className="table-container" style={{ padding: '0', boxShadow: 'none' }}>
-                  <table className="appointments-table">
-                    <thead>
-                      <tr>
-                        <th>S.No</th>
-                        <th>Medicine Name</th>
-                        <th>Time</th>
-                        <th>Intake</th>
+          <div className="table-container">
+            {loading ? (
+              <p className="loading-text">Loading appointments...</p>
+            ) : (
+              <>
+                <table className="appointments-table">
+                  <thead>
+                    <tr>
+                      <th>Booking ID</th>
+                      <th>Patient Name</th>
+                      <th>Doctor Name</th>
+                      <th>Appointment Date</th>
+                      <th>Appointment Time</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedAppointments.length > 0 ? paginatedAppointments.map((appt) => (
+                      <tr key={appt.id || appt._id}>
+                        <td>{appt.booking_id || '0000'}</td>
+                        <td>{appt.patient_name}</td>
+                        <td>{removeTamil(appt.doctor_name)}</td>
+                        <td>{appt.appointment_date ? appt.appointment_date.replace(/\s+/g, '') : ''}</td>
+                        <td>{formatTimeSlot(appt.appointment_time)}</td>
+                        <td>
+                          <span className={`status-badge ${(appt.status || 'Pending').toLowerCase()}`}>
+                            {appt.status || 'Pending'}
+                          </span>
+                        </td>
+                        <td>
+                          <button className="view-btn" onClick={() => handleView(appt)}>
+                            <FaEye />
+                          </button>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {selectedAppointment.prescription.map((med, index) => (
-                        <tr key={med.id || index}>
-                          <td>{index + 1}</td>
-                          <td>{med.name}</td>
-                          <td>{med.timing}</td>
-                          <td>{med.intake}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    )) : (
+                      <tr>
+                        <td colSpan="7" className="text-center">No appointments found</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={filteredAppointments.length}
+                  itemsPerPage={itemsPerPage}
+                />
+              </>
             )}
           </div>
-        </div>
+
+          {isModalOpen && selectedAppointment && (
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h3>Appointment Details</h3>
+                  <button className="close-btn" onClick={closeModal}>
+                    <FaTimes />
+                  </button>
+                </div>
+                <div className="modal-body-grid">
+                  {/* Left Side: Doctor Details */}
+                  <div className="detail-column">
+                    <h4 className="column-title">Doctor Details</h4>
+                    {(() => {
+                      const doctor = doctors.find(d => d.doctorName === selectedAppointment.doctor_name);
+                      if (doctor) {
+                        return (
+                          <>
+                            <div className="detail-row">
+                              <span className="detail-label">Name:</span>
+                              <span className="detail-value">{removeTamil(doctor.doctorName)}</span>
+                            </div>
+                            <div className="detail-row">
+                              <span className="detail-label">Department:</span>
+                              <span className="detail-value">{removeTamil(doctor.department) || 'N/A'}</span>
+                            </div>
+                            <div className="detail-row">
+                              <span className="detail-label">Gender:</span>
+                              <span className="detail-value">{doctor.gender || 'N/A'}</span>
+                            </div>
+                            <div className="detail-row">
+                              <span className="detail-label">Experience:</span>
+                              <span className="detail-value">{doctor.experience || 'N/A'}</span>
+                            </div>
+                            <div className="detail-row">
+                              <span className="detail-label">Mobile:</span>
+                              <span className="detail-value">{doctor.mobile || 'N/A'}</span>
+                            </div>
+                            <div className="detail-row">
+                              <span className="detail-label">Email:</span>
+                              <span className="detail-value">{doctor.email || 'N/A'}</span>
+                            </div>
+                          </>
+                        );
+                      } else {
+                        return (
+                          <div className="detail-row">
+                            <span className="detail-label">Name:</span>
+                            <span className="detail-value">{removeTamil(selectedAppointment.doctor_name)}</span>
+                          </div>
+                        );
+                      }
+                    })()}
+                  </div>
+
+                  {/* Right Side: Patient & Appointment Details */}
+                  <div className="detail-column">
+                    <h4 className="column-title">Patient & Appointment</h4>
+                    <div className="detail-row">
+                      <span className="detail-label">Booking ID:</span>
+                      <span className="detail-value">{selectedAppointment.booking_id || '0000'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Patient Name:</span>
+                      <span className="detail-value">{selectedAppointment.patient_name}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Age/Gender:</span>
+                      <span className="detail-value">{selectedAppointment.patient_age || 'N/A'} / {selectedAppointment.patient_gender || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">WhatsApp:</span>
+                      <span className="detail-value">{selectedAppointment.whatsapp_number || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Login Mobile:</span>
+                      <span className="detail-value">{selectedAppointment.login_mobile || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Date:</span>
+                      <span className="detail-value">{selectedAppointment.appointment_date ? selectedAppointment.appointment_date.replace(/\s+/g, '') : ''}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Time:</span>
+                      <span className="detail-value">{formatTimeSlot(selectedAppointment.appointment_time)}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Video Call:</span>
+                      <span className="detail-value">{selectedAppointment.video_call || 'No'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Consult Fee:</span>
+                      <span className="detail-value" style={{ fontWeight: 'bold', color: '#2563eb' }}>
+                        ₹{selectedAppointment.consultation_fee || 0}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Payment Method:</span>
+                      <span className="detail-value">{selectedAppointment.payment_method || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Payment Status:</span>
+                      <span className="detail-value">{selectedAppointment.payment_status || 'Pending'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Payment ID:</span>
+                      <span className="detail-value">{selectedAppointment.payment_id || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Status:</span>
+                      <span className={`detail-value status-text ${(selectedAppointment.status || 'Pending').toLowerCase()}`}>
+                        {selectedAppointment.status || 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+
+                {selectedAppointment.prescription && selectedAppointment.prescription.length > 0 && (
+                  <div style={{ padding: '0 25px 25px 25px' }}>
+                    <h4 className="column-title">Prescription Details</h4>
+                    <div className="table-container" style={{ padding: '0', boxShadow: 'none' }}>
+                      <table className="appointments-table">
+                        <thead>
+                          <tr>
+                            <th>S.No</th>
+                            <th>Medicine Name</th>
+                            <th>Time</th>
+                            <th>Intake</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedAppointment.prescription.map((med, index) => (
+                            <tr key={med.id || index}>
+                              <td>{index + 1}</td>
+                              <td>{med.name}</td>
+                              <td>{med.timing}</td>
+                              <td>{med.intake}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -16,7 +16,7 @@
     align-items: center;
     justify-content: space-between;
     background: #ffffff;
-    padding: 16px 24px;
+    /* padding: 16px 24px; */
     border-radius: 14px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
     margin-bottom: 20px;
@@ -63,12 +63,12 @@
 }
 
 .btn-print {
-    background-color: #0033a0;
+    background-color: rgb(50, 99, 203);
     color: #ffffff;
 }
 
 .btn-print:hover {
-    background-color: #002680;
+    background-color: white;
 }
 
 .btn-download {
@@ -323,7 +323,7 @@
 
 .btn-add-item {
     width: 100%;
-    background-color: #0033a0;
+    background-color: white;
     color: #ffffff;
     border: none;
     padding: 9px;
@@ -338,7 +338,7 @@
 }
 
 .btn-add-item:hover {
-    background-color: #002680;
+    background-color: white;
 }
 
 
@@ -993,7 +993,7 @@
 }
 
 .btn-view-bill {
-    background-color: #2563eb;
+    background-color: white;
     color: #ffffff;
     border: none;
     border-radius: 6px;
@@ -1008,7 +1008,7 @@
 }
 
 .btn-view-bill:hover {
-    background-color: #1d4ed8;
+    background-color: white;
     transform: translateY(-1px);
 }
 

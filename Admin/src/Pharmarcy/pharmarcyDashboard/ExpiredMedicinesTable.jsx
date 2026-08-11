@@ -35,7 +35,7 @@ const ExpiredMedicinesTable = ({ expiredItems }) => {
           <thead>
             <tr>
               <th>Medicine Name</th>
-              <th>Batch / ID</th>
+              <th>Medicine ID</th>
               <th>Qty</th>
               <th>Expiry Date</th>
               <th>Status</th>
@@ -52,7 +52,7 @@ const ExpiredMedicinesTable = ({ expiredItems }) => {
                     <span className="med-title">{item.medicineName}</span>
                   </div>
                 </td>
-                <td className="text-gray font-mono">{item.batchNo || item.medicineId}</td>
+                <td className="text-gray font-mono">{item.medicineId || 'N/A'}</td>
                 <td className="font-semibold text-dark">{item.stock}</td>
                 <td className="expiry-date-text">{item.expiryDate}</td>
                 <td>
@@ -79,7 +79,7 @@ const ExpiredMedicinesTable = ({ expiredItems }) => {
                 <thead>
                   <tr>
                     <th>Medicine Name</th>
-                    <th>Batch / ID</th>
+                    <th>Medicine ID</th>
                     <th>Qty</th>
                     <th>Expiry Date</th>
                     <th>Status</th>
@@ -96,7 +96,7 @@ const ExpiredMedicinesTable = ({ expiredItems }) => {
                           <span className="med-title">{item.medicineName}</span>
                         </div>
                       </td>
-                      <td className="text-gray font-mono">{item.batchNo || item.medicineId}</td>
+                      <td className="text-gray font-mono">{item.medicineId || 'N/A'}</td>
                       <td className="font-semibold text-dark">{item.stock}</td>
                       <td className="expiry-date-text">{item.expiryDate}</td>
                       <td>

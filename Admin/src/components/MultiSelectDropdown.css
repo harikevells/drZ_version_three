@@ -145,7 +145,7 @@
 }
 
 .ok-btn {
-  background-color: #1173ba;
+  background-color: white;
   color: white;
   border: none;
   padding: 6px 16px;
@@ -156,5 +156,5 @@
 }
 
 .ok-btn:hover {
-  background-color: #0e5b94;
+  background-color: white;
 }

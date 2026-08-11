@@ -110,8 +110,24 @@ const PharmacyDashboard = () => {
       const billingsRes = await axios.get(`${API_BASE_URL}/billings`, authHeader).catch(() => ({ data: [] }));
       const billings = Array.isArray(billingsRes.data) ? billingsRes.data : [];
 
-      const todayStr = today.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/');
-      const todayISO = today.toISOString().slice(0, 10); // YYYY-MM-DD
+      // Today in DD/MM/YYYY format (matches billDate storage format)
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      const todayISO = `${yyyy}-${mm}-${dd}`; // YYYY-MM-DD
+      const todayDDMMYYYY = `${dd}/${mm}/${yyyy}`; // DD/MM/YYYY
+
+      // Helper: parse billDate stored as "DD/MM/YYYY HH:MM" → "YYYY-MM-DD"
+      const parseBillDateToISO = (dateStr) => {
+        if (!dateStr) return '';
+        const str = String(dateStr).trim();
+        // Match DD/MM/YYYY at start (e.g. "10/08/2026 11:30")
+        const ddmmyyyy = str.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+        if (ddmmyyyy) return `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`;
+        // Fallback: try native Date parse (ISO or other formats)
+        const d = new Date(str);
+        return (!isNaN(d.getTime())) ? d.toISOString().slice(0, 10) : '';
+      };
 
       let todaysSalesTotal = 0;
       let todaysSalesCount = 0;
@@ -119,26 +135,31 @@ const PharmacyDashboard = () => {
 
       billings.forEach((bill) => {
         const billDateStr = String(bill.billDate || '');
-        // Match by date string containing today's date in any format
-        const billDateObj = billDateStr ? new Date(billDateStr) : null;
-        const billDateISO = billDateObj && !isNaN(billDateObj) ? billDateObj.toISOString().slice(0, 10) : '';
-        const isToday = billDateISO === todayISO || billDateStr.startsWith(todayISO);
+        // Correctly parse DD/MM/YYYY HH:MM format
+        const billDateISO = parseBillDateToISO(billDateStr);
+        const isToday = billDateISO === todayISO || billDateStr.startsWith(todayDDMMYYYY);
 
-        const payable = parseFloat(bill.totalPayable || 0);
+        // Medicine amount only — exclude doctor consultation fees
+        // Fallback: if totalMedicineAmount missing (older records), use totalPayable - consultFee
+        const totalPayable = parseFloat(bill.totalPayable || 0);
+        const consultFee = parseFloat(bill.consultFee || 0);
+        const medicineAmt = bill.totalMedicineAmount != null
+          ? parseFloat(bill.totalMedicineAmount)
+          : Math.max(0, totalPayable - consultFee);
+
         if (isToday) {
-          todaysSalesTotal += payable;
+          todaysSalesTotal += medicineAmt;
           todaysSalesCount++;
         }
 
-        // For chart — group by date
+        // For chart — group by date (medicine amount only)
         if (billDateISO) {
-          dateSalesMap[billDateISO] = (dateSalesMap[billDateISO] || 0) + payable;
+          dateSalesMap[billDateISO] = (dateSalesMap[billDateISO] || 0) + medicineAmt;
         }
       });
 
-      // Profit = Sales - estimated cost (medicine purchase price * qty used)
-      // Simple estimate: profit is ~30% of sales as cost is ~70%
-      const todaysProfitTotal = Math.round(todaysSalesTotal * 0.30);
+      // Today's Profit = medicine sales total for today (no consult fee included)
+      const todaysProfitTotal = Math.round(todaysSalesTotal);
 
       const calcGrowth = (val) => val > 0 ? `+${((val % 15) + 5).toFixed(1)}%` : '+0%';
 

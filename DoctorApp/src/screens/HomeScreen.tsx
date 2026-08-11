@@ -124,11 +124,11 @@ export default function HomeScreen() {
   const getStatusColor = (status: string) => {
     if (!status) return '#666';
     switch (status.toLowerCase()) {
-      case 'pending': return '#FFA500';
-      case 'approved': return '#2CA01C';
-      case 'rescheduled': return '#0084FF';
-      case 'cancelled': return '#FF4C4C';
-      case 'completed': return '#052A3F';
+      case 'pending': return '#F59E0B';
+      case 'approved': return '#10B981';
+      case 'rescheduled': return '#0D6EFD';
+      case 'cancelled': return '#EF4444';
+      case 'completed': return '#8B5CF6';
       default: return '#666';
     }
   };
@@ -152,57 +152,78 @@ export default function HomeScreen() {
       >
         
         {/* Appointments Summary */}
-        <Text style={[styles.sectionTitle, { marginBottom: 15 }]}>Appointments</Text>
         <View style={styles.statsContainer}>
-          <TouchableOpacity style={styles.statCardBlue} onPress={() => navigation.navigate('Appointment', { activeTab: 'Pending' })}>
-            <Text style={styles.statNumberWhite}>{stats.todaysAppointments < 10 ? `0${stats.todaysAppointments}` : stats.todaysAppointments}</Text>
-            <Text style={styles.statLabelWhite}>Today's{'\n'}Appointment</Text>
+          <TouchableOpacity style={[styles.statCard, { backgroundColor: '#EAF1FE' }]} onPress={() => navigation.navigate('Appointment', { activeTab: 'Pending' })}>
+            <View style={[styles.iconWrapper, { backgroundColor: '#4871F7' }]}>
+              <Ionicons name="calendar-outline" size={16} color="#FFF" />
+            </View>
+            <Text style={styles.statNumberText}>{stats.todaysAppointments < 10 ? `0${stats.todaysAppointments}` : stats.todaysAppointments}</Text>
+            <Text style={styles.statLabelText}>Today's{'\n'}Appointments</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.statCardBlue} onPress={() => navigation.navigate('Appointment', { activeTab: 'Pending' })}>
-            <Text style={styles.statNumberWhite}>{stats.pendingAppointments < 10 ? `0${stats.pendingAppointments}` : stats.pendingAppointments}</Text>
-            <Text style={styles.statLabelWhite}>Pending{'\n'}Appointment</Text>
+
+          <TouchableOpacity style={[styles.statCard, { backgroundColor: '#E6F8F3' }]} onPress={() => navigation.navigate('Appointment', { activeTab: 'Pending' })}>
+            <View style={[styles.iconWrapper, { backgroundColor: '#20C997' }]}>
+              <Ionicons name="hourglass-outline" size={16} color="#FFF" />
+            </View>
+            <Text style={styles.statNumberText}>{stats.pendingAppointments < 10 ? `0${stats.pendingAppointments}` : stats.pendingAppointments}</Text>
+            <Text style={styles.statLabelText}>Pending{'\n'}Appointments</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.statCardBlue} onPress={() => navigation.navigate('Appointment', { activeTab: 'Pending' })}>
-            <Text style={styles.statNumberWhite}>{stats.rescheduleAppointments < 10 ? `0${stats.rescheduleAppointments}` : stats.rescheduleAppointments}</Text>
-            <Text style={styles.statLabelWhite}>Reschedule{'\n'}Appointment</Text>
+
+          <TouchableOpacity style={[styles.statCard, { backgroundColor: '#EAF1FE' }]} onPress={() => navigation.navigate('Appointment', { activeTab: 'Pending' })}>
+            <View style={[styles.iconWrapper, { backgroundColor: '#0D6EFD' }]}>
+              <Ionicons name="time-outline" size={16} color="#FFF" />
+            </View>
+            <Text style={styles.statNumberText}>{stats.rescheduleAppointments < 10 ? `0${stats.rescheduleAppointments}` : stats.rescheduleAppointments}</Text>
+            <Text style={styles.statLabelText}>Rescheduled{'\n'}Appointments</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Patient Request */}
+        {/* Upcoming Appointments */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Patient Requests</Text>
+          <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Appointment')}>
-            <Text style={styles.viewAll}>See All</Text>
+            <Text style={styles.viewAll}>See All <Ionicons name="arrow-forward" size={12} color="#4A4A4A" /></Text>
           </TouchableOpacity>
         </View>
 
         {patientRequests.length === 0 ? (
-          <Text style={{ textAlign: 'center', color: '#999', marginVertical: 20 }}>No pending requests.</Text>
+          <Text style={{ textAlign: 'center', color: '#999', marginVertical: 20 }}>No upcoming appointments.</Text>
         ) : (
           patientRequests.slice(0, 3).map((patient: any) => (
             <View key={patient.id || patient._id} style={styles.requestCard}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.patientName}>{patient.patient_name}</Text>
-                <Text style={[styles.statusTextInline, { color: getStatusColor(patient.status) }]}>{patient.status}</Text>
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.avatarContainer}>
+                  <Image 
+                    source={patient.profileImage ? { uri: patient.profileImage } : ((patient.patient_gender === 'Female' || patient.gender === 'Female') ? require('../assets/femalepatient.png') : require('../assets/malepatient.png'))} 
+                    style={styles.avatarImage} 
+                    resizeMode={patient.profileImage ? "cover" : "contain"} 
+                  />
+                </View>
+                <View style={styles.nameAndStatus}>
+                  <View style={styles.nameRow}>
+                    <Text style={styles.patientName}>{patient.patient_name}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(patient.status) + '20' }]}>
+                      <Text style={[styles.statusText, { color: getStatusColor(patient.status) }]}>{patient.status}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.dateTimeText}>{patient.appointment_date}  •  {formatTimeSlot(patient.appointment_time)}</Text>
+                  <View style={styles.categoryRow}>
+                    <Ionicons name="medkit-outline" size={12} color="#666" />
+                    <Text style={styles.categoryText}>{patient.treatment_category || 'General Consultation'}</Text>
+                  </View>
+                </View>
               </View>
-              <Text style={styles.dateTime}>{patient.appointment_date} {formatTimeSlot(patient.appointment_time)}</Text>
               <View style={styles.actionButtons}>
-                <TouchableOpacity 
-                  style={[styles.btn, styles.approveBtn]}
-                  onPress={() => openApprove(patient)}
-                >
+                <TouchableOpacity style={[styles.btn, styles.approveBtn]} onPress={() => openApprove(patient)}>
+                  <Ionicons name="checkmark" size={16} color="#FFF" style={{marginRight: 4}}/>
                   <Text style={styles.btnTextAction}>Approve</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.btn, styles.rescheduleBtn]}
-                  onPress={() => openReschedule(patient)}
-                >
+                <TouchableOpacity style={[styles.btn, styles.rescheduleBtn]} onPress={() => openReschedule(patient)}>
+                  <Ionicons name="calendar-outline" size={14} color="#FFF" style={{marginRight: 4}}/>
                   <Text style={styles.btnTextAction}>Reschedule</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.btn, styles.cancelBtn]}
-                  onPress={() => openCancel(patient)}
-                >
+                <TouchableOpacity style={[styles.btn, styles.cancelBtn]} onPress={() => openCancel(patient)}>
+                  <Ionicons name="close" size={16} color="#FFF" style={{marginRight: 4}}/>
                   <Text style={styles.btnTextAction}>Cancel</Text>
                 </TouchableOpacity>
               </View>
@@ -210,38 +231,71 @@ export default function HomeScreen() {
           ))
         )}
 
-        {/* Recent Patient History */}
-        <View style={[styles.sectionHeader, { marginTop: 10 }]}>
-          <Text style={styles.sectionTitle}>Recent Patient History</Text>
+        {/* Quick Actions */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
         </View>
+        <View style={styles.quickActionsRow}>
+          <TouchableOpacity style={styles.quickActionCard}>
+            <View style={[styles.quickActionIconBg, { backgroundColor: '#F0F5FF' }]}>
+              <Ionicons name="calendar-outline" size={24} color="#4871F7" />
+            </View>
+            <Text style={styles.quickActionText}>Add{'\n'}Appointment</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickActionCard}>
+            <View style={[styles.quickActionIconBg, { backgroundColor: '#F5F0FF' }]}>
+              <Ionicons name="people-outline" size={24} color="#8B5CF6" />
+            </View>
+            <Text style={styles.quickActionText}>Patient{'\n'}History</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickActionCard}>
+            <View style={[styles.quickActionIconBg, { backgroundColor: '#EAF6FF' }]}>
+              <Ionicons name="document-text-outline" size={24} color="#0D6EFD" />
+            </View>
+            <Text style={styles.quickActionText}>Create{'\n'}Prescription</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickActionCard}>
+            <View style={[styles.quickActionIconBg, { backgroundColor: '#FFF5EB' }]}>
+              <Ionicons name="bar-chart-outline" size={24} color="#FD7E14" />
+            </View>
+            <Text style={styles.quickActionText}>Reports</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Recent Patient History */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Patient History</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAll}>See All <Ionicons name="arrow-forward" size={12} color="#4A4A4A" /></Text>
+          </TouchableOpacity>
+        </View>
+
         {recentPatients.length === 0 ? (
            <Text style={{ textAlign: 'center', color: '#999', marginVertical: 20 }}>No recent history.</Text>
         ) : (
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={recentPatients}
-            keyExtractor={(item: any) => item.id || item._id}
-            renderItem={({ item }: { item: any }) => (
-              <View style={styles.historyCard}>
-                <View style={styles.historyImageContainer}>
-                  <Image 
-                    source={item.patient_gender === 'Female' ? require('../assets/femalepatient.png') : require('../assets/malepatient.png')} 
-                    style={styles.historyPatientImage}
-                  />
-                </View>
-                <Text style={styles.historyPatientName} numberOfLines={1}>{item.patient_name}</Text>
-                <Text style={styles.historySubText} numberOfLines={1}>{item.treatment_category || 'General Checkup'}</Text>
-                <View style={styles.historyDatePill}>
-                  <Ionicons name="calendar-outline" size={12} color="#0084FF" />
-                  <Text style={styles.historyDateText}>
-                    {item.appointment_date ? item.appointment_date : '28 Mar 2026'}
-                  </Text>
+          recentPatients.slice(0, 3).map((item: any) => (
+            <View key={item.id || item._id} style={styles.recentHistoryCard}>
+              <View style={styles.recentAvatarContainer}>
+                <Image 
+                  source={item.profileImage ? { uri: item.profileImage } : ((item.patient_gender === 'Female' || item.gender === 'Female') ? require('../assets/femalepatient.png') : require('../assets/malepatient.png'))} 
+                  style={styles.recentAvatarImage} 
+                  resizeMode={item.profileImage ? "cover" : "contain"} 
+                />
+              </View>
+              <View style={styles.historyDetails}>
+                <Text style={styles.historyName}>{item.patient_name}</Text>
+                <Text style={styles.historyDate}>{item.appointment_date || '04/08/2026'} • {formatTimeSlot(item.appointment_time) || '11:30 AM'}</Text>
+                <View style={styles.historyCategoryRow}>
+                  <Ionicons name="medkit-outline" size={12} color="#666" />
+                  <Text style={styles.historyCategoryText}>{item.treatment_category || 'Fever, Headache'}</Text>
                 </View>
               </View>
-            )}
-            contentContainerStyle={styles.recentList}
-          />
+              <TouchableOpacity style={styles.viewDetailsBtn}>
+                <Text style={styles.viewDetailsText}>View Details</Text>
+                <Ionicons name="arrow-forward" size={12} color="#333" />
+              </TouchableOpacity>
+            </View>
+          ))
         )}
         
       </ScrollView>
@@ -278,11 +332,49 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f7feff',
+    backgroundColor: '#FAFCFF',
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 30,
+    paddingTop: 10,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  statCard: {
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    width: '31.5%',
+    minHeight: 110,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
+  iconWrapper: {
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  statNumberText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  statLabelText: {
+    fontSize: 15,
+    color: '#555',
+    fontWeight: '600',
+    lineHeight: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -294,81 +386,88 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#0F172A',
   },
   viewAll: {
-    fontSize: 14,
-    color: '#4A4A4A',
-    fontWeight: 'bold',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statCardBlue: {
-    backgroundColor: '#0D6EFD',
-    borderRadius: 16,
-    paddingVertical: 18,
-    paddingHorizontal: 10,
-    width: '32%',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    minHeight: 110,
-    justifyContent: 'center',
-  },
-  statNumberWhite: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 8,
-  },
-  statLabelWhite: {
     fontSize: 13,
-    color: '#FFF',
-    fontWeight: 'bold',
-    lineHeight: 16,
+    color: '#4A4A4A',
+    fontWeight: '600',
   },
   requestCard: {
     backgroundColor: '#FFF',
-    borderRadius: 24,
-    padding: 15,
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 15,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
-  cardHeader: {
+  cardHeaderRow: {
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
+  avatarContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#EBF4FF',
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 44,
+    height: 44,
+  },
+  nameAndStatus: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  nameRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   patientName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1E293B',
   },
-  statusTextInline: {
-    fontSize: 13,
-    fontWeight: '600',
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  dateTime: {
-    fontSize: 13,
-    color: '#555',
-    marginBottom: 15,
-    marginTop: 5,
+  statusText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  dateTimeText: {
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: 4,
     fontWeight: '500',
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  categoryText: {
+    fontSize: 12,
+    color: '#64748B',
+    marginLeft: 4,
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   btn: {
-    paddingVertical: 10,
+    flexDirection: 'row',
+    paddingVertical: 8,
     paddingHorizontal: 8,
     borderRadius: 8,
     alignItems: 'center',
@@ -377,76 +476,115 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   approveBtn: {
-    backgroundColor: '#2DC045',
+    backgroundColor: '#22C55E',
   },
   rescheduleBtn: {
-    backgroundColor: '#FFB84D',
+    backgroundColor: '#0D6EFD',
   },
   cancelBtn: {
-    backgroundColor: '#F47171',
+    backgroundColor: '#f27b7bff',
   },
   btnTextAction: {
-    color: '#333',
-    fontSize: 13,
+    color: '#FFF',
+    fontSize: 12,
     fontWeight: '700',
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  quickActionCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 5,
+    width: '23%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  quickActionIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  quickActionText: {
+    fontSize: 10,
+    color: '#475569',
+    fontWeight: '600',
     textAlign: 'center',
+    lineHeight: 14,
   },
-  recentList: {
-    paddingTop: 10,
-    paddingBottom: 5,
-    paddingLeft: 5,
-  },
-  historyCard: {
+  recentHistoryCard: {
     backgroundColor: '#FFF',
     borderRadius: 16,
-    padding: 15,
-    marginRight: 15,
-    width: 140,
+    padding: 12,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
-  historyImageContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 35,
+  recentAvatarContainer: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: '#EBF4FF',
-    marginBottom: 4,
+    marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
   },
-  historyPatientImage: {
-    width: 70,
-    height: 70,
-    resizeMode: 'contain',
+  recentAvatarImage: {
+    width: 40,
+    height: 40,
   },
-  historyPatientName: {
+  historyDetails: {
+    flex: 1,
+  },
+  historyName: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1E293B',
+    marginBottom: 2,
+  },
+  historyDate: {
+    fontSize: 11,
+    color: '#64748B',
     marginBottom: 4,
-    textAlign: 'center',
   },
-  historySubText: {
-    fontSize: 12,
-    color: '#888',
-    marginBottom: 12,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  historyDatePill: {
+  historyCategoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EBF4FF',
+  },
+  historyCategoryText: {
+    fontSize: 11,
+    color: '#64748B',
+    marginLeft: 4,
+  },
+  viewDetailsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 20,
   },
-  historyDateText: {
+  viewDetailsText: {
     fontSize: 11,
-    color: '#0084FF',
     fontWeight: '600',
-    marginLeft: 4,
+    color: '#1E293B',
+    marginRight: 4,
   },
 });

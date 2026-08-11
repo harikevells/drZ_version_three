@@ -9,116 +9,143 @@
 /* Sidebar */
 .sidebar {
   width: 270px;
-  background-color: #ffffff;
+  background: linear-gradient(175deg, #ffffff 0%, #5064d3 100% 100%);
   display: flex;
   flex-direction: column;
 }
 
 .sidebar-logo {
-  padding: 30px 20px;
+  padding: 30px 20px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border-bottom: 1px solid transparent;
-  /* Keeps spacing consistent */
-}
-
-.sidebar-logo .logo-icon {
-  width: 24px;
-  height: 24px;
-  background-color: #1a2530;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  margin-bottom: 5px;
-}
-
-.sidebar-logo .logo-icon .cross {
-  width: 10px;
-  height: 3px;
-  background-color: #1173ba;
-  position: absolute;
-}
-
-.sidebar-logo .logo-icon .cross::after {
-  content: '';
-  width: 3px;
-  height: 10px;
-  background-color: #1173ba;
-  position: absolute;
-  top: -3.5px;
-  left: 3.5px;
-}
-
-.sidebar-logo .logo-text {
-  font-size: 26px;
-  font-weight: 700;
-  color: #1173ba;
-  letter-spacing: -1px;
-}
-
-.sidebar-logo .logo-subtext {
-  font-size: 8px;
-  color: #1173ba;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  border-bottom: none;
 }
 
 .sidebar-nav {
-  padding: 40px 0 20px 0;
+  padding: 10px 0 20px 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  background-color: #586ff5;
-  /* Match mockup blue */
+  gap: 8px;
+  background-color: transparent;
   flex: 1;
-  border-top-right-radius: 50px;
   overflow-y: auto;
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
 .sidebar-nav::-webkit-scrollbar {
   display: none;
+}
+
+.sidebar-section-header {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 20px 20px 5px 25px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 15px 15px;
+  padding: 14px 15px;
   margin: 0 10px;
-  color: #ffffff;
+  color: #334155;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 15px;
   transition: all 0.2s ease;
-  border-radius: 12px;
-  /* For hover/active pill effect */
+  border-radius: 5px;
 }
 
 .nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  background-color: rgba(79, 124, 246, 0.08);
+  color: #4f7cf6;
 }
 
 .nav-item.active {
-  background-color: #ffffff;
-  color: #586ff5;
-  font-weight: 700;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: #4f7cf6;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(79, 124, 246, 0.3);
 }
 
 .nav-icon {
   margin-right: 15px;
-  font-size: 18px;
-  color: #ffffff;
+  font-size: 16px;
+  color: #4f7cf6;
 }
 
 .nav-item.active .nav-icon {
-  color: #586ff5;
+  color: #ffffff;
+}
+
+.nav-item:hover:not(.active) .nav-icon {
+  color: #4f7cf6;
+}
+
+/* Support Card */
+.support-card {
+  margin: auto 15px 0px 15px;
+  /* auto on top pushes it to the bottom */
+  padding: 20px;
+  background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+  border-radius: 16px;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.support-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 2;
+  max-width: 65%;
+}
+
+.support-card h4 {
+  margin: 0;
+  color: #1e3a8a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.support-card p {
+  margin: 0;
+  font-size: 11px;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.support-btn {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 8px;
+  transition: background-color 0.2s;
+}
+
+.support-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.support-card-img {
+  position: absolute;
+  right: -10px;
+  bottom: 0;
+  height: 110%;
+  /* Makes the image slightly taller than the card to overlap nicely */
+  width: auto;
+  z-index: 1;
 }
 
 /* Main Area */
@@ -180,7 +207,7 @@
 /* Content Wrapper */
 .content-wrapper {
   flex: 1;
-  padding: 15px 30px;
+  padding: 25px 25px;
   overflow-y: auto;
   background-color: #ffffff;
 }

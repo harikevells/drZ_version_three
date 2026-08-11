@@ -5,18 +5,7 @@ import './LowStockTable.css';
 const LowStockTable = ({ lowStockItems }) => {
   const [showAllModal, setShowAllModal] = useState(false);
 
-  // Default low stock records fallback matching design image
-  const defaultItems = [
-    { id: 1, medicineName: 'Crocin 650mg Tablet', brandName: 'Dolo', batchNo: 'BAT-1021', stock: 15 },
-    { id: 2, medicineName: 'Azithral 500mg Tablet', brandName: 'Cipla', batchNo: 'BAT-1088', stock: 8 },
-    { id: 3, medicineName: 'Amoxicillin 250mg Capsule', brandName: 'Mox', batchNo: 'BAT-2041', stock: 6 },
-    { id: 4, medicineName: 'Cetirizine 10mg Tablet', brandName: 'Okacet', batchNo: 'BAT-3092', stock: 12 },
-    { id: 5, medicineName: 'Ranitidine 150mg Tablet', brandName: 'Aciloc', batchNo: 'BAT-4015', stock: 10 },
-    { id: 6, medicineName: 'Metformin 500mg Tablet', brandName: 'Glycomet', batchNo: 'BAT-5022', stock: 5 },
-    { id: 7, medicineName: 'Pantoprazole 40mg Tablet', brandName: 'Pan 40', batchNo: 'BAT-6019', stock: 9 },
-  ];
-
-  const itemsList = lowStockItems && lowStockItems.length > 0 ? lowStockItems : defaultItems;
+  const itemsList = lowStockItems || [];
   const displayItems = itemsList.slice(0, 5);
 
   return (
@@ -42,21 +31,29 @@ const LowStockTable = ({ lowStockItems }) => {
             </tr>
           </thead>
           <tbody>
-            {displayItems.map((item, index) => (
-              <tr key={index}>
-                <td>
-                  <div className="med-name-cell">
-                    <div className="pill-icon-container">
-                      <FaCapsules size={14} className="pill-icon" />
+            {displayItems.length > 0 ? (
+              displayItems.map((item, index) => (
+                <tr key={index}>
+                  <td>
+                    <div className="med-name-cell">
+                      <div className="pill-icon-container">
+                        <FaCapsules size={14} className="pill-icon" />
+                      </div>
+                      <span className="med-title">{item.medicineName}</span>
                     </div>
-                    <span className="med-title">{item.medicineName}</span>
-                  </div>
+                  </td>
+                  <td className="text-gray">{item.brandName || 'N/A'}</td>
+                  <td className="text-gray font-mono">{item.batchNo || item.medicineId || 'N/A'}</td>
+                  <td className="stock-warning">{item.stock}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" style={{ textAlign: 'center', padding: '1.5rem', color: '#6b7280' }}>
+                  No low stock medicines
                 </td>
-                <td className="text-gray">{item.brandName || 'N/A'}</td>
-                <td className="text-gray font-mono">{item.batchNo || item.medicineId || 'N/A'}</td>
-                <td className="stock-warning">{item.stock}</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -80,21 +77,29 @@ const LowStockTable = ({ lowStockItems }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {itemsList.map((item, index) => (
-                    <tr key={index}>
-                      <td>
-                        <div className="med-name-cell">
-                          <div className="pill-icon-container">
-                            <FaCapsules size={14} className="pill-icon" />
+                  {itemsList.length > 0 ? (
+                    itemsList.map((item, index) => (
+                      <tr key={index}>
+                        <td>
+                          <div className="med-name-cell">
+                            <div className="pill-icon-container">
+                              <FaCapsules size={14} className="pill-icon" />
+                            </div>
+                            <span className="med-title">{item.medicineName}</span>
                           </div>
-                          <span className="med-title">{item.medicineName}</span>
-                        </div>
+                        </td>
+                        <td className="text-gray">{item.brandName || 'N/A'}</td>
+                        <td className="text-gray font-mono">{item.batchNo || item.medicineId || 'N/A'}</td>
+                        <td className="stock-warning">{item.stock}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'center', padding: '1.5rem', color: '#6b7280' }}>
+                        No low stock medicines
                       </td>
-                      <td className="text-gray">{item.brandName || 'N/A'}</td>
-                      <td className="text-gray font-mono">{item.batchNo || item.medicineId || 'N/A'}</td>
-                      <td className="stock-warning">{item.stock}</td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>

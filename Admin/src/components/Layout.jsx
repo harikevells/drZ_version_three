@@ -2,10 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt, FaChevronDown, FaChevronUp, FaPills, FaListUl, FaClock, FaPrescriptionBottle, FaUsers, FaCreditCard, FaFileInvoiceDollar } from 'react-icons/fa';
+import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt, FaChevronDown, FaChevronUp, FaPills, FaListUl, FaClock, FaPrescriptionBottle, FaUsers, FaCreditCard, FaFileInvoiceDollar, FaCalendarAlt } from 'react-icons/fa';
 import './Layout.css';
-import logoImage from '../assets/DoctorlogoApp1.png';
+import logoImage from '../assets/Dclogo.png';
 import adminImage from '../assets/adminimage.png';
+import doctorImage from '../assets/doctorimage1.png';
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning! 🌅';
+  if (hour < 17) return 'Good Afternoon! 👋';
+  return 'Good Evening! 🌙';
+};
 
 const Layout = () => {
   const navigate = useNavigate();
@@ -67,55 +75,66 @@ const Layout = () => {
         <div className="sidebar-logo" style={{ marginBottom: '0px', padding: '10px 20px 10px 20px', display: 'flex', justifyContent: 'center' }}>
           <img src={logoImage} alt="DrZ Logo" style={{ height: '80px' }} />
         </div>
-        
+
         <nav className="sidebar-nav">
           {userRole === 'Pharmacy' ? (
             <>
-              <NavLink to="/pharmacy-dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <NavLink to="/pharmacy-dashboard" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaTachometerAlt className="nav-icon" />
                 <span>Dashboard</span>
               </NavLink>
-              <NavLink to="/medi" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <NavLink to="/medi" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaListUl className="nav-icon" />
                 <span>Medicine Create</span>
               </NavLink>
-              <NavLink to="/purchase-medicine" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <NavLink to="/purchase-medicine" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaFileInvoiceDollar className="nav-icon" />
                 <span>Medicine Billing</span>
               </NavLink>
-              <NavLink to="/billing-medicine" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <NavLink to="/billing-medicine" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaFileInvoiceDollar className="nav-icon" />
                 <span>Billing Medicine</span>
               </NavLink>
+
+              <div className="support-card">
+                <div className="support-card-content">
+                  <h4>Need Help?</h4>
+                  <p>We're here to help you 24/7</p>
+                  <button className="support-btn">Contact Support</button>
+                </div>
+                <img src={doctorImage} alt="Support" className="support-card-img" />
+              </div>
             </>
           ) : (
             <>
-              <NavLink to="/dashboard" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <NavLink to="/dashboard" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaTachometerAlt className="nav-icon" />
                 <span>Dashboard</span>
               </NavLink>
-              <NavLink to="/dr-management" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+
+              <NavLink to="/dr-management" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaUserMd className="nav-icon" />
                 <span>DR Management</span>
               </NavLink>
-              <NavLink to="/schedule" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <NavLink to="/schedule" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaCalendarCheck className="nav-icon" />
                 <span>Schedule</span>
               </NavLink>
-              <NavLink to="/patient" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <NavLink to="/patient" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaUserInjured className="nav-icon" />
                 <span>Appointment</span>
               </NavLink>
 
-              <NavLink to="/patient-list" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <NavLink to="/patient-list" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaUsers className="nav-icon" />
                 <span>Patient List</span>
               </NavLink>
-              <NavLink to="/medical-camp" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+              <NavLink to="/medical-camp" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaBell className="nav-icon" />
                 <span>Push Message</span>
               </NavLink>
-              <div 
+
+              <div
                 className={`nav-item ${['/medi', '/medicine-time', '/medicine-intake', '/pharmarcy-creation'].includes(location.pathname) ? 'active' : ''}`}
                 onClick={() => setIsMedicineOpen(!isMedicineOpen)}
                 style={{ cursor: 'pointer', justifyContent: 'space-between' }}
@@ -126,29 +145,29 @@ const Layout = () => {
                 </div>
                 {isMedicineOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
               </div>
-              
+
               {isMedicineOpen && (
                 <div className="sub-nav" style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  <NavLink to="/medi" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                  <NavLink to="/medi" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                     <FaListUl className="nav-icon" style={{ fontSize: '14px' }} />
                     <span style={{ fontSize: '13px' }}>Medicine Create</span>
                   </NavLink>
-                  <NavLink to="/medicine-time" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                  <NavLink to="/medicine-time" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                     <FaClock className="nav-icon" style={{ fontSize: '14px' }} />
                     <span style={{ fontSize: '13px' }}>Medicine Time</span>
                   </NavLink>
-                  <NavLink to="/medicine-intake" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                  <NavLink to="/medicine-intake" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                     <FaPrescriptionBottle className="nav-icon" style={{ fontSize: '14px' }} />
                     <span style={{ fontSize: '13px' }}>Medicine Intake</span>
                   </NavLink>
-                  <NavLink to="/pharmarcy-creation" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                  <NavLink to="/pharmarcy-creation" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                     <FaUsers className="nav-icon" style={{ fontSize: '14px' }} />
                     <span style={{ fontSize: '13px' }}>Clinical Services</span>
                   </NavLink>
                 </div>
               )}
 
-              <div 
+              <div
                 className={`nav-item ${['/payment', '/revenue'].includes(location.pathname) ? 'active' : ''}`}
                 onClick={() => setIsRevenueOpen(!isRevenueOpen)}
                 style={{ cursor: 'pointer', justifyContent: 'space-between' }}
@@ -159,19 +178,32 @@ const Layout = () => {
                 </div>
                 {isRevenueOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
               </div>
-              
+
               {isRevenueOpen && (
                 <div className="sub-nav" style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  <NavLink to="/payment" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                  <NavLink to="/payment" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                     <FaCreditCard className="nav-icon" style={{ fontSize: '14px' }} />
-                    <span style={{ fontSize: '13px' }}>Payment Details</span>
+                    <span style={{ fontSize: '13px' }}>Consult Revenue</span>
                   </NavLink>
-                  <NavLink to="/revenue" className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+                  <NavLink to="/revenue" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                     <FaTachometerAlt className="nav-icon" style={{ fontSize: '14px' }} />
-                    <span style={{ fontSize: '13px' }}>Revenue Details</span>
+                    <span style={{ fontSize: '13px' }}>Doctor's Revenue</span>
+                  </NavLink>
+                  <NavLink to="/billing-medicine" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                    <FaFileInvoiceDollar className="nav-icon" style={{ fontSize: '14px' }} />
+                    <span style={{ fontSize: '13px' }}>Pharmacy Revenue</span>
                   </NavLink>
                 </div>
               )}
+
+              <div className="support-card">
+                <div className="support-card-content">
+                  <h4>Need Help?</h4>
+                  <p>We're here to help you 24/7</p>
+                  <button className="support-btn">Contact Support</button>
+                </div>
+                <img src={doctorImage} alt="Support" className="support-card-img" />
+              </div>
             </>
           )}
         </nav>
@@ -180,38 +212,73 @@ const Layout = () => {
       {/* Main Content Area */}
       <div className="main-area">
         {/* Top Header */}
-        <header className="topbar">
-          <div className="topbar-welcome">
-            <h2>Welcome, {userName}</h2>
-            <p>{userRole} For DrZ...</p>
+        <header className="topbar" style={{ padding: '20px 32px', backgroundColor: '#fff', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Left: Greeting & Welcome */}
+          <div className="topbar-welcome" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '14px', color: '#64748b', fontWeight: '500' }}>{getGreeting()}</span>
+            <h2 style={{ fontSize: '22px', color: '#0f172a', fontWeight: '700', margin: 0, letterSpacing: '-0.5px' }}>
+              Welcome back, {userName === 'Admin' ? 'Administrator' : userName}
+            </h2>
           </div>
-          <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div style={{ display: 'flex', gap: '15px' }}>
-              <button className="icon-btn" style={{ position: 'relative' }} onClick={() => navigate('/notifications')}>
-                <FaBell />
+
+          {/* Right: Date, Actions, Profile */}
+          <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+
+            {/* Date Display */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 16px', borderRadius: '12px', }}>
+              <FaCalendarAlt color="#1e293b" size={16} />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b', lineHeight: '1.2' }}>
+                  {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+                  {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+                </span>
+              </div>
+            </div>
+
+            {/* Icon Buttons */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                className="icon-btn"
+                style={{ position: 'relative', width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', color: '#1e293b' }}
+                onClick={() => navigate('/notifications')}
+              >
+                <FaBell size={16} />
                 {unreadCount > 0 && (
                   <span style={{
-                    position: 'absolute', top: '-5px', right: '-5px',
-                    backgroundColor: '#e74c3c', color: '#fff', fontSize: '10px',
-                    borderRadius: '50%', padding: '2px 6px', fontWeight: 'bold'
+                    position: 'absolute', top: '-2px', right: '-2px',
+                    backgroundColor: '#4f46e5', color: '#fff', fontSize: '10px',
+                    borderRadius: '50%', padding: '2px 5px', fontWeight: 'bold', border: '2px solid #fff'
                   }}>
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </button>
-              <button className="icon-btn" onClick={() => setIsLogoutModalOpen(true)}>
-                <FaSignOutAlt />
+              <button
+                className="icon-btn"
+                style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', color: '#1e293b' }}
+                onClick={() => setIsLogoutModalOpen(true)}
+              >
+                <FaSignOutAlt size={16} />
               </button>
             </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '10px' }}>
-              <span style={{ fontWeight: '600', fontSize: '18px', color: '#1f2937' }}>{userRole}</span>
-              <img 
-                src={adminImage} 
-                alt="Admin Avatar" 
-                style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover' }} 
+
+            {/* Profile Avatar */}
+            <div style={{ position: 'relative', marginLeft: '8px' }}>
+              <img
+                src={adminImage}
+                alt="Profile"
+                style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #f8fafc' }}
               />
+              {/* Online Status Dot */}
+              <div style={{
+                position: 'absolute', bottom: '2px', right: '2px',
+                width: '10px', height: '10px', backgroundColor: '#10b981',
+                borderRadius: '50%', border: '2px solid #fff'
+              }}></div>
             </div>
+
           </div>
         </header>
 
@@ -227,8 +294,8 @@ const Layout = () => {
             <img src={logoImage} alt="DrZ Logo" style={{ height: '50px', marginBottom: '20px' }} />
             <p>Are you sure you want to logout?</p>
             <div className="logout-modal-actions">
-              <button style={{width:'150px', borderRadius:'20px'}} className="cancel-btn" onClick={() => setIsLogoutModalOpen(false)}>Cancel</button>
-              <button style={{width:'150px', borderRadius:'20px'}} className="confirm-logout-btn" onClick={handleLogout}>Logout</button>
+              <button style={{ width: '150px', borderRadius: '20px' }} className="cancel-btn" onClick={() => setIsLogoutModalOpen(false)}>Cancel</button>
+              <button style={{ width: '150px', borderRadius: '20px' }} className="confirm-logout-btn" onClick={handleLogout}>Logout</button>
             </div>
           </div>
         </div>

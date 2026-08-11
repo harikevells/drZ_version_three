@@ -25,9 +25,27 @@ const getDoctorDashboard = async (req, res) => {
 
         const patientRequests = await Appointment.find({ doctor_name: doctorName, status: { $in: ['Pending', 'pending', 'Rescheduled', 'rescheduled'] } }).sort({ createdAt: -1 });
 
+        for (let i = 0; i < patientRequests.length; i++) {
+            if (patientRequests[i].login_mobile) {
+                const pat = await Patient.findOne({ contactNumber: patientRequests[i].login_mobile });
+                if (pat && pat.profileImage) {
+                    patientRequests[i].profileImage = pat.profileImage;
+                }
+            }
+        }
+
         const recentPatients = await Appointment.find({ doctor_name: doctorName, status: { $in: ['Completed', 'completed', 'Approved', 'approved'] } })
             .sort({ updatedAt: -1 })
             .limit(10);
+
+        for (let i = 0; i < recentPatients.length; i++) {
+            if (recentPatients[i].login_mobile) {
+                const pat = await Patient.findOne({ contactNumber: recentPatients[i].login_mobile });
+                if (pat && pat.profileImage) {
+                    recentPatients[i].profileImage = pat.profileImage;
+                }
+            }
+        }
 
         res.json({
             stats: { todaysAppointments, pendingAppointments, rescheduleAppointments, totalAttended },

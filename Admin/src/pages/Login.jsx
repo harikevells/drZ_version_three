@@ -6,7 +6,7 @@ import { FaEyeSlash, FaEye, FaShieldAlt } from 'react-icons/fa';
 import { FiMail, FiLock, FiBarChart2, FiFolder, FiCheckCircle } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 import './Login.css';
-import logoImage from '../assets/DoctorlogoApp1.png';
+import logoImage from '../assets/Dclogo.png';
 import adminImage from '../assets/loginleftimage.png';
 
 const Login = () => {

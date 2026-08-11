@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { API_BASE_URL, API_LOCAL_URL } from '../config';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaArrowLeft, FaEye, FaTint } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaArrowLeft, FaEye, FaTint, FaCapsules, FaBoxOpen, FaExclamationTriangle, FaCalendarTimes, FaShoppingCart, FaTimesCircle } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import Pagination from '../components/Pagination';
 import './DoctorManagement.css'; // Importing DoctorManagement CSS to match exact design
 import './Medi.css';
+import '../Pharmarcy/PharmarcyDashBoard/PharmacyStatCards.css';
 
 const Medi = () => {
   const [medicines, setMedicines] = useState([]);
@@ -27,6 +28,16 @@ const Medi = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  const [statsData, setStatsData] = useState({
+    totalMedicines: 0,
+    availableStock: 0,
+    lowStockAlert: 0,
+    outOfStock: 0,
+    expiredMedicines: 0,
+    totalMedicineSales: 0
+  });
+  const userRole = sessionStorage.getItem('role');
+
   useEffect(() => {
     fetchMedicines();
   }, []);
@@ -38,7 +49,56 @@ const Medi = () => {
   const fetchMedicines = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/medicines`);
-      setMedicines(response.data);
+      const meds = response.data;
+      setMedicines(meds);
+
+      if (sessionStorage.getItem('role') === 'Admin') {
+        let totalMeds = meds.length;
+        let totalStockCount = 0;
+        let lowStockCount = 0;
+        let outOfStockCount = 0;
+        let expiredCount = 0;
+        const today = new Date();
+
+        meds.forEach(med => {
+          const stock = parseInt(med.currentStock, 10) || 0;
+          const minStock = parseInt(med.minimumStock, 10) || 10;
+          totalStockCount += stock;
+
+          const expDate = med.expiryDate ? new Date(med.expiryDate) : null;
+          if (expDate && !isNaN(expDate.getTime()) && expDate < today) {
+            expiredCount++;
+          }
+          if (stock === 0) {
+            outOfStockCount++;
+          } else if (stock <= minStock && stock > 0) {
+            lowStockCount++;
+          }
+        });
+
+        // Fetch billings for total sales
+        const billingsRes = await axios.get(`${API_BASE_URL}/billings`).catch(() => ({ data: [] }));
+        const billings = Array.isArray(billingsRes.data) ? billingsRes.data : [];
+
+        let totalMedicineAmount = 0;
+        billings.forEach(bill => {
+          const totalPayable = parseFloat(bill.totalPayable || 0);
+          const consultFee = parseFloat(bill.consultFee || 0);
+          const medicineAmt = bill.totalMedicineAmount != null
+            ? parseFloat(bill.totalMedicineAmount)
+            : Math.max(0, totalPayable - consultFee);
+          totalMedicineAmount += medicineAmt;
+        });
+
+        setStatsData({
+          totalMedicines: totalMeds,
+          availableStock: totalStockCount,
+          lowStockAlert: lowStockCount,
+          outOfStock: outOfStockCount,
+          expiredMedicines: expiredCount,
+          totalMedicineSales: totalMedicineAmount
+        });
+      }
     } catch (err) {
       console.error('Error fetching medicines:', err);
     }
@@ -344,6 +404,67 @@ const Medi = () => {
         <>
           <h1 style={{marginBottom:'20px'}} className="page-title">Medicine Management</h1>
           
+          {userRole === 'Admin' && (
+            <div className="pharmacy-stats-wrapper" style={{ marginBottom: '20px' }}>
+              <div className="top-stats-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                <div className="top-stat-card">
+                  <div className="top-card-body">
+                    <div className="stat-icon-box icon-blue"><FaCapsules size={24} /></div>
+                    <div className="stat-content">
+                      <span className="stat-label">Total Medicines</span>
+                      <h2 className="stat-value">{statsData.totalMedicines.toLocaleString('en-IN')}</h2>
+                      <span className="stat-subtext text-blue">All medicines in stock</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="top-stat-card">
+                  <div className="top-card-body">
+                    <div className="stat-icon-box icon-green"><FaBoxOpen size={24} /></div>
+                    <div className="stat-content">
+                      <span className="stat-label">Available Stock</span>
+                      <h2 className="stat-value">{statsData.availableStock.toLocaleString('en-IN')}</h2>
+                      <span className="stat-subtext text-green">Total available stock</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="top-stat-card">
+                  <div className="top-card-body">
+                    <div className="stat-icon-box icon-orange"><FaExclamationTriangle size={22} /></div>
+                    <div className="stat-content">
+                      <span className="stat-label">Low Stock Alert</span>
+                      <h2 className="stat-value">{statsData.lowStockAlert}</h2>
+                      <span className="stat-subtext text-orange">Medicines low in stock</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="top-stat-card">
+                  <div className="top-card-body">
+                    <div className="stat-icon-box icon-red"><FaCalendarTimes size={24} /></div>
+                    <div className="stat-content">
+                      <span className="stat-label">Expired Medicines</span>
+                      <h2 className="stat-value">{statsData.expiredMedicines}</h2>
+                      <span className="stat-subtext text-red">Expired medicines</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="top-stat-card">
+                  <div className="top-card-body">
+                    <div className="stat-icon-box" style={{ background: 'linear-gradient(135deg, #fee2e2, #fecaca)' }}><FaTimesCircle size={22} color="#dc2626" /></div>
+                    <div className="stat-content">
+                      <span className="stat-label">Out of Stock</span>
+                      <h2 className="stat-value" style={{ color: statsData.outOfStock > 0 ? '#dc2626' : '#15803d' }}>{statsData.outOfStock}</h2>
+                      <span className="stat-subtext" style={{ color: statsData.outOfStock > 0 ? '#dc2626' : '#15803d' }}>Medicines out of stock</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="list-header" style={{ display: 'flex', justifyItems: 'flex-start', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
             {/* <h2 className="list-title">List:</h2> */}
             <input 

@@ -162,8 +162,8 @@ input:checked + .slider:before {
 }
 
 .submit-btn {
-  background-color: #D3D9FF;
-  color: #5F76FE;
+  background-color: #4f7cf6;
+  color: white;
   border: none;
   border-radius: 6px;
   padding: 12px 40px;
@@ -174,7 +174,7 @@ input:checked + .slider:before {
 }
 
 .submit-btn:hover {
-  background-color: #5F76FE;
+  background-color: #4f7cf6;
   color : white;
 }
 
