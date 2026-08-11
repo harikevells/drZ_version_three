@@ -39,8 +39,41 @@ const formatTimeSlot = (timeStr: string) => {
   if (dHrs === 0) dHrs = 12;
 
   const eMinsStr = eMins < 10 ? '0' + eMins : eMins;
-  return `${str} to ${dHrs}.${eMinsStr}${eAmpm}`;
+  return `${dHrs}:${eMinsStr} ${eAmpm.toUpperCase()}`;
 };
+
+const getLeftBorderColor = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'pending': return '#4871F7';
+    case 'rescheduled': return '#8B5CF6';
+    case 'approved': return '#10B981';
+    case 'completed': return '#10B981';
+    case 'cancelled': return '#EF4444';
+    default: return '#E5E7EB';
+  }
+};
+
+const getStatusBadgeStyle = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'pending': return { bg: '#FEF3C7', text: '#D97706', icon: null };
+    case 'rescheduled': return { bg: '#E0E7FF', text: '#4338CA', icon: null };
+    case 'approved': return { bg: '#D1FAE5', text: '#059669', icon: 'checkmark' };
+    case 'completed': return { bg: '#D1FAE5', text: '#059669', icon: 'checkmark' };
+    case 'cancelled': return { bg: '#FEE2E2', text: '#DC2626', icon: 'close' };
+    default: return { bg: '#F3F4F6', text: '#4B5563', icon: null };
+  }
+};
+
+const getAvatarBg = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'rescheduled': return '#8B5CF6';
+    case 'pending': return '#4871F7';
+    case 'approved': return '#10B981';
+    default: return '#14B8A6'; 
+  }
+};
+
+const getInitials = (name: string) => name ? name.charAt(0).toUpperCase() : 'U';
 
 const parseDateStr = (dateStr: string) => {
   if (!dateStr) return null;
@@ -485,17 +518,21 @@ export default function AppointmentScreen({ route }: any) {
               const displayAppmtId = item.booking_id || 'Appmt0000';
               const displayPatId = item.patient_id || 'Pat0000';
               const isHighlighted = highlightedBookingId && (item.booking_id === highlightedBookingId || item.id === highlightedBookingId || item._id === highlightedBookingId);
+              
+              const badge = getStatusBadgeStyle(item.status);
+              const avatarBg = getAvatarBg(item.status);
+
               const cardStyle = [
                 styles.requestCard,
                 isHighlighted && {
                   borderColor: blinkAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: ['#F5F6F8', '#0D6EFD']
+                    outputRange: ['#FFF', '#0D6EFD']
                   }),
                   borderWidth: 2,
                   elevation: blinkAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [0, 8]
+                    outputRange: [3, 10]
                   })
                 }
               ];
@@ -503,14 +540,24 @@ export default function AppointmentScreen({ route }: any) {
               return (
                 <TouchableOpacity activeOpacity={1} onPress={() => removeBlink(item)}>
                   <Animated.View style={cardStyle}>
-                    <View style={styles.cardHeader}>
-                      <View style={styles.headerLeftInfo}>
-                        <Text style={styles.appointmentIdText}>Booking ID: {displayAppmtId}</Text>
-                        <Text style={styles.patientName}>{item.patient_name}</Text>
+                    {/* Header Row: Avatar, Name, Status */}
+                    <View style={styles.cardHeaderRow}>
+                      <View style={[styles.avatarContainer, !item.profileImage && { backgroundColor: avatarBg }]}>
+                        <Animated.Image 
+                          source={item.profileImage ? { uri: item.profileImage } : ((item.patient_gender === 'Female' || item.gender === 'Female') ? require('../assets/femalepatient.png') : require('../assets/malepatient.png'))} 
+                          style={styles.avatarImage} 
+                          resizeMode={item.profileImage ? "cover" : "contain"} 
+                        />
                       </View>
+                      
+                      <View style={styles.nameAndIdCol}>
+                        <Text style={styles.patientNameText}>{item.patient_name}</Text>
+                        <Text style={styles.appointmentIdText}>Booking ID: {displayAppmtId}</Text>
+                      </View>
+
                       {activeTab === 'Approved' ? (
                         <TouchableOpacity 
-                          style={styles.joinBtn} 
+                          style={styles.joinVideoBtn} 
                           onPress={() => navigation.navigate('VideoCall', { 
                             patientName: item.patient_name, 
                             patientId: item.id || item._id,
@@ -525,67 +572,67 @@ export default function AppointmentScreen({ route }: any) {
                           <Text style={styles.joinBtnText}> Join</Text>
                         </TouchableOpacity>
                       ) : (
-                        <View style={styles.statusBadge}>
-                          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
+                        <View style={[styles.statusPill, { backgroundColor: badge.bg }]}>
+                          {badge.icon && <Ionicons name={badge.icon} size={12} color={badge.text} style={{ marginRight: 4 }} />}
+                          <Text style={[styles.statusPillText, { color: badge.text }]}>{item.status}</Text>
                         </View>
                       )}
                     </View>
 
-                    <View style={styles.detailRow}>
-                      <Ionicons name="calendar-outline" size={14} color="#666" />
-                      <Text style={[styles.detailText, { width: 90 }]}>{item.appointment_date}</Text>
-                      <Ionicons name="time-outline" size={14} color="#666" style={{ marginLeft: 15 }} />
-                      <Text style={[styles.detailText, { width: 150 }]}>{formatTimeSlot(item.appointment_time)}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Ionicons name="medical-outline" size={14} color="#666" />
-                      <Text style={[styles.detailText, { width: 280 }]}>{item.treatment_category || 'General'}</Text>
+                    {/* Details Row: Date & Time */}
+                    <View style={styles.dateTimeRow}>
+                      <View style={styles.detailItem}>
+                        <Ionicons name="calendar-outline" size={16} color="#6B7280" />
+                        <Text style={styles.detailTextVal}>{item.appointment_date}</Text>
+                      </View>
+                      <View style={styles.detailItem}>
+                        <Ionicons name="time-outline" size={16} color="#6B7280" />
+                        <Text style={styles.detailTextVal}>{formatTimeSlot(item.appointment_time)}</Text>
+                      </View>
                     </View>
 
+                    {/* Department Row */}
+                    <View style={styles.deptRow}>
+                      <Ionicons name="medical-outline" size={16} color="#6B7280" />
+                      <Text style={styles.detailTextVal}>{item.treatment_category || 'Neurology / நரம்பியல்'}</Text>
+                    </View>
+
+                    {/* Action Buttons */}
                     {activeTab === 'Pending' && (
-                      <View style={styles.actionButtons}>
-                        <TouchableOpacity
-                          style={[styles.btn, styles.approveBtn]}
-                          onPress={() => openApprove(item)}
-                        >
-                          <Text style={styles.btnText}>Approve</Text>
+                      <View style={styles.actionButtonsRow}>
+                        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#22C55E' }]} onPress={() => openApprove(item)}>
+                          <Ionicons name="checkmark-circle-outline" size={16} color="#FFF" />
+                          <Text style={styles.actionBtnText}> Approve</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.btn, styles.rescheduleBtn]}
-                          onPress={() => openReschedule(item)}
-                        >
-                          <Text style={styles.btnText}>Reschedule</Text>
+                        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#0D6EFD' }]} onPress={() => openReschedule(item)}>
+                          <Ionicons name="calendar-outline" size={16} color="#FFF" />
+                          <Text style={styles.actionBtnText}> Reschedule</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.btn, styles.cancelBtn]}
-                          onPress={() => openCancel(item)}
-                        >
-                          <Text style={styles.btnText}>Cancel</Text>
+                        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#f27b7bff' }]} onPress={() => openCancel(item)}>
+                          <Ionicons name="close-circle-outline" size={16} color="#FFF" />
+                          <Text style={styles.actionBtnText}> Cancel</Text>
                         </TouchableOpacity>
                       </View>
                     )}
 
                     {activeTab === 'Approved' && (
-                      <View style={styles.actionButtons}>
-                        <TouchableOpacity
-                          style={[styles.btn, styles.completeBtn]}
-                          onPress={() => openComplete(item)}
-                        >
-                          <Text style={styles.btnText}>Complete</Text>
+                      <View style={styles.actionButtonsRow}>
+                        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#22C55E' }]} onPress={() => openComplete(item)}>
+                          <Ionicons name="checkmark-circle-outline" size={16} color="#FFF" />
+                          <Text style={styles.actionBtnText}> Complete</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.btn, styles.cancelBtn]}
-                          onPress={() => openCancel(item)}
-                        >
-                          <Text style={styles.btnText}>Cancel</Text>
+                        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#f27b7bff' }]} onPress={() => openCancel(item)}>
+                          <Ionicons name="close-circle-outline" size={16} color="#FFF" />
+                          <Text style={styles.actionBtnText}> Cancel</Text>
                         </TouchableOpacity>
                       </View>
                     )}
                     
+                    {/* Prescription Details for Completed */}
                     {activeTab === 'Completed' && item.prescription && item.prescription.length > 0 && (
-                      <View style={styles.prescriptionContainer}>
+                      <View style={styles.prescriptionBlock}>
                         <TouchableOpacity 
-                          style={styles.prescriptionHeader} 
+                          style={styles.prescriptionHeaderBtn} 
                           onPress={() => {
                             const id = item.id || item._id;
                             setExpandedPrescriptions(prev => ({
@@ -594,12 +641,38 @@ export default function AppointmentScreen({ route }: any) {
                             }));
                           }}
                         >
-                          <Text style={styles.prescriptionTitle}>Prescription Details</Text>
-                          <View style={styles.headerIcons}>
-                            <TouchableOpacity
-                              style={styles.editIconBtn}
-                              onPress={(e) => {
-                                e.stopPropagation(); // Prevent toggling the accordion
+                          <View style={styles.prescriptionHeaderLeft}>
+                            <Ionicons name="document-text-outline" size={18} color="#1E3A8A" />
+                            <Text style={styles.prescriptionTitleText}> Prescription Details</Text>
+                          </View>
+                          <Ionicons 
+                            name={expandedPrescriptions[item.id || item._id] ? "chevron-up" : "chevron-down"} 
+                            size={20} 
+                            color="#1E3A8A" 
+                          />
+                        </TouchableOpacity>
+                        
+                        {expandedPrescriptions[item.id || item._id] && (
+                          <View style={styles.prescriptionList}>
+                            {item.prescription.map((med: any, index: number) => (
+                              <View key={med.id || index.toString()} style={styles.pillRow}>
+                                <View style={styles.pillIconPlaceholder}>
+                                  <Ionicons name="bandage-outline" size={24} color="#6B7280" />
+                                </View>
+                                <View style={styles.pillInfoCol}>
+                                  <View style={styles.pillNameRow}>
+                                    <Text style={styles.pillNameText}>{med.name}</Text>
+                                    <Text style={styles.pillQtyText}>{med.days ? `${med.days} Days` : ''}</Text>
+                                  </View>
+                                  <Text style={styles.pillDetailText}>Timing: {med.timing}</Text>
+                                  <Text style={styles.pillDetailText}>Intake: {med.intake}</Text>
+                                </View>
+                              </View>
+                            ))}
+                            
+                            <TouchableOpacity 
+                              style={styles.viewFullPrescriptionBtn}
+                              onPress={() => {
                                 navigation.navigate('Prescription', { 
                                   patientName: item.patient_name, 
                                   patientId: item.id || item._id,
@@ -610,27 +683,9 @@ export default function AppointmentScreen({ route }: any) {
                                 });
                               }}
                             >
-                              <Ionicons name="pencil" size={16} color="#0D6EFD" />
+                              <Ionicons name="document-text-outline" size={16} color="#2563EB" />
+                              <Text style={styles.viewFullPrescriptionText}> View & Edit Prescription</Text>
                             </TouchableOpacity>
-                            <Ionicons 
-                              name={expandedPrescriptions[item.id || item._id] ? "chevron-up" : "chevron-down"} 
-                              size={18} 
-                              color="#0D6EFD" 
-                            />
-                          </View>
-                        </TouchableOpacity>
-                        
-                        {expandedPrescriptions[item.id || item._id] && (
-                          <View style={styles.prescriptionContent}>
-                            {item.prescription.map((med: any, index: number) => (
-                              <View key={med.id || index.toString()} style={styles.medRow}>
-                                <View style={styles.medInfo}>
-                                  <Text style={styles.medDetailLine}>Medicine Name: {med.name}</Text>
-                                  <Text style={styles.medDetailLine}>Timing: {med.timing}</Text>
-                                  <Text style={styles.medDetailLine}>Intake : {med.intake}</Text>
-                                </View>
-                              </View>
-                            ))}
                           </View>
                         )}
                       </View>
@@ -863,52 +918,74 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   requestCard: {
-    backgroundColor: '#F5F6F8',
+    backgroundColor: '#FFF',
     borderRadius: 16,
-    padding: 18,
-    marginBottom: 15,
-    shadowOpacity: 0,
-    elevation: 0,
-    borderWidth: 2,
-    borderColor: '#F5F6F8',
+    padding: 14,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
-  cardHeader: {
+  cardHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 16,
   },
-  headerLeftInfo: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+  avatarContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarInitial: {
+    color: '#FFF',
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  nameAndIdCol: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  patientNameText: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 2,
   },
   appointmentIdText: {
-    fontSize: 11,
-    color: '#888',
-    marginBottom: 2,
-    fontWeight: '600',
-  },
-  patientName: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#0D6EFD',
-  },
-  statusBadge: {
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    backgroundColor: 'transparent'
-  },
-  statusText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    color: '#6B7280',
   },
-  joinBtn: {
-    backgroundColor: '#0D6EFD',
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  joinVideoBtn: {
+    backgroundColor: '#10B981',
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 6,
+    borderRadius: 12,
   },
   joinBtnText: {
     color: '#FFF',
@@ -916,117 +993,123 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 4,
   },
-  detailRow: {
+  dateTimeRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: 5,
-    marginBottom: 5,
-    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  detailText: {
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  detailTextVal: {
     fontSize: 13,
-    color: '#333',
+    color: '#111827',
     marginLeft: 6,
-    flexShrink: 1,
-    width: 'auto', // change from fixed 110 to auto for date
+    fontWeight: '600',
   },
-  actionButtons: {
+  deptRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  actionButtonsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 15,
+    marginTop: 6,
   },
-  btn: {
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 6,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
     marginHorizontal: 4,
   },
-  approveBtn: {
-    backgroundColor: '#2CD95C',
+  actionBtnText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 4,
   },
-  completeBtn: {
-    backgroundColor: '#2CD95C',
-  },
-  rescheduleBtn: {
-    backgroundColor: '#FDBA31',
-  },
-  cancelBtn: {
-    backgroundColor: '#F47171',
-  },
-  btnText: {
-    color: '#000',
-    fontSize: 13,
-    fontWeight: 'bold',
-    textAlign: 'center'
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  calendarContainer: {
-    backgroundColor: '#FFF',
-    borderRadius: 15,
-    padding: 15,
-    width: '90%',
-  },
-  closeCalendarBtn: {
-    marginTop: 15,
-    padding: 10,
-    backgroundColor: '#E8E8E8',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  closeCalendarText: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  prescriptionContainer: {
+  prescriptionBlock: {
     marginTop: 15,
     paddingTop: 15,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#F3F4F6',
   },
-  prescriptionHeader: {
+  prescriptionHeaderBtn: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 5,
   },
-  prescriptionContent: {
-    marginTop: 10,
-  },
-  prescriptionTitle: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#0D6EFD',
-  },
-  headerIcons: {
+  prescriptionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  editIconBtn: {
-    paddingHorizontal: 10,
+  prescriptionTitleText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1E3A8A',
   },
-  medRow: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+  prescriptionList: {
+    marginTop: 15,
+  },
+  pillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 15,
-    backgroundColor: '#F9FAFB',
-    padding: 10,
-    borderRadius: 8,
   },
-  medInfo: {
+  pillIconPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  pillInfoCol: {
     flex: 1,
   },
-  medDetailLine: {
+  pillNameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  pillNameText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1E293B',
+  },
+  pillQtyText: {
+    fontSize: 12,
+    color: '#4B5563',
+  },
+  pillDetailText: {
+    fontSize: 12,
+    color: '#4B5563',
+    marginBottom: 2,
+  },
+  viewFullPrescriptionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EFF6FF',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  viewFullPrescriptionText: {
+    color: '#2563EB',
     fontSize: 13,
-    color: '#333',
-    marginBottom: 6,
-    fontWeight: '500',
+    fontWeight: 'bold',
+    marginLeft: 6,
   }
 });

@@ -177,6 +177,16 @@ const getAllDoctorAppointments = async (req, res) => {
     try {
         const { doctorName } = req.params;
         const appointments = await Appointment.find({ doctor_name: doctorName }).sort({ createdAt: -1 });
+        
+        for (let i = 0; i < appointments.length; i++) {
+            if (appointments[i].login_mobile) {
+                const pat = await Patient.findOne({ identifier: appointments[i].login_mobile });
+                if (pat && pat.profileImage) {
+                    appointments[i].profileImage = pat.profileImage;
+                }
+            }
+        }
+        
         res.json(appointments);
     } catch (err) {
         res.status(500).json({ error: err.message });
