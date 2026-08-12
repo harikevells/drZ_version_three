@@ -1,0 +1,214 @@
+.rd-sidebar {
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  .rd-sidebar {
+    width: 100%;
+  }
+}
+
+/* Sidebar Components */
+.rd-sidebar-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+}
+
+.rd-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: #536ef6;
+}
+
+.rd-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  text-align: center;
+}
+
+.rd-calendar-day-name {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.rd-calendar-day {
+  font-size: 12px;
+  font-weight: 500;
+  color: #4b5563;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+
+.rd-calendar-day.rd-active {
+  background: #536ef6;
+  color: white;
+}
+
+.rd-calendar-day.rd-red {
+  color: #ff3b30;
+}
+
+/* Profile Card */
+.rd-profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.rd-profile-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.rd-profile-img-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.rd-profile-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid #536ef6;
+  padding: 3px;
+  object-fit: cover;
+}
+
+.rd-profile-info {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.rd-profile-info h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #1a1a1a;
+}
+
+.rd-profile-info p {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.rd-profile-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.rd-action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rd-action-btn:hover {
+  background: #f9fafb;
+  color: #536ef6;
+}
+
+/* Available Beds List */
+.rd-beds-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.rd-beds-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.rd-btn-add {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.rd-beds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rd-bed-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rd-bed-info-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rd-bed-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #f3f4f6;
+}
+
+.rd-bed-details h5 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 2px 0;
+  color: #1a1a1a;
+}
+
+.rd-bed-details p {
+  font-size: 11px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.rd-badge-available {
+  background: #536ef6;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+}

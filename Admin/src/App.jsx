@@ -18,6 +18,7 @@ import PharmarcyCreattion from './Pharmarcy/PharmarcyCreattion';
 import PharmacyDashboard from './Pharmarcy/pharmarcyDashboard/PharmacyDashboard';
 import PurchaseMedicine from './Pharmarcy/PurchaseMedicine';
 import BillingMedicine from './Pharmarcy/BillingMedicine';
+import ReceptionistDashboard from './Receptionist/ReceptionistDashboard/ReceptionistDashboard';
 
 const ProtectedRoute = ({ element }) => {
   const token = sessionStorage.getItem('token');
@@ -50,7 +51,12 @@ const PublicRoute = ({ element }) => {
     const timeElapsed = now - parseInt(loginTime, 10);
     const twentyFourHours = 24 * 60 * 60 * 1000;
     if (timeElapsed <= twentyFourHours) {
-      return <Navigate to={role === 'Pharmacy' ? "/pharmacy-dashboard" : "/dashboard"} replace />;
+      if (role === 'Pharmacy') {
+        return <Navigate to="/pharmacy-dashboard" replace />;
+      } else if (role === 'Receptionist') {
+        return <Navigate to="/receptionist-dashboard" replace />;
+      }
+      return <Navigate to="/dashboard" replace />;
     }
   }
   return element;
@@ -66,6 +72,7 @@ function App() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="pharmacy-dashboard" element={<PharmacyDashboard />} />
+          <Route path="receptionist-dashboard" element={<ReceptionistDashboard />} />
           <Route path="dr-management" element={<DoctorManagement />} />
           <Route path="schedule" element={<Schedule />} />
           <Route path="patient" element={<PatientAppointments />} />

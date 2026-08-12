@@ -7,6 +7,8 @@ import './Layout.css';
 import logoImage from '../assets/Dclogo.png';
 import adminImage from '../assets/adminimage.png';
 import doctorImage from '../assets/doctorimage1.png';
+import pharmacyImage from '../assets/Pharmacylogo.webp';
+import receptionistImage from '../assets/receptionistlogo.jpg';
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -35,11 +37,24 @@ const Layout = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
+  const getProfileImage = () => {
+    if (userRole === 'Admin') return adminImage;
+    if (userRole === 'Pharmacy') return pharmacyImage;
+    if (userRole === 'Receptionist') return receptionistImage;
+    return adminImage; // default fallback
+  };
+
   useEffect(() => {
     if (userRole === 'Pharmacy' && (location.pathname === '/dashboard' || location.pathname === '/')) {
       navigate('/pharmacy-dashboard');
+    } else if (userRole === 'Receptionist' && !['/receptionist-dashboard', '/patient'].includes(location.pathname)) {
+      navigate('/receptionist-dashboard');
     }
+
     if (userRole !== 'Pharmacy' && location.pathname === '/pharmacy-dashboard') {
+      navigate('/dashboard');
+    }
+    if (userRole !== 'Receptionist' && location.pathname === '/receptionist-dashboard') {
       navigate('/dashboard');
     }
     fetchUnreadCount();
@@ -96,6 +111,26 @@ const Layout = () => {
                 <span>Billing Medicine</span>
               </NavLink>
 
+              <div className="support-card">
+                <div className="support-card-content">
+                  <h4>Need Help?</h4>
+                  <p>We're here to help you 24/7</p>
+                  <button className="support-btn">Contact Support</button>
+                </div>
+                <img src={doctorImage} alt="Support" className="support-card-img" />
+              </div>
+            </>
+          ) : userRole === 'Receptionist' ? (
+            <>
+              <NavLink to="/receptionist-dashboard" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                <FaTachometerAlt className="nav-icon" />
+                <span>Dashboard</span>
+              </NavLink>
+              <NavLink to="/patient" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                <FaUserInjured className="nav-icon" />
+                <span>Appointment</span>
+              </NavLink>
+              
               <div className="support-card">
                 <div className="support-card-content">
                   <h4>Need Help?</h4>
@@ -255,28 +290,34 @@ const Layout = () => {
                   </span>
                 )}
               </button>
-              <button
-                className="icon-btn"
-                style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', color: '#1e293b' }}
-                onClick={() => setIsLogoutModalOpen(true)}
-              >
-                <FaSignOutAlt size={16} />
-              </button>
             </div>
 
-            {/* Profile Avatar */}
-            <div style={{ position: 'relative', marginLeft: '8px' }}>
-              <img
-                src={adminImage}
-                alt="Profile"
-                style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #f8fafc' }}
-              />
-              {/* Online Status Dot */}
-              <div style={{
-                position: 'absolute', bottom: '2px', right: '2px',
-                width: '10px', height: '10px', backgroundColor: '#10b981',
-                borderRadius: '50%', border: '2px solid #fff'
-              }}></div>
+            {/* Profile Section */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '8px', cursor: 'pointer' }} onClick={() => setIsLogoutModalOpen(true)}>
+              <div style={{ position: 'relative' }}>
+                <img
+                  src={getProfileImage()}
+                  alt="Profile"
+                  style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #f8fafc' }}
+                />
+                {/* Online Status Dot */}
+                <div style={{
+                  position: 'absolute', bottom: '2px', right: '0px',
+                  width: '12px', height: '12px', backgroundColor: '#10b981',
+                  borderRadius: '50%', border: '2px solid #fff'
+                }}></div>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '15px', fontWeight: '600', color: '#1e293b', lineHeight: '1.2' }}>
+                  {userName}
+                </span>
+                <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
+                  {userRole}
+                </span>
+              </div>
+              
+              <FaChevronDown size={14} color="#64748b" style={{ marginLeft: '4px' }} />
             </div>
 
           </div>

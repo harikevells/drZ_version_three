@@ -84,6 +84,7 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [isVideoCall, setIsVideoCall] = useState(false);
+  const [appointmentType, setAppointmentType] = useState('Offline');
 
   useEffect(() => {
     fetchInitialData();
@@ -301,7 +302,9 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
       doctor_name: doc ? doc.doctorName : "N/A",
       appointment_date: formatDate(appointmentDate),
       appointment_time: selectedTime,
-      video_call: isVideoCall ? "Yes" : "No",
+      appointment_type: appointmentType,
+      created_by: sessionStorage.getItem('role') || 'Admin',
+      video_call: (appointmentType === 'Online' && isVideoCall) ? "Yes" : "No",
       consultation_fee: Number(consultFee) || 0,
       payment_id: 'CASH_' + Date.now(),
       payment_method: 'Cash',
@@ -420,6 +423,26 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
         <div>
           <div className="form-section-title">Appointment Details</div>
           
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div className="appointment-type-toggle">
+              <button 
+                className={`type-btn ${appointmentType === 'Online' ? 'active' : ''}`}
+                onClick={() => setAppointmentType('Online')}
+              >
+                Online
+              </button>
+              <button 
+                className={`type-btn ${appointmentType === 'Offline' ? 'active' : ''}`}
+                onClick={() => {
+                  setAppointmentType('Offline');
+                  setIsVideoCall(false);
+                }}
+              >
+                Offline
+              </button>
+            </div>
+          </div>
+
           <div className="form-group">
             <label>Select Appointment Date *</label>
             <input 
@@ -481,18 +504,20 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
             )}
           </div>
 
-          <div className="form-group" style={{ marginTop: '24px' }}>
-            <div 
-              className={`video-box ${isVideoCall ? 'active' : ''}`}
-              onClick={() => setIsVideoCall(!isVideoCall)}
-            >
-              <input type="checkbox" checked={isVideoCall} readOnly />
-              <div style={{ textAlign: 'center' }}>
-                <span style={{ display: 'block', fontWeight: '700', fontSize: '14px', color: '#1e293b' }}>Video Call Consult</span>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Request video consultation</span>
+          {appointmentType === 'Online' && (
+            <div className="form-group" style={{ marginTop: '24px' }}>
+              <div 
+                className={`video-box ${isVideoCall ? 'active' : ''}`}
+                onClick={() => setIsVideoCall(!isVideoCall)}
+              >
+                <input type="checkbox" checked={isVideoCall} readOnly />
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ display: 'block', fontWeight: '700', fontSize: '14px', color: '#1e293b' }}>Video Call Consult</span>
+                  <span style={{ fontSize: '12px', color: '#64748b' }}>Request video consultation</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
