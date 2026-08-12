@@ -131,7 +131,7 @@ const PharmarcyCreattion = () => {
 
   return (
     <div className="page-container">
-      <h1 className="page-title">Pharmacy, Lab & Scan Management</h1>
+      <h1 className="page-title">Pharmacy, Lab, Scan & Receptionist Management</h1>
       
       <div className="form-card">
         <form onSubmit={handleSubmit} autoComplete="off">
@@ -154,6 +154,7 @@ const PharmarcyCreattion = () => {
                 <option value="Pharmacy">Pharmacy</option>
                 <option value="Lab">Lab</option>
                 <option value="Scan">Scan</option>
+                <option value="Receptionist">Receptionist</option>
               </select>
             </div>
             

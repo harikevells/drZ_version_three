@@ -18,6 +18,7 @@ export default function Header({ title, isNotification = false, variant = 'defau
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
   const [doctorName, setDoctorName] = useState('Doctor');
+  const [specialization, setSpecialization] = useState('Cardiologist');
   const [greeting, setGreeting] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
@@ -32,6 +33,24 @@ export default function Header({ title, isNotification = false, variant = 'defau
           if (parsed.doctorName) {
             setDoctorName(parsed.doctorName);
             fetchUnreadCount(parsed.doctorName);
+          }
+          if (parsed.specialization || parsed.department) {
+            const rawCat = parsed.specialization || parsed.department;
+            let categories: string[] = [];
+            if (Array.isArray(rawCat)) {
+              categories = rawCat.map((s: any) => String(s).trim()).filter(s => s);
+            } else if (typeof rawCat === 'string') {
+              categories = rawCat.split(',').map(s => s.trim()).filter(s => s);
+            } else {
+              categories = [String(rawCat).trim()];
+            }
+
+            if (categories.length > 2) {
+              setSpecialization('Multi Specialist');
+            } else if (categories.length > 0) {
+              const engCategories = categories.map(cat => cat.split('/')[0].trim());
+              setSpecialization(engCategories.join(', '));
+            }
           }
         }
       } catch (e) {
@@ -79,17 +98,23 @@ export default function Header({ title, isNotification = false, variant = 'defau
     <View style={[styles.headerContainer, variant === 'appointment' && styles.appointmentHeaderContainer]}>
       <View style={styles.headerContent}>
         <View style={[styles.userInfo, variant === 'appointment' && styles.appointmentUserInfo]}>
-          <Image
-            source={require('../assets/DoctorlogoApp1.png')}
-            style={styles.avatar}
-          />
+          <View style={styles.avatarWrapper}>
+            <Image
+              source={require('../assets/doctorlogo.png')}
+              style={styles.avatar}
+            />
+          </View>
           <View style={styles.textContainer}>
             {title ? (
               <Text style={styles.doctorName}>{title}</Text>
             ) : (
               <>
-                <Text style={styles.greeting}>Welcome To DrZ</Text>
-                <Text style={styles.doctorName}>Dr.{doctorName.replace('Dr. ', '').replace('Dr.', '')}</Text>
+                <Text style={styles.greeting}>Welcome back,</Text>
+                <View style={styles.nameRow}>
+                  <Text style={styles.doctorName}>Dr. {doctorName.replace('Dr. ', '').replace('Dr.', '')}</Text>
+                  <Ionicons name="checkmark-circle" size={16} color="#2563EB" style={{ marginLeft: 4 }} />
+                </View>
+                <Text style={styles.specialization}>{specialization}</Text>
               </>
             )}
           </View>
@@ -128,36 +153,48 @@ const styles = StyleSheet.create({
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 8,
-    paddingHorizontal: 15,
-    borderRadius: 30,
-    elevation: 2,
+  },
+  avatarWrapper: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+    borderRadius: 27.5,
+    backgroundColor: '#FFF',
   },
   avatar: {
-    width: 35,
-    height: 35,
-    resizeMode: 'contain',
+    width: 55,
+    height: 55,
+    borderRadius: 27.5,
+    borderWidth: 2,
+    borderColor: '#FFF',
+    resizeMode: 'cover',
   },
   textContainer: {
-    marginLeft: 10,
+    marginLeft: 12,
     marginRight: 15,
+    justifyContent: 'center',
   },
   greeting: {
-    color: '#666',
+    color: '#4B5563',
     fontSize: 12,
-    // marginBottom: 2,
-    width: 100,
-
+    fontWeight: '600',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 1,
   },
   doctorName: {
-    color: '#000',
-    fontSize: 14,
+    color: '#0F172A',
+    fontSize: 18,
     fontWeight: 'bold',
+  },
+  specialization: {
+    color: '#3B82F6',
+    fontSize: 12,
+    fontWeight: '700',
   },
   notificationIconContainer: {
     backgroundColor: '#E0E9FF',

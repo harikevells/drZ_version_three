@@ -69,7 +69,7 @@ const getAvatarBg = (status: string) => {
     case 'rescheduled': return '#8B5CF6';
     case 'pending': return '#4871F7';
     case 'approved': return '#10B981';
-    default: return '#14B8A6'; 
+    default: return '#14B8A6';
   }
 };
 
@@ -353,11 +353,11 @@ export default function AppointmentScreen({ route }: any) {
     const params = [];
     if (appliedFromDate) params.push(`from=${encodeURIComponent(appliedFromDate)}`);
     if (appliedToDate) params.push(`to=${encodeURIComponent(appliedToDate)}`);
-    
+
     if (params.length > 0) {
       url += `?${params.join('&')}`;
     }
-    
+
     import('react-native').then(({ Linking }) => {
       Linking.openURL(url).catch(err => {
         console.error("Couldn't open download URL", err);
@@ -518,7 +518,7 @@ export default function AppointmentScreen({ route }: any) {
               const displayAppmtId = item.booking_id || 'Appmt0000';
               const displayPatId = item.patient_id || 'Pat0000';
               const isHighlighted = highlightedBookingId && (item.booking_id === highlightedBookingId || item.id === highlightedBookingId || item._id === highlightedBookingId);
-              
+
               const badge = getStatusBadgeStyle(item.status);
               const avatarBg = getAvatarBg(item.status);
 
@@ -543,23 +543,23 @@ export default function AppointmentScreen({ route }: any) {
                     {/* Header Row: Avatar, Name, Status */}
                     <View style={styles.cardHeaderRow}>
                       <View style={[styles.avatarContainer, !item.profileImage && { backgroundColor: avatarBg }]}>
-                        <Animated.Image 
-                          source={item.profileImage ? { uri: item.profileImage } : ((item.patient_gender === 'Female' || item.gender === 'Female') ? require('../assets/femalepatient.png') : require('../assets/malepatient.png'))} 
-                          style={styles.avatarImage} 
-                          resizeMode={item.profileImage ? "cover" : "contain"} 
+                        <Animated.Image
+                          source={item.profileImage ? { uri: item.profileImage } : ((item.patient_gender === 'Female' || item.gender === 'Female') ? require('../assets/femalepatient.png') : require('../assets/malepatient.png'))}
+                          style={styles.avatarImage}
+                          resizeMode={item.profileImage ? "cover" : "contain"}
                         />
                       </View>
-                      
+
                       <View style={styles.nameAndIdCol}>
                         <Text style={styles.patientNameText}>{item.patient_name}</Text>
                         <Text style={styles.appointmentIdText}>Booking ID: {displayAppmtId}</Text>
                       </View>
 
                       {activeTab === 'Approved' ? (
-                        <TouchableOpacity 
-                          style={styles.joinVideoBtn} 
-                          onPress={() => navigation.navigate('VideoCall', { 
-                            patientName: item.patient_name, 
+                        <TouchableOpacity
+                          style={styles.joinVideoBtn}
+                          onPress={() => navigation.navigate('VideoCall', {
+                            patientName: item.patient_name,
                             patientId: item.id || item._id,
                             appointmentId: item._id || item.id,
                             displayAppointmentId: displayAppmtId,
@@ -627,12 +627,12 @@ export default function AppointmentScreen({ route }: any) {
                         </TouchableOpacity>
                       </View>
                     )}
-                    
+
                     {/* Prescription Details for Completed */}
                     {activeTab === 'Completed' && item.prescription && item.prescription.length > 0 && (
                       <View style={styles.prescriptionBlock}>
-                        <TouchableOpacity 
-                          style={styles.prescriptionHeaderBtn} 
+                        <TouchableOpacity
+                          style={styles.prescriptionHeaderBtn}
                           onPress={() => {
                             const id = item.id || item._id;
                             setExpandedPrescriptions(prev => ({
@@ -645,13 +645,13 @@ export default function AppointmentScreen({ route }: any) {
                             <Ionicons name="document-text-outline" size={18} color="#1E3A8A" />
                             <Text style={styles.prescriptionTitleText}> Prescription Details</Text>
                           </View>
-                          <Ionicons 
-                            name={expandedPrescriptions[item.id || item._id] ? "chevron-up" : "chevron-down"} 
-                            size={20} 
-                            color="#1E3A8A" 
+                          <Ionicons
+                            name={expandedPrescriptions[item.id || item._id] ? "chevron-up" : "chevron-down"}
+                            size={20}
+                            color="#1E3A8A"
                           />
                         </TouchableOpacity>
-                        
+
                         {expandedPrescriptions[item.id || item._id] && (
                           <View style={styles.prescriptionList}>
                             {item.prescription.map((med: any, index: number) => (
@@ -669,12 +669,12 @@ export default function AppointmentScreen({ route }: any) {
                                 </View>
                               </View>
                             ))}
-                            
-                            <TouchableOpacity 
+
+                            <TouchableOpacity
                               style={styles.viewFullPrescriptionBtn}
                               onPress={() => {
-                                navigation.navigate('Prescription', { 
-                                  patientName: item.patient_name, 
+                                navigation.navigate('Prescription', {
+                                  patientName: item.patient_name,
                                   patientId: item.id || item._id,
                                   appointmentId: item._id || item.id,
                                   displayAppointmentId: displayAppmtId,
