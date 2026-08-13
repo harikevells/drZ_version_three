@@ -3,7 +3,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import { 
   FaBed, FaPlus, FaSearch, FaUserInjured, 
-  FaDoorOpen, FaTimes, FaDoorClosed, FaBroom, FaTools, FaEdit, FaCheck, FaImage, FaUpload, FaTrash
+  FaDoorOpen, FaTimes, FaDoorClosed, FaBroom, FaTools, FaEdit, FaCheck, FaImage, FaUpload, FaTrash, FaSignOutAlt
 } from 'react-icons/fa';
 import './RoomManagement.css';
 
@@ -20,7 +20,7 @@ const RoomManagement = () => {
   const [isAddRoomOpen, setIsAddRoomOpen] = useState(false);
   const [isEditRoomOpen, setIsEditRoomOpen] = useState(false);
   const [admitRoom, setAdmitRoom] = useState(null);
-  const [dischargeRoom, setDischargeRoom] = useState(null);
+  const [dischargeTarget, setDischargeTarget] = useState(null); // { room, patient }
 
   // Form States
   const defaultRoomState = { roomNo: '', type: 'Private', floor: '1st Floor', capacity: '1', price: '', description: '', amenities: { ...INITIAL_AMENITIES }, status: 'Available', image: null };
@@ -60,7 +60,8 @@ const RoomManagement = () => {
   // Derived state
   const filteredRooms = useMemo(() => {
     return rooms.filter(r => {
-      const matchSearch = r.roomNo.includes(searchTerm) || (r.patient && r.patient.name && r.patient.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchSearch = r.roomNo.includes(searchTerm) || 
+        (r.patients && r.patients.some(p => p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())));
       const matchStatus = statusFilter === 'All' || r.status === statusFilter;
       const matchFloor = floorFilter === 'All' || r.floor === floorFilter;
       return matchSearch && matchStatus && matchFloor;
@@ -165,13 +166,13 @@ const RoomManagement = () => {
       fetchRooms();
     } catch (error) {
       console.error("Error admitting patient:", error);
-      alert("Failed to admit patient");
+      alert(error.response?.data?.error || "Failed to admit patient");
     }
   };
 
   const handleDischarge = async (e) => {
     e.preventDefault();
-    if (!dischargeRoom) return;
+    if (!dischargeTarget) return;
     
     try {
       const token = sessionStorage.getItem('token');
@@ -179,12 +180,12 @@ const RoomManagement = () => {
       
       const payload = {
         ...dischargeData,
-        patientId: dischargeRoom.patient?.id,
-        patientName: dischargeRoom.patient?.name
+        patientId: dischargeTarget.patient.id,
+        _admissionId: dischargeTarget.patient._admissionId
       };
 
-      await axios.post(`${API_BASE_URL}/rooms/${dischargeRoom.id}/discharge`, payload, config);
-      setDischargeRoom(null);
+      await axios.post(`${API_BASE_URL}/rooms/${dischargeTarget.room.id}/discharge`, payload, config);
+      setDischargeTarget(null);
       fetchRooms();
     } catch (error) {
       console.error("Error discharging patient:", error);
@@ -308,95 +309,109 @@ const RoomManagement = () => {
             <p>Try adjusting your search or filters.</p>
           </div>
         ) : (
-          filteredRooms.map(room => (
-            <div className="rm-card" key={room.id}>
-              {room.image && (
-                <div className="rm-card-image" style={{backgroundImage: `url(${room.image})`}}></div>
-              )}
-              <div className="rm-card-header">
-                <div className="rm-room-no">
-                  <div className="rm-room-icon">
-                    {getStatusIcon(room.status)}
-                  </div>
-                  <div>
-                    <h3 style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                      {room.roomNo} 
-                      <button className="rm-edit-icon-btn" onClick={() => { setEditRoom({...room}); setIsEditRoomOpen(true); }} title="Edit Room">
-                        <FaEdit size={12} />
-                      </button>
-                    </h3>
-                    <p className="rm-room-type">{room.type} • {room.floor}</p>
-                  </div>
-                </div>
-                <span className={`rm-status-badge ${getStatusBadgeClass(room.status)}`}>
-                  {room.status}
-                </span>
-              </div>
-              
-              <div className="rm-card-body">
-                <div className="rm-details">
-                  <div className="rm-detail-row" style={{justifyContent: 'space-between'}}>
+          filteredRooms.map(room => {
+            const currentPatients = room.patients || [];
+            const capacity = parseInt(room.capacity) || 1;
+            const availableBeds = capacity - currentPatients.length;
+
+            return (
+              <div className="rm-card" key={room.id}>
+                {room.image && (
+                  <div className="rm-card-image" style={{backgroundImage: `url(${room.image})`}}></div>
+                )}
+                <div className="rm-card-header">
+                  <div className="rm-room-no">
+                    <div className="rm-room-icon">
+                      {getStatusIcon(room.status)}
+                    </div>
                     <div>
-                      <span className="rm-detail-icon">₹</span>
-                      <span><strong>{room.price}</strong> / Day</span>
-                    </div>
-                    <div style={{fontSize: '13px', color: '#64748b', fontWeight: '500'}}>
-                      Capacity: {room.capacity}
+                      <h3 style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                        {room.roomNo} 
+                        <button className="rm-edit-icon-btn" onClick={() => { setEditRoom({...room}); setIsEditRoomOpen(true); }} title="Edit Room">
+                          <FaEdit size={12} />
+                        </button>
+                      </h3>
+                      <p className="rm-room-type">{room.type} • {room.floor}</p>
                     </div>
                   </div>
-                  
-                  {room.amenities && (
-                    <div className="rm-amenities-tags">
-                      {room.amenities.ac && <span>AC</span>}
-                      {room.amenities.tv && <span>TV</span>}
-                      {room.amenities.wifi && <span>Wi-Fi</span>}
-                      {room.amenities.bathroom && <span>Attached Bath</span>}
-                      {room.amenities.fridge && <span>Fridge</span>}
+                  <span className={`rm-status-badge ${getStatusBadgeClass(room.status)}`}>
+                    {room.status}
+                  </span>
+                </div>
+                
+                <div className="rm-card-body">
+                  <div className="rm-details">
+                    <div className="rm-detail-row" style={{justifyContent: 'space-between'}}>
+                      <div>
+                        <span className="rm-detail-icon">₹</span>
+                        <span><strong>{room.price}</strong> / Day</span>
+                      </div>
+                      <div style={{fontSize: '13px', color: availableBeds === 0 ? '#dc2626' : '#16a34a', fontWeight: '600'}}>
+                        Beds: {currentPatients.length} / {capacity} Admitted
+                      </div>
+                    </div>
+                    
+                    {room.amenities && (
+                      <div className="rm-amenities-tags">
+                        {room.amenities.ac && <span>AC</span>}
+                        {room.amenities.tv && <span>TV</span>}
+                        {room.amenities.wifi && <span>Wi-Fi</span>}
+                        {room.amenities.bathroom && <span>Attached Bath</span>}
+                        {room.amenities.fridge && <span>Fridge</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  {currentPatients.length > 0 && (
+                    <div className="rm-patient-list-container">
+                      <h5 style={{fontSize: '12px', color: '#64748b', marginTop: '16px', marginBottom: '8px', textTransform: 'uppercase'}}>Admitted Patients</h5>
+                      <div className="rm-patient-list">
+                        {currentPatients.map(patient => (
+                          <div key={patient._admissionId || patient.id} className="rm-patient-info-item">
+                            <div className="rm-patient-info-left">
+                              {patient.profileImage ? (
+                                 <img src={patient.profileImage} alt="Patient" className="rm-patient-avatar" />
+                              ) : (
+                                 <div className="rm-patient-avatar-placeholder"><FaUserInjured /></div>
+                              )}
+                              <div>
+                                <div className="rm-patient-name">{patient.name}</div>
+                                <div className="rm-patient-meta">
+                                  <span>ID: {patient.id}</span>
+                                  <span>{patient.date} {patient.time && `| ${patient.time}`}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <button 
+                              className="rm-mini-discharge-btn" 
+                              title="Discharge Patient"
+                              onClick={() => setDischargeTarget({ room, patient })}
+                            >
+                              <FaSignOutAlt />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
 
-                {room.status === 'Occupied' && room.patient && (
-                  <div className="rm-patient-info" style={{display: 'flex', gap: '15px', alignItems: 'center'}}>
-                    {room.patient.profileImage ? (
-                       <img src={room.patient.profileImage} alt="Patient" style={{width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover'}} />
-                    ) : (
-                       <div style={{width: '40px', height: '40px', borderRadius: '50%', background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4f46e5'}}><FaUserInjured /></div>
-                    )}
-                    <div>
-                      <div className="rm-patient-name" style={{marginBottom: '2px'}}>
-                        {room.patient.name}
-                      </div>
-                      <div className="rm-patient-meta">
-                        <span>ID: {room.patient.id}</span>
-                        <span>Admitted: {room.patient.date} {room.patient.time && `at ${room.patient.time}`}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+                <div className="rm-card-footer">
+                  {availableBeds > 0 && !['Maintenance', 'Cleaning', 'Working'].includes(room.status) && (
+                    <button className="rm-btn rm-btn-primary" onClick={() => setAdmitRoom(room)}>
+                      Admit Patient
+                    </button>
+                  )}
 
-              <div className="rm-card-footer">
-                {room.status === 'Available' && (
-                  <button className="rm-btn rm-btn-primary" onClick={() => setAdmitRoom(room)}>
-                    Admit Patient
-                  </button>
-                )}
-                
-                {room.status === 'Occupied' && (
-                  <button className="rm-btn rm-btn-danger" onClick={() => setDischargeRoom(room)}>
-                    Discharge / Vacate
-                  </button>
-                )}
-
-                {['Cleaning', 'Maintenance', 'Working'].includes(room.status) && (
-                  <button className="rm-btn rm-btn-outline" onClick={() => { setEditRoom({...room}); setIsEditRoomOpen(true); }}>
-                    Update Status
-                  </button>
-                )}
+                  {['Cleaning', 'Maintenance', 'Working'].includes(room.status) && (
+                    <button className="rm-btn rm-btn-outline" onClick={() => { setEditRoom({...room}); setIsEditRoomOpen(true); }}>
+                      Update Status
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -536,13 +551,13 @@ const RoomManagement = () => {
                     <label style={{color: '#4f46e5'}}>Update Room Status</label>
                     <select className="rm-form-control" value={editRoom.status} onChange={e => setEditRoom({...editRoom, status: e.target.value})} style={{fontWeight: '600', color: '#1e293b'}}>
                       <option value="Available">🟢 Available</option>
-                      <option value="Occupied" disabled={!editRoom.patient}>🔴 Occupied</option>
+                      <option value="Occupied" disabled={!editRoom.patients || editRoom.patients.length === 0}>🔴 Occupied</option>
                       <option value="Maintenance">🟠 Maintenance</option>
                       <option value="Cleaning">🔵 Cleaning</option>
                       <option value="Working">🟣 Working</option>
                     </select>
-                    {editRoom.status === 'Occupied' && !editRoom.patient && (
-                      <p style={{fontSize: '11px', color: '#dc2626', marginTop: '4px', marginBottom: 0}}>You can only set to Occupied by admitting a patient.</p>
+                    {editRoom.status === 'Occupied' && (!editRoom.patients || editRoom.patients.length === 0) && (
+                      <p style={{fontSize: '11px', color: '#dc2626', marginTop: '4px', marginBottom: 0}}>You can only set to Occupied by admitting patients.</p>
                     )}
                   </div>
 
@@ -668,26 +683,26 @@ const RoomManagement = () => {
       )}
 
       {/* Discharge Form Modal */}
-      {dischargeRoom && (
+      {dischargeTarget && (
         <div className="rm-modal-overlay">
           <div className="rm-modal" style={{maxWidth: '500px'}}>
             <div className="rm-modal-header">
               <h3>Discharge Patient</h3>
-              <button className="rm-close-btn" type="button" onClick={() => setDischargeRoom(null)}><FaTimes /></button>
+              <button className="rm-close-btn" type="button" onClick={() => setDischargeTarget(null)}><FaTimes /></button>
             </div>
             <form onSubmit={handleDischarge}>
               <div className="rm-modal-body">
                 <div style={{background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px'}}>
-                  <p style={{margin: '0 0 10px 0', fontSize: '14px', color: '#475569'}}>You are about to discharge:</p>
+                  <p style={{margin: '0 0 10px 0', fontSize: '14px', color: '#475569'}}>You are about to discharge from Room {dischargeTarget.room.roomNo}:</p>
                   <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-                    {dischargeRoom.patient?.profileImage ? (
-                       <img src={dischargeRoom.patient.profileImage} alt="Patient" style={{width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover'}} />
+                    {dischargeTarget.patient?.profileImage ? (
+                       <img src={dischargeTarget.patient.profileImage} alt="Patient" style={{width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover'}} />
                     ) : (
                        <div style={{width: '48px', height: '48px', borderRadius: '50%', background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4f46e5'}}><FaUserInjured size={20} /></div>
                     )}
                     <div>
-                      <h4 style={{margin: '0 0 4px 0', color: '#1e293b'}}>{dischargeRoom.patient?.name}</h4>
-                      <p style={{margin: 0, fontSize: '12px', color: '#64748b'}}>ID: {dischargeRoom.patient?.id} | Admitted: {dischargeRoom.patient?.date}</p>
+                      <h4 style={{margin: '0 0 4px 0', color: '#1e293b'}}>{dischargeTarget.patient?.name}</h4>
+                      <p style={{margin: 0, fontSize: '12px', color: '#64748b'}}>ID: {dischargeTarget.patient?.id} | Admitted: {dischargeTarget.patient?.date}</p>
                     </div>
                   </div>
                 </div>
@@ -704,7 +719,7 @@ const RoomManagement = () => {
                 </div>
               </div>
               <div className="rm-modal-footer">
-                <button type="button" className="rm-btn-cancel" onClick={() => setDischargeRoom(null)}>Cancel</button>
+                <button type="button" className="rm-btn-cancel" onClick={() => setDischargeTarget(null)}>Cancel</button>
                 <button type="submit" className="rm-btn-save" style={{background: '#dc2626'}}>Confirm Discharge</button>
               </div>
             </form>

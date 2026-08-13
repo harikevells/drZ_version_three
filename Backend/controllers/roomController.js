@@ -13,9 +13,9 @@ exports.getAllRooms = async (req, res) => {
 exports.createRoom = async (req, res) => {
     try {
         const roomData = req.body;
-        // Default status and patient if not provided
+        // Default status and patients array
         roomData.status = roomData.status || 'Available';
-        roomData.patient = roomData.patient || null;
+        roomData.patients = []; 
         roomData.createdAt = new Date().toISOString();
         
         const docRef = await Room.add(roomData);
@@ -50,11 +50,33 @@ exports.deleteRoom = async (req, res) => {
 exports.admitPatient = async (req, res) => {
     try {
         const { id } = req.params;
-        const patientData = req.body; // { name, id, date, time }
+        const patientData = req.body; // { name, id, date, time, profileImage }
+        
+        const roomDoc = await Room.doc(id).get();
+        if (!roomDoc.exists) {
+            return res.status(404).json({ error: 'Room not found' });
+        }
+        
+        const room = roomDoc.data();
+        const currentPatients = room.patients || [];
+        const capacity = parseInt(room.capacity) || 1;
+        
+        if (currentPatients.length >= capacity) {
+            return res.status(400).json({ error: 'Room is already at full capacity' });
+        }
+        
+        // Ensure patient has a unique ID, fallback to provided id or timestamp
+        const patientEntry = {
+            ...patientData,
+            _admissionId: Date.now().toString() // unique identifier for this specific admission
+        };
+        
+        const updatedPatients = [...currentPatients, patientEntry];
+        const newStatus = updatedPatients.length >= capacity ? 'Occupied' : 'Available';
         
         const updateData = {
-            status: 'Occupied',
-            patient: patientData
+            status: newStatus,
+            patients: updatedPatients
         };
         
         await Room.doc(id).update(updateData);
@@ -67,11 +89,24 @@ exports.admitPatient = async (req, res) => {
 exports.dischargePatient = async (req, res) => {
     try {
         const { id } = req.params;
-        const dischargeData = req.body; // { dischargeDate, dischargeTime, patientName, patientId }
+        const dischargeData = req.body; // { dischargeDate, dischargeTime, patientId, _admissionId }
         
+        const roomDoc = await Room.doc(id).get();
+        if (!roomDoc.exists) {
+            return res.status(404).json({ error: 'Room not found' });
+        }
+        
+        const room = roomDoc.data();
+        const currentPatients = room.patients || [];
+        
+        // Remove the specific patient
+        const updatedPatients = currentPatients.filter(p => p._admissionId !== dischargeData._admissionId);
+        
+        // Since there are multiple beds, if we discharge someone, it is not "Cleaning" for the whole room if others are there.
+        // It just becomes Available (or stays Available if it already was).
         const updateData = {
-            status: 'Cleaning',
-            patient: null
+            status: 'Available',
+            patients: updatedPatients
         };
         
         await Room.doc(id).update(updateData);
