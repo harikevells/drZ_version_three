@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import { FaCheck } from 'react-icons/fa';
 
 const parseTimeStringToMinutes = (timeStr) => {
   try {
@@ -61,7 +62,7 @@ const formatDate = (rawDate) => {
 
 const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
   const [loading, setLoading] = useState(false);
-  
+
   // Data States
   const [registeredPatients, setRegisteredPatients] = useState([]);
   const [allDoctors, setAllDoctors] = useState([]);
@@ -78,7 +79,11 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
   const [gender, setGender] = useState('Male');
   const [whatsapp, setWhatsapp] = useState('');
   const [mobile, setMobile] = useState('');
-  
+
+  const [patientSearchTerm, setPatientSearchTerm] = useState('');
+  const [showPatientDropdown, setShowPatientDropdown] = useState(false);
+  const [bookedMap, setBookedMap] = useState({});
+
   const [appointmentDate, setAppointmentDate] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedDoctor, setSelectedDoctor] = useState('');
@@ -94,12 +99,12 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
     try {
       const token = sessionStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      
+
       const [patientsRes, docsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/auth/patients`, config),
         axios.get(`${API_BASE_URL}/doctors`, config)
       ]);
-      
+
       if (patientsRes.data) {
         setRegisteredPatients(patientsRes.data);
       }
@@ -111,27 +116,25 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
     }
   };
 
-  const handlePatientSelect = (e) => {
-    const patientId = e.target.value;
-    setSelectedPatientId(patientId);
-    
-    if (patientId) {
-      const patient = registeredPatients.find(p => p._id === patientId || p.id === patientId);
-      if (patient) {
-        setPatientName(patient.patient_name || '');
-        setAge(patient.patient_age ? String(patient.patient_age) : '');
-        if (patient.gender) setGender(patient.gender);
-        setWhatsapp(patient.identifier || patient.emergency_contact || '');
-        setMobile(patient.identifier || patient.emergency_contact || '');
-      }
+  const handlePatientSelect = (patient) => {
+    if (patient) {
+      setSelectedPatientId(patient._id || patient.id);
+      setPatientName(patient.patient_name || '');
+      setAge(patient.patient_age ? String(patient.patient_age) : '');
+      if (patient.gender) setGender(patient.gender);
+      setWhatsapp(patient.identifier || patient.emergency_contact || '');
+      setMobile(patient.identifier || patient.emergency_contact || '');
+      setPatientSearchTerm(`${patient.patient_name || 'Unknown'} - ${patient.identifier || patient.emergency_contact || 'No Number'}`);
     } else {
-      // Clear if unselected
+      setSelectedPatientId('');
       setPatientName('');
       setAge('');
       setGender('Male');
       setWhatsapp('');
       setMobile('');
+      setPatientSearchTerm('');
     }
+    setShowPatientDropdown(false);
   };
 
   useEffect(() => {
@@ -152,7 +155,7 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
     try {
       setAvailableTimings([]);
       setSelectedTime('');
-      
+
       const d = new Date(selectedDate);
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -175,13 +178,14 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
       setDateSchedules(approvedSchedules);
 
       const appointments = appointmentsRes.data || [];
-      const bookedMap = {};
+      const localBookedMap = {};
       appointments.forEach(app => {
         if (!['Pending', 'Approved', 'Rescheduled'].includes(app.status)) return;
         const docName = (app.doctor_name || '').trim();
-        if (!bookedMap[docName]) bookedMap[docName] = [];
-        bookedMap[docName].push((app.appointment_time || '').trim());
+        if (!localBookedMap[docName]) localBookedMap[docName] = [];
+        localBookedMap[docName].push((app.appointment_time || '').trim());
       });
+      setBookedMap(localBookedMap);
 
       const activeDocsWithSchedules = allDoctors.filter(doc =>
         approvedSchedules.some(s => s.doctorId === doc._id || s.doctorId === doc.id || s.doctorName === doc.doctorName)
@@ -207,7 +211,7 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
           fullDepartment: cat
         };
       });
-      
+
       setDoctorCategories(formattedCategories);
       setSelectedCategory('');
       setSelectedDoctor('');
@@ -223,7 +227,7 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
     setSelectedDoctor('');
     setSelectedTime('');
     setAvailableTimings([]);
-    
+
     if (catName) {
       const selectedCatObj = doctorCategories.find(c => c.name === catName);
       if (selectedCatObj) {
@@ -243,7 +247,7 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
     const docId = e.target.value;
     setSelectedDoctor(docId);
     setSelectedTime('');
-    
+
     if (docId) {
       const doc = doctorList.find(d => String(d._id) === String(docId) || String(d.id) === String(docId));
       if (doc) {
@@ -261,7 +265,7 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
           const today = new Date();
           const d = new Date(appointmentDate);
           const isToday = d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
-          
+
           if (isToday) {
             const currentMinutes = today.getHours() * 60 + today.getMinutes();
             uniqueTimings = uniqueTimings.filter(t => {
@@ -332,34 +336,72 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
 
   return (
     <div className="form-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
         <h2 style={{ fontSize: '20px', color: '#1a4d80', fontWeight: '700', margin: 0 }}>Booking Appointment</h2>
-        <button className="back-btn" onClick={onCancel}>Back to List</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div className="appointment-type-toggle" style={{ margin: 0 }}>
+            <button
+              className={`type-btn ${appointmentType === 'Online' ? 'active' : ''}`}
+              onClick={() => setAppointmentType('Online')}
+            >
+              Online
+            </button>
+            <button
+              className={`type-btn ${appointmentType === 'Offline' ? 'active' : ''}`}
+              onClick={() => {
+                setAppointmentType('Offline');
+                setIsVideoCall(false);
+              }}
+            >
+              Offline
+            </button>
+          </div>
+          <button className="back-btn" onClick={onCancel}>Back to List</button>
+        </div>
       </div>
 
       <div className="form-grid">
         {/* Left Column: Patient Details */}
         <div>
           <div className="form-section-title">Patient Details</div>
-          
-          <div className="form-group">
+
+          <div className="form-group" style={{ position: 'relative' }}>
             <label>Select Registered Patient (Optional)</label>
-            <select className="form-select" value={selectedPatientId} onChange={handlePatientSelect}>
-              <option value="">-- Registered Patient / Search --</option>
-              {registeredPatients.map(p => (
-                <option key={p._id || p.id} value={p._id || p.id}>
-                  {p.patient_name || 'Unknown'} - {p.identifier || p.emergency_contact || 'No Number'}
-                </option>
-              ))}
-            </select>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="-- Search Registered Patient --"
+              value={patientSearchTerm}
+              onChange={(e) => {
+                setPatientSearchTerm(e.target.value);
+                setShowPatientDropdown(true);
+                if (!e.target.value) handlePatientSelect(null);
+              }}
+              onFocus={() => setShowPatientDropdown(true)}
+            />
+            {showPatientDropdown && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px', maxHeight: '200px', overflowY: 'auto', zIndex: 10, boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                <div style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', color: '#64748b' }} onClick={() => handlePatientSelect(null)}>
+                  -- Clear Selection --
+                </div>
+                {registeredPatients.filter(p => {
+                  const search = patientSearchTerm.toLowerCase();
+                  return (p.patient_name || '').toLowerCase().includes(search) || (p.identifier || p.emergency_contact || '').toLowerCase().includes(search);
+                }).map(p => (
+                  <div key={p._id || p.id} style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }} onClick={() => handlePatientSelect(p)}>
+                    {p.patient_name || 'Unknown'} - {p.identifier || p.emergency_contact || 'No Number'}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="form-group">
             <label>Patient Name *</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="Enter patient name" 
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Enter patient name"
               value={patientName}
               onChange={(e) => setPatientName(e.target.value)}
             />
@@ -368,10 +410,10 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
           <div className="form-row">
             <div className="form-group" style={{ flex: 1 }}>
               <label>Age *</label>
-              <input 
-                type="number" 
-                className="form-input" 
-                placeholder="00" 
+              <input
+                type="number"
+                className="form-input"
+                placeholder="00"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
               />
@@ -379,13 +421,13 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
             <div className="form-group" style={{ flex: 2 }}>
               <label>Gender *</label>
               <div className="gender-container">
-                <button 
+                <button
                   className={`gender-btn ${gender === 'Male' ? 'active' : ''}`}
                   onClick={() => setGender('Male')}
                 >
                   Male
                 </button>
-                <button 
+                <button
                   className={`gender-btn ${gender === 'Female' ? 'active' : ''}`}
                   onClick={() => setGender('Female')}
                 >
@@ -398,20 +440,20 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
           <div className="form-row">
             <div className="form-group" style={{ flex: 1 }}>
               <label>WhatsApp No</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="WhatsApp" 
+              <input
+                type="text"
+                className="form-input"
+                placeholder="WhatsApp"
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
               />
             </div>
             <div className="form-group" style={{ flex: 1 }}>
               <label>Patient Mobile *</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="Mobile" 
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Mobile"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
               />
@@ -422,32 +464,12 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
         {/* Right Column: Appointment Details */}
         <div>
           <div className="form-section-title">Appointment Details</div>
-          
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <div className="appointment-type-toggle">
-              <button 
-                className={`type-btn ${appointmentType === 'Online' ? 'active' : ''}`}
-                onClick={() => setAppointmentType('Online')}
-              >
-                Online
-              </button>
-              <button 
-                className={`type-btn ${appointmentType === 'Offline' ? 'active' : ''}`}
-                onClick={() => {
-                  setAppointmentType('Offline');
-                  setIsVideoCall(false);
-                }}
-              >
-                Offline
-              </button>
-            </div>
-          </div>
 
-          <div className="form-group">
+          <div className="form-group" style={{ marginTop: '15px' }}>
             <label>Select Appointment Date *</label>
-            <input 
-              type="date" 
-              className="form-input" 
+            <input
+              type="date"
+              className="form-input"
               value={appointmentDate}
               min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setAppointmentDate(e.target.value)}
@@ -456,9 +478,9 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
 
           <div className="form-group">
             <label>Select Treatment Category *</label>
-            <select 
-              className="form-select" 
-              value={selectedCategory} 
+            <select
+              className="form-select"
+              value={selectedCategory}
               onChange={handleCategorySelect}
               disabled={!appointmentDate}
             >
@@ -471,9 +493,9 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
 
           <div className="form-group">
             <label>Select Doctor *</label>
-            <select 
-              className="form-select" 
-              value={selectedDoctor} 
+            <select
+              className="form-select"
+              value={selectedDoctor}
               onChange={handleDoctorSelect}
               disabled={!selectedCategory}
             >
@@ -487,16 +509,44 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
           <div className="form-group">
             <label>Available Timing Slots *</label>
             {availableTimings.length > 0 ? (
-              <select 
-                className="form-select" 
-                value={selectedTime}
-                onChange={(e) => setSelectedTime(e.target.value)}
-              >
-                <option value="">Select a time slot</option>
-                {availableTimings.map((t, idx) => (
-                  <option key={idx} value={t}>{t}</option>
-                ))}
-              </select>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px' }}>
+                {availableTimings.map((t, idx) => {
+                  const doc = doctorList.find(d => String(d._id) === String(selectedDoctor) || String(d.id) === String(selectedDoctor));
+                  const docName = doc ? (doc.doctorName || '').trim() : '';
+                  const isBooked = bookedMap[docName] && bookedMap[docName].includes(t.trim());
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        if (!isBooked) setSelectedTime(t);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 16px',
+                        border: isBooked ? '1px solid #ef4444' : (selectedTime === t ? '1px solid #10b981' : '1px solid #cbd5e1'),
+                        borderRadius: '6px',
+                        cursor: isBooked ? 'not-allowed' : 'pointer',
+                        background: isBooked ? '#fef2f2' : (selectedTime === t ? '#d1fae5' : '#fff'),
+                        color: isBooked ? '#ef4444' : (selectedTime === t ? '#10b981' : '#475569'),
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <div style={{
+                        width: '16px', height: '16px', borderRadius: '4px', border: selectedTime === t ? 'none' : '1px solid #cbd5e1',
+                        background: selectedTime === t ? '#10b981' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        {selectedTime === t && <FaCheck size={10} color="#fff" />}
+                      </div>
+                      {t}
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
               <p style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', margin: 0, marginTop: '8px' }}>
                 {selectedDoctor ? "No timings available." : "No timings available for selected date/doctor."}
@@ -506,7 +556,7 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
 
           {appointmentType === 'Online' && (
             <div className="form-group" style={{ marginTop: '24px' }}>
-              <div 
+              <div
                 className={`video-box ${isVideoCall ? 'active' : ''}`}
                 onClick={() => setIsVideoCall(!isVideoCall)}
               >
@@ -521,9 +571,9 @@ const AdminAppointmentCreate = ({ onCancel, onSuccess }) => {
         </div>
       </div>
 
-      <div className="form-actions">
-        <button className="btn-cancel" onClick={onCancel} disabled={loading}>Cancel</button>
-        <button className={`btn-confirm ${patientName && appointmentDate && selectedCategory && selectedDoctor && selectedTime ? 'active' : ''}`} onClick={handleSubmit} disabled={loading}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '30px', padding: '0', border: 'none', boxShadow: 'none', background: 'transparent' }}>
+        <button className="btn-cancel" style={{ flex: '1', maxWidth: '280px', padding: '14px', borderRadius: '20px', border: 'none' }} onClick={onCancel} disabled={loading}>Cancel</button>
+        <button className={`btn-confirm ${patientName && appointmentDate && selectedCategory && selectedDoctor && selectedTime ? 'active' : ''}`} style={{ flex: '1', maxWidth: '280px', padding: '14px', backgroundColor: '#586ff5', color: 'white', borderRadius: '20px', border: 'none' }} onClick={handleSubmit} disabled={loading}>
           {loading ? 'Creating...' : 'Confirm Appointment'}
         </button>
       </div>

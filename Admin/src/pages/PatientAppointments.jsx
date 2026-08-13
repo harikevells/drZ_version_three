@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
-import { FaEye, FaTimes } from 'react-icons/fa';
+import {
+  FaEye, FaTimes, FaUserMd, FaShieldAlt, FaUser, FaBriefcase, FaPhone,
+  FaEnvelope, FaCalendarAlt, FaFileInvoice, FaUsers, FaWhatsapp,
+  FaMobileAlt, FaCalendarDay, FaClock, FaVideo, FaRupeeSign,
+  FaCreditCard, FaFileInvoiceDollar, FaCheckCircle, FaUserTie, FaTags
+} from 'react-icons/fa';
 import Pagination from '../components/Pagination';
 import AdminAppointmentCreate from './AdminAppointmentCreate';
+import doctorImage from '../assets/doctorimage.webp';
 import './PatientAppointments.css';
 
 const removeTamil = (text) => {
@@ -161,7 +167,7 @@ const PatientAppointments = () => {
       ) : (
         <>
           <div className="header-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', gap: '15px', flexWrap: 'wrap' }}>
-            <h2>Patient Appointments</h2>
+            <h2>Appointments</h2>
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
               <input
                 type="date"
@@ -242,149 +248,207 @@ const PatientAppointments = () => {
 
           {isModalOpen && selectedAppointment && (
             <div className="modal-overlay">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h3>Appointment Details</h3>
-                  <button className="close-btn" onClick={closeModal}>
-                    <FaTimes />
+              <div className="modal-content format">
+                <div className="modal-header" style={{ borderBottom: 'none', paddingBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ background: '#eef2ff', padding: '8px', borderRadius: '8px', color: '#4f46e5', display: 'flex' }}>
+                      <FaCalendarAlt size={16} />
+                    </div>
+                    <h3 style={{ color: '#1e293b', fontWeight: '700', fontSize: '18px', margin: 0 }}>Appointment Details</h3>
+                  </div>
+                  <button className="close-btn" style={{ background: '#f8fafc', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }} onClick={closeModal}>
+                    <FaTimes size={14} />
                   </button>
                 </div>
-                <div className="modal-body-grid">
-                  {/* Left Side: Doctor Details */}
-                  <div className="detail-column">
-                    <h4 className="column-title">Doctor Details</h4>
-                    {(() => {
-                      const doctor = doctors.find(d => d.doctorName === selectedAppointment.doctor_name);
-                      if (doctor) {
+                <div className="modal-scroll-area">
+                  <div className="modal-body-grid" style={{ gridTemplateColumns: '0.8fr 1.6fr', padding: '10px 25px 25px 25px', gap: '20px' }}>
+
+                    {/* Doctor Details Card */}
+                    <div className="ap-card ap-card-blue">
+                      <div className="ap-card-header ap-header-blue">
+                        <FaUserMd />
+                        <span>Doctor Details</span>
+                      </div>
+
+                      {(() => {
+                        const doctor = doctors.find(d => d.doctorName === selectedAppointment.doctor_name);
+                        const docName = doctor ? removeTamil(doctor.doctorName) : removeTamil(selectedAppointment.doctor_name);
+                        const docAvatar = doctorImage;
+                        const dept = doctor ? (removeTamil(doctor.department) || 'Specialist') : 'Specialist';
+
                         return (
-                          <>
-                            <div className="detail-row">
-                              <span className="detail-label">Name:</span>
-                              <span className="detail-value">{removeTamil(doctor.doctorName)}</span>
+                          <div className="ap-card-body">
+                            <div className="ap-doc-profile">
+                              <img src={docAvatar} alt="Doctor" className="ap-doc-avatar" />
+                              <div className="ap-doc-info">
+                                <h4>{docName}</h4>
+                                <div className="ap-badge-blue">
+                                  <FaShieldAlt size={10} />
+                                  <span>Specialist</span>
+                                </div>
+                                <p className="ap-doc-dept">{dept}</p>
+                              </div>
                             </div>
-                            <div className="detail-row">
-                              <span className="detail-label">Department:</span>
-                              <span className="detail-value">{removeTamil(doctor.department) || 'N/A'}</span>
+
+                            <div className="ap-info-list" style={{ marginTop: '20px' }}>
+                              <div className="ap-info-item">
+                                <div className="ap-icon-box ap-icon-blue"><FaUser size={12} /></div>
+                                <span className="ap-info-label">Gender</span>
+                                <span className="ap-info-value">{doctor ? (doctor.gender || 'N/A') : 'N/A'}</span>
+                              </div>
+                              <div className="ap-info-item">
+                                <div className="ap-icon-box ap-icon-blue"><FaBriefcase size={12} /></div>
+                                <span className="ap-info-label">Experience</span>
+                                <span className="ap-info-value">{doctor ? (doctor.experience || 'N/A') : 'N/A'}</span>
+                              </div>
+                              <div className="ap-info-item">
+                                <div className="ap-icon-box ap-icon-blue"><FaPhone size={12} /></div>
+                                <span className="ap-info-label">Mobile</span>
+                                <span className="ap-info-value">{doctor ? (doctor.mobile || 'N/A') : 'N/A'}</span>
+                              </div>
+                              <div className="ap-info-item">
+                                <div className="ap-icon-box ap-icon-blue"><FaEnvelope size={12} /></div>
+                                <span className="ap-info-label">Email</span>
+                                <span className="ap-info-value" style={{ fontSize: '12px' }}>{doctor ? (doctor.email || 'N/A') : 'N/A'}</span>
+                              </div>
                             </div>
-                            <div className="detail-row">
-                              <span className="detail-label">Gender:</span>
-                              <span className="detail-value">{doctor.gender || 'N/A'}</span>
-                            </div>
-                            <div className="detail-row">
-                              <span className="detail-label">Experience:</span>
-                              <span className="detail-value">{doctor.experience || 'N/A'}</span>
-                            </div>
-                            <div className="detail-row">
-                              <span className="detail-label">Mobile:</span>
-                              <span className="detail-value">{doctor.mobile || 'N/A'}</span>
-                            </div>
-                            <div className="detail-row">
-                              <span className="detail-label">Email:</span>
-                              <span className="detail-value">{doctor.email || 'N/A'}</span>
-                            </div>
-                          </>
-                        );
-                      } else {
-                        return (
-                          <div className="detail-row">
-                            <span className="detail-label">Name:</span>
-                            <span className="detail-value">{removeTamil(selectedAppointment.doctor_name)}</span>
                           </div>
                         );
-                      }
-                    })()}
+                      })()}
+                    </div>
+
+                    {/* Patient & Appointment Card */}
+                    <div className="ap-card ap-card-green">
+                      <div className="ap-card-header ap-header-green">
+                        <FaCalendarAlt />
+                        <span>Patient & Appointment</span>
+                      </div>
+                      <div className="ap-card-body">
+                        <div className="ap-grid-2col">
+
+                          {/* Col 1 */}
+                          <div className="ap-info-list">
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-purple"><FaFileInvoice size={12} /></div>
+                              <span className="ap-info-label">Booking ID</span>
+                              <span className="ap-info-value ap-text-purple">{selectedAppointment.booking_id || '0000'}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-blue"><FaUser size={12} /></div>
+                              <span className="ap-info-label">Patient Name</span>
+                              <span className="ap-info-value">{selectedAppointment.patient_name}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-purple"><FaUsers size={12} /></div>
+                              <span className="ap-info-label">Age / Gender</span>
+                              <span className="ap-info-value">{selectedAppointment.patient_age || 'N/A'} / {selectedAppointment.patient_gender || 'N/A'}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-green"><FaWhatsapp size={12} /></div>
+                              <span className="ap-info-label">WhatsApp</span>
+                              <span className="ap-info-value">{selectedAppointment.whatsapp_number || 'N/A'}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-blue"><FaMobileAlt size={12} /></div>
+                              <span className="ap-info-label">Login Mobile</span>
+                              <span className="ap-info-value">{selectedAppointment.login_mobile || 'N/A'}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-purple"><FaCalendarDay size={12} /></div>
+                              <span className="ap-info-label">Date</span>
+                              <span className="ap-info-value">{selectedAppointment.appointment_date ? selectedAppointment.appointment_date.replace(/\s+/g, '') : ''}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-purple"><FaClock size={12} /></div>
+                              <span className="ap-info-label">Time</span>
+                              <span className="ap-info-value" style={{ fontSize: '11px' }}>{formatTimeSlot(selectedAppointment.appointment_time)}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-blue"><FaTags size={12} /></div>
+                              <span className="ap-info-label">Appt Type</span>
+                              <span className="ap-info-value">{selectedAppointment.appointment_type || 'Offline'}</span>
+                            </div>
+                          </div>
+
+                          {/* Col 2 */}
+                          <div className="ap-info-list">
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-green"><FaVideo size={12} /></div>
+                              <span className="ap-info-label">Video Call</span>
+                              <span className="ap-info-value ap-text-green">{selectedAppointment.video_call || 'No'}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-blue"><FaRupeeSign size={12} /></div>
+                              <span className="ap-info-label">Consult Fee</span>
+                              <span className="ap-info-value ap-text-blue" style={{ fontSize: '15px', fontWeight: '700' }}>₹{selectedAppointment.consultation_fee || 0}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-orange"><FaCreditCard size={12} /></div>
+                              <span className="ap-info-label">Payment Method</span>
+                              <span className="ap-info-value">{selectedAppointment.payment_method || 'N/A'}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-green"><FaFileInvoiceDollar size={12} /></div>
+                              <span className="ap-info-label">Payment Status</span>
+                              <span className={`ap-info-value ${(selectedAppointment.payment_status || 'Pending') === 'Paid' ? 'ap-text-green' : 'ap-text-orange'}`}>{selectedAppointment.payment_status || 'Pending'}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-purple"><FaShieldAlt size={12} /></div>
+                              <span className="ap-info-label">Payment ID</span>
+                              <span className="ap-info-value" style={{ fontSize: '11px' }}>{selectedAppointment.payment_id || 'N/A'}</span>
+                            </div>
+                            <div className="ap-info-item">
+                              <div className="ap-icon-box ap-icon-orange"><FaUserTie size={12} /></div>
+                              <span className="ap-info-label">Created By</span>
+                              <span className="ap-info-value">{selectedAppointment.created_by || 'Patient'}</span>
+                            </div>
+
+                            <div className="ap-status-box" style={{ marginTop: 'auto', marginBottom: '8px' }}>
+                              <FaCheckCircle className="ap-text-green" style={{ fontSize: '16px' }} />
+                              <span className="ap-info-label" style={{ flexGrow: 1 }}>Status</span>
+                              <span className="ap-status-badge ap-text-green">
+                                {selectedAppointment.status || 'Pending'}
+                              </span>
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
 
-                  {/* Right Side: Patient & Appointment Details */}
-                  <div className="detail-column">
-                    <h4 className="column-title">Patient & Appointment</h4>
-                    <div className="detail-row">
-                      <span className="detail-label">Booking ID:</span>
-                      <span className="detail-value">{selectedAppointment.booking_id || '0000'}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Patient Name:</span>
-                      <span className="detail-value">{selectedAppointment.patient_name}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Age/Gender:</span>
-                      <span className="detail-value">{selectedAppointment.patient_age || 'N/A'} / {selectedAppointment.patient_gender || 'N/A'}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">WhatsApp:</span>
-                      <span className="detail-value">{selectedAppointment.whatsapp_number || 'N/A'}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Login Mobile:</span>
-                      <span className="detail-value">{selectedAppointment.login_mobile || 'N/A'}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Date:</span>
-                      <span className="detail-value">{selectedAppointment.appointment_date ? selectedAppointment.appointment_date.replace(/\s+/g, '') : ''}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Time:</span>
-                      <span className="detail-value">{formatTimeSlot(selectedAppointment.appointment_time)}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Video Call:</span>
-                      <span className="detail-value">{selectedAppointment.video_call || 'No'}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Consult Fee:</span>
-                      <span className="detail-value" style={{ fontWeight: 'bold', color: '#2563eb' }}>
-                        ₹{selectedAppointment.consultation_fee || 0}
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Payment Method:</span>
-                      <span className="detail-value">{selectedAppointment.payment_method || 'N/A'}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Payment Status:</span>
-                      <span className="detail-value">{selectedAppointment.payment_status || 'Pending'}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Payment ID:</span>
-                      <span className="detail-value">{selectedAppointment.payment_id || 'N/A'}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Status:</span>
-                      <span className={`detail-value status-text ${(selectedAppointment.status || 'Pending').toLowerCase()}`}>
-                        {selectedAppointment.status || 'Pending'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
 
-
-                {selectedAppointment.prescription && selectedAppointment.prescription.length > 0 && (
-                  <div style={{ padding: '0 25px 25px 25px' }}>
-                    <h4 className="column-title">Prescription Details</h4>
-                    <div className="table-container" style={{ padding: '0', boxShadow: 'none' }}>
-                      <table className="appointments-table">
-                        <thead>
-                          <tr>
-                            <th>S.No</th>
-                            <th>Medicine Name</th>
-                            <th>Time</th>
-                            <th>Intake</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedAppointment.prescription.map((med, index) => (
-                            <tr key={med.id || index}>
-                              <td>{index + 1}</td>
-                              <td>{med.name}</td>
-                              <td>{med.timing}</td>
-                              <td>{med.intake}</td>
+                  {selectedAppointment.prescription && selectedAppointment.prescription.length > 0 && (
+                    <div style={{ padding: '0 25px 25px 25px' }}>
+                      <h4 className="column-title">Prescription Details</h4>
+                      <div className="table-container" style={{ padding: '0', boxShadow: 'none' }}>
+                        <table className="appointments-table">
+                          <thead>
+                            <tr>
+                              <th>S.No</th>
+                              <th>Medicine Name</th>
+                              <th>Time</th>
+                              <th>Intake</th>
+                              <th>Days</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {selectedAppointment.prescription.map((med, index) => (
+                              <tr key={med.id || index}>
+                                <td>{index + 1}</td>
+                                <td>{med.name}</td>
+                                <td>{med.timing}</td>
+                                <td>{med.intake}</td>
+                                <td>{med.days || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           )}

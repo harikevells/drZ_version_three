@@ -19,6 +19,7 @@ import PharmacyDashboard from './Pharmarcy/pharmarcyDashboard/PharmacyDashboard'
 import PurchaseMedicine from './Pharmarcy/PurchaseMedicine';
 import BillingMedicine from './Pharmarcy/BillingMedicine';
 import ReceptionistDashboard from './Receptionist/ReceptionistDashboard/ReceptionistDashboard';
+import RoomManagement from './pages/RoomManagement';
 
 const ProtectedRoute = ({ element }) => {
   const token = sessionStorage.getItem('token');
@@ -87,6 +88,7 @@ function App() {
           <Route path="medicine-time" element={<MedicineTime />} />
           <Route path="medicine-intake" element={<MedicineIntake />} />
           <Route path="pharmarcy-creation" element={<PharmarcyCreattion />} />
+          <Route path="room-management" element={<RoomManagement />} />
         </Route>
       </Routes>
     </Router>

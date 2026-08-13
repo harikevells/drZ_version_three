@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt, FaChevronDown, FaChevronUp, FaPills, FaListUl, FaClock, FaPrescriptionBottle, FaUsers, FaCreditCard, FaFileInvoiceDollar, FaCalendarAlt } from 'react-icons/fa';
+import { FaUserMd, FaCalendarCheck, FaBell, FaSignOutAlt, FaUserInjured, FaTachometerAlt, FaChevronDown, FaChevronUp, FaPills, FaListUl, FaClock, FaPrescriptionBottle, FaUsers, FaCreditCard, FaFileInvoiceDollar, FaCalendarAlt, FaBed } from 'react-icons/fa';
 import './Layout.css';
 import logoImage from '../assets/Dclogo.png';
 import adminImage from '../assets/adminimage.png';
@@ -47,7 +47,7 @@ const Layout = () => {
   useEffect(() => {
     if (userRole === 'Pharmacy' && (location.pathname === '/dashboard' || location.pathname === '/')) {
       navigate('/pharmacy-dashboard');
-    } else if (userRole === 'Receptionist' && !['/receptionist-dashboard', '/patient'].includes(location.pathname)) {
+    } else if (userRole === 'Receptionist' && !['/receptionist-dashboard', '/patient', '/notifications'].includes(location.pathname)) {
       navigate('/receptionist-dashboard');
     }
 
@@ -169,6 +169,11 @@ const Layout = () => {
                 <span>Push Message</span>
               </NavLink>
 
+              <NavLink to="/room-management" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                <FaBed className="nav-icon" />
+                <span>Room Creation</span>
+              </NavLink>
+
               <div
                 className={`nav-item ${['/medi', '/medicine-time', '/medicine-intake', '/pharmarcy-creation'].includes(location.pathname) ? 'active' : ''}`}
                 onClick={() => setIsMedicineOpen(!isMedicineOpen)}
@@ -274,22 +279,24 @@ const Layout = () => {
 
             {/* Icon Buttons */}
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                className="icon-btn"
-                style={{ position: 'relative', width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', color: '#1e293b' }}
-                onClick={() => navigate('/notifications')}
-              >
-                <FaBell size={16} />
-                {unreadCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: '-2px', right: '-2px',
-                    backgroundColor: '#4f46e5', color: '#fff', fontSize: '10px',
-                    borderRadius: '50%', padding: '2px 5px', fontWeight: 'bold', border: '2px solid #fff'
-                  }}>
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </button>
+              {userRole !== 'Pharmacy' && (
+                <button
+                  className="icon-btn"
+                  style={{ position: 'relative', width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', color: '#1e293b' }}
+                  onClick={() => navigate('/notifications')}
+                >
+                  <FaBell size={16} />
+                  {unreadCount > 0 && (
+                    <span style={{
+                      position: 'absolute', top: '-2px', right: '-2px',
+                      backgroundColor: '#4f46e5', color: '#fff', fontSize: '10px',
+                      borderRadius: '50%', padding: '2px 5px', fontWeight: 'bold', border: '2px solid #fff'
+                    }}>
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Profile Section */}
