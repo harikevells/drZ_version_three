@@ -2,8 +2,7 @@ const Room = require('../models/Room');
 
 exports.getAllRooms = async (req, res) => {
     try {
-        const snapshot = await Room.get();
-        const rooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const rooms = await Room.find({});
         res.status(200).json(rooms);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -18,8 +17,8 @@ exports.createRoom = async (req, res) => {
         roomData.patients = []; 
         roomData.createdAt = new Date().toISOString();
         
-        const docRef = await Room.add(roomData);
-        res.status(201).json({ id: docRef.id, ...roomData });
+        const newRoom = await Room.create(roomData);
+        res.status(201).json(newRoom);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -30,8 +29,11 @@ exports.updateRoom = async (req, res) => {
         const { id } = req.params;
         const updateData = req.body;
         
-        await Room.doc(id).update(updateData);
-        res.status(200).json({ message: 'Room updated successfully', id, ...updateData });
+        const updatedRoom = await Room.findByIdAndUpdate(id, updateData);
+        if (!updatedRoom) {
+            return res.status(404).json({ error: 'Room not found' });
+        }
+        res.status(200).json({ message: 'Room updated successfully', room: updatedRoom });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -40,7 +42,10 @@ exports.updateRoom = async (req, res) => {
 exports.deleteRoom = async (req, res) => {
     try {
         const { id } = req.params;
-        await Room.doc(id).delete();
+        const deletedRoom = await Room.findByIdAndDelete(id);
+        if (!deletedRoom) {
+            return res.status(404).json({ error: 'Room not found' });
+        }
         res.status(200).json({ message: 'Room deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -52,12 +57,11 @@ exports.admitPatient = async (req, res) => {
         const { id } = req.params;
         const patientData = req.body; // { name, id, date, time, profileImage }
         
-        const roomDoc = await Room.doc(id).get();
-        if (!roomDoc.exists) {
+        const room = await Room.findById(id);
+        if (!room) {
             return res.status(404).json({ error: 'Room not found' });
         }
         
-        const room = roomDoc.data();
         const currentPatients = room.patients || [];
         const capacity = parseInt(room.capacity) || 1;
         
@@ -79,7 +83,7 @@ exports.admitPatient = async (req, res) => {
             patients: updatedPatients
         };
         
-        await Room.doc(id).update(updateData);
+        await Room.findByIdAndUpdate(id, updateData);
         res.status(200).json({ message: 'Patient admitted successfully', ...updateData });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -91,12 +95,11 @@ exports.dischargePatient = async (req, res) => {
         const { id } = req.params;
         const dischargeData = req.body; // { dischargeDate, dischargeTime, patientId, _admissionId }
         
-        const roomDoc = await Room.doc(id).get();
-        if (!roomDoc.exists) {
+        const room = await Room.findById(id);
+        if (!room) {
             return res.status(404).json({ error: 'Room not found' });
         }
         
-        const room = roomDoc.data();
         const currentPatients = room.patients || [];
         
         // Remove the specific patient
@@ -109,7 +112,7 @@ exports.dischargePatient = async (req, res) => {
             patients: updatedPatients
         };
         
-        await Room.doc(id).update(updateData);
+        await Room.findByIdAndUpdate(id, updateData);
         res.status(200).json({ message: 'Patient discharged successfully', ...updateData });
     } catch (error) {
         res.status(500).json({ error: error.message });
