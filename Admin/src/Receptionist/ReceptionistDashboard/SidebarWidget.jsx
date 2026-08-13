@@ -12,6 +12,8 @@ const SidebarWidget = ({ appointments = [] }) => {
   const userName = sessionStorage.getItem('userName') || 'Receptionist';
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [rooms, setRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(true);
 
   // Find days with appointments in current month
   const appointmentDays = useMemo(() => {
@@ -49,6 +51,7 @@ const SidebarWidget = ({ appointments = [] }) => {
 
   useEffect(() => {
     fetchUnreadCount();
+    fetchRooms();
 
     const handleUpdate = (e) => {
       if (e.detail && typeof e.detail.unreadCount === 'number') {
@@ -74,14 +77,26 @@ const SidebarWidget = ({ appointments = [] }) => {
     }
   };
 
-  const beds = [
-    { id: 1, name: 'General Ward', total: '12 Beds', status: 'Available' },
-    { id: 2, name: 'Private Ward', total: '12 Beds', status: 'Available' },
-    { id: 3, name: 'Semi-Private Ward', total: '12 Beds', status: 'Available' },
-    { id: 4, name: 'ICU', total: '12 Beds', status: 'Available' },
-    { id: 5, name: 'Emergency', total: '12 Beds', status: 'Available' },
-    { id: 6, name: 'Pediatric Ward', total: '12 Beds', status: 'Available' },
-  ];
+  const fetchRooms = async () => {
+    try {
+      setLoadingRooms(true);
+      const token = sessionStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const res = await axios.get(`${API_BASE_URL}/rooms`, config);
+      setRooms(res.data || []);
+    } catch (error) {
+      console.error("Error fetching rooms:", error);
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  const availableRooms = rooms.filter(room => {
+    if (['Maintenance', 'Cleaning', 'Working'].includes(room.status)) return false;
+    const currentPatients = room.patients || [];
+    const capacity = parseInt(room.capacity) || 1;
+    return (capacity - currentPatients.length) > 0;
+  });
 
   const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
@@ -165,24 +180,38 @@ const SidebarWidget = ({ appointments = [] }) => {
       </div>
 
       {/* Available Beds */}
-      <div className="rd-sidebar-card">
+      <div style={{height:'380px'}} className="rd-sidebar-card">
         <div className="rd-beds-header">
           <h3>Available Beds</h3>
           <button className="rd-btn-add"><FaPlus size={10} /></button>
         </div>
-        <div className="rd-beds-list">
-          {beds.map(bed => (
-            <div key={bed.id} className="rd-bed-item">
-              <div className="rd-bed-info-left">
-                <img src={bedImage} alt="Bed" className="rd-bed-img" />
-                <div className="rd-bed-details">
-                  <h5>{bed.name}</h5>
-                  <p>{bed.total}</p>
+        <div className="rd-beds-list" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '5px' }}>
+          {loadingRooms ? (
+            <div style={{padding: '10px', fontSize: '13px', color: '#64748b', textAlign: 'center'}}>Loading...</div>
+          ) : availableRooms.length === 0 ? (
+            <div style={{padding: '10px', fontSize: '13px', color: '#64748b', textAlign: 'center'}}>No available beds</div>
+          ) : (
+            availableRooms.map(room => {
+              const currentPatients = room.patients || [];
+              const capacity = parseInt(room.capacity) || 1;
+              const availableBeds = capacity - currentPatients.length;
+
+              return (
+                <div key={room.id} className="rd-bed-item">
+                  <div className="rd-bed-info-left">
+                    <img src={room.image || bedImage} alt="Bed" className="rd-bed-img" />
+                    <div className="rd-bed-details">
+                      <h5>Room {room.roomNo}</h5>
+                      <p>{room.type} • {availableBeds} Bed(s) Free</p>
+                    </div>
+                  </div>
+                  <div className="rd-badge-available">
+                    {room.status === 'Available' ? 'Available' : 'Partial'}
+                  </div>
                 </div>
-              </div>
-              <div className="rd-badge-available">{bed.status}</div>
-            </div>
-          ))}
+              );
+            })
+          )}
         </div>
       </div>
 

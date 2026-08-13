@@ -47,7 +47,7 @@ const Layout = () => {
   useEffect(() => {
     if (userRole === 'Pharmacy' && (location.pathname === '/dashboard' || location.pathname === '/')) {
       navigate('/pharmacy-dashboard');
-    } else if (userRole === 'Receptionist' && !['/receptionist-dashboard', '/patient', '/notifications'].includes(location.pathname)) {
+    } else if (userRole === 'Receptionist' && !['/receptionist-dashboard', '/patient', '/notifications', '/room-management'].includes(location.pathname)) {
       navigate('/receptionist-dashboard');
     }
 
@@ -129,6 +129,10 @@ const Layout = () => {
               <NavLink to="/patient" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaUserInjured className="nav-icon" />
                 <span>Appointment</span>
+              </NavLink>
+              <NavLink to="/room-management" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                <FaBed className="nav-icon" />
+                <span>Admission</span>
               </NavLink>
               
               <div className="support-card">

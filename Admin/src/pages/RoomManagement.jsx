@@ -13,8 +13,12 @@ const RoomManagement = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('Available');
   const [floorFilter, setFloorFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  
+  const userRole = sessionStorage.getItem('role') || 'Admin';
 
   // Modals
   const [isAddRoomOpen, setIsAddRoomOpen] = useState(false);
@@ -29,7 +33,7 @@ const RoomManagement = () => {
   
   // Admit Form State
   const [admissionData, setAdmissionData] = useState({ 
-    name: '', id: '', date: new Date().toISOString().split('T')[0], time: '', profileImage: null 
+    name: '', id: '', phone: '', date: new Date().toISOString().split('T')[0], time: '', profileImage: null 
   });
 
   // Discharge Form State
@@ -37,6 +41,11 @@ const RoomManagement = () => {
     dischargeDate: new Date().toISOString().split('T')[0],
     dischargeTime: ''
   });
+
+  // Patient Dropdown States
+  const [registeredPatients, setRegisteredPatients] = useState([]);
+  const [patientSearchTerm, setPatientSearchTerm] = useState('');
+  const [showPatientDropdown, setShowPatientDropdown] = useState(false);
 
   // Fetch Rooms
   const fetchRooms = async () => {
@@ -53,8 +62,20 @@ const RoomManagement = () => {
     }
   };
 
+  const fetchPatients = async () => {
+    try {
+      const token = sessionStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const res = await axios.get(`${API_BASE_URL}/auth/patients`, config);
+      setRegisteredPatients(res.data || []);
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+    }
+  };
+
   useEffect(() => {
     fetchRooms();
+    fetchPatients();
   }, []);
 
   // Derived state
@@ -67,6 +88,11 @@ const RoomManagement = () => {
       return matchSearch && matchStatus && matchFloor;
     });
   }, [rooms, searchTerm, statusFilter, floorFilter]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, floorFilter]);
 
   const stats = useMemo(() => {
     return {
@@ -162,7 +188,8 @@ const RoomManagement = () => {
       await axios.post(`${API_BASE_URL}/rooms/${admitRoom.id}/admit`, admissionData, config);
       
       setAdmitRoom(null);
-      setAdmissionData({ name: '', id: '', date: new Date().toISOString().split('T')[0], time: '', profileImage: null });
+      setAdmissionData({ name: '', id: '', phone: '', date: new Date().toISOString().split('T')[0], time: '', profileImage: null });
+      setPatientSearchTerm('');
       fetchRooms();
     } catch (error) {
       console.error("Error admitting patient:", error);
@@ -223,9 +250,11 @@ const RoomManagement = () => {
     <div className="room-management-container">
       <div className="rm-header">
         <h2>Room & Bed Management</h2>
-        <button className="rm-add-btn" onClick={() => setIsAddRoomOpen(true)}>
-          <FaPlus /> Add New Room
-        </button>
+        {userRole === 'Admin' && (
+          <button className="rm-add-btn" onClick={() => setIsAddRoomOpen(true)}>
+            <FaPlus /> Add New Room
+          </button>
+        )}
       </div>
 
       <div className="rm-stats-grid">
@@ -268,13 +297,19 @@ const RoomManagement = () => {
 
       <div className="rm-controls">
         <div className="rm-tabs">
-          {['All', 'Available', 'Occupied', 'Maintenance', 'Cleaning', 'Working'].map(tab => (
+          {[
+            { label: 'Available', count: stats.available },
+            { label: 'Occupied', count: stats.occupied },
+            { label: 'Maintenance', count: stats.maintenance },
+            { label: 'Cleaning', count: stats.cleaning },
+            { label: 'Working', count: stats.working }
+          ].map(tab => (
             <div 
-              key={tab} 
-              className={`rm-tab ${statusFilter === tab ? 'active' : ''}`}
-              onClick={() => setStatusFilter(tab)}
+              key={tab.label} 
+              className={`rm-tab ${statusFilter === tab.label ? 'active' : ''}`}
+              onClick={() => setStatusFilter(tab.label)}
             >
-              {tab}
+              {tab.label} ({tab.count})
             </div>
           ))}
         </div>
@@ -309,111 +344,156 @@ const RoomManagement = () => {
             <p>Try adjusting your search or filters.</p>
           </div>
         ) : (
-          filteredRooms.map(room => {
-            const currentPatients = room.patients || [];
-            const capacity = parseInt(room.capacity) || 1;
-            const availableBeds = capacity - currentPatients.length;
+          (() => {
+            const indexOfLastItem = currentPage * itemsPerPage;
+            const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+            const currentRooms = filteredRooms.slice(indexOfFirstItem, indexOfLastItem);
+            
+            return currentRooms.map(room => {
+              const currentPatients = room.patients || [];
+              const capacity = parseInt(room.capacity) || 1;
+              const availableBeds = capacity - currentPatients.length;
 
             return (
               <div className="rm-card" key={room.id}>
-                {room.image && (
-                  <div className="rm-card-image" style={{backgroundImage: `url(${room.image})`}}></div>
-                )}
-                <div className="rm-card-header">
-                  <div className="rm-room-no">
-                    <div className="rm-room-icon">
-                      {getStatusIcon(room.status)}
-                    </div>
-                    <div>
-                      <h3 style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                        {room.roomNo} 
-                        <button className="rm-edit-icon-btn" onClick={() => { setEditRoom({...room}); setIsEditRoomOpen(true); }} title="Edit Room">
-                          <FaEdit size={12} />
-                        </button>
-                      </h3>
-                      <p className="rm-room-type">{room.type} • {room.floor}</p>
-                    </div>
-                  </div>
-                  <span className={`rm-status-badge ${getStatusBadgeClass(room.status)}`}>
+                <div className="rm-card-image-wrap">
+                  {room.image ? (
+                    <img src={room.image} alt="Room" />
+                  ) : (
+                    <div className="rm-placeholder-img"><FaBed /></div>
+                  )}
+                  <div className={`rm-badge-modern ${getStatusBadgeClass(room.status)}`}>
                     {room.status}
-                  </span>
+                  </div>
                 </div>
                 
-                <div className="rm-card-body">
-                  <div className="rm-details">
-                    <div className="rm-detail-row" style={{justifyContent: 'space-between'}}>
-                      <div>
-                        <span className="rm-detail-icon">₹</span>
-                        <span><strong>{room.price}</strong> / Day</span>
-                      </div>
-                      <div style={{fontSize: '13px', color: availableBeds === 0 ? '#dc2626' : '#16a34a', fontWeight: '600'}}>
-                        Beds: {currentPatients.length} / {capacity} Admitted
-                      </div>
+                <div className="rm-card-content">
+                  <div className="rm-card-header-modern">
+                    <div className={`rm-room-icon-modern ${getStatusBadgeClass(room.status)}`}>
+                      {getStatusIcon(room.status)}
                     </div>
-                    
-                    {room.amenities && (
-                      <div className="rm-amenities-tags">
-                        {room.amenities.ac && <span>AC</span>}
-                        {room.amenities.tv && <span>TV</span>}
-                        {room.amenities.wifi && <span>Wi-Fi</span>}
-                        {room.amenities.bathroom && <span>Attached Bath</span>}
-                        {room.amenities.fridge && <span>Fridge</span>}
-                      </div>
-                    )}
+                    <div className="rm-room-title-modern">
+                      <h3>
+                        {room.roomNo} 
+                        {userRole === 'Admin' && (
+                          <button className="rm-edit-icon-btn" onClick={() => { setEditRoom({...room}); setIsEditRoomOpen(true); }} title="Edit Room">
+                            <FaEdit size={14} />
+                          </button>
+                        )}
+                      </h3>
+                      <p>{room.type} • {room.floor}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="rm-card-stats">
+                    <div className="rm-price">₹{room.price} / Day</div>
+                    <div className="rm-capacity">Capacity: {capacity}</div>
                   </div>
 
+                  {room.amenities && (
+                    <div className="rm-amenities-modern">
+                      {room.amenities.ac && <span>AC</span>}
+                      {room.amenities.tv && <span>TV</span>}
+                      {room.amenities.wifi && <span>Wi-Fi</span>}
+                      {room.amenities.bathroom && <span>Attached Bath</span>}
+                      {room.amenities.fridge && <span>Fridge</span>}
+                    </div>
+                  )}
+
                   {currentPatients.length > 0 && (
-                    <div className="rm-patient-list-container">
-                      <h5 style={{fontSize: '12px', color: '#64748b', marginTop: '16px', marginBottom: '8px', textTransform: 'uppercase'}}>Admitted Patients</h5>
-                      <div className="rm-patient-list">
-                        {currentPatients.map(patient => (
-                          <div key={patient._admissionId || patient.id} className="rm-patient-info-item">
-                            <div className="rm-patient-info-left">
-                              {patient.profileImage ? (
-                                 <img src={patient.profileImage} alt="Patient" className="rm-patient-avatar" />
-                              ) : (
-                                 <div className="rm-patient-avatar-placeholder"><FaUserInjured /></div>
-                              )}
-                              <div>
-                                <div className="rm-patient-name">{patient.name}</div>
-                                <div className="rm-patient-meta">
-                                  <span>ID: {patient.id}</span>
-                                  <span>{patient.date} {patient.time && `| ${patient.time}`}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <button 
-                              className="rm-mini-discharge-btn" 
-                              title="Discharge Patient"
-                              onClick={() => setDischargeTarget({ room, patient })}
-                            >
-                              <FaSignOutAlt />
-                            </button>
-                          </div>
-                        ))}
+                    <div className="rm-patient-modern">
+                      <div className="rm-patient-avatar-m">
+                        {currentPatients[0].profileImage ? (
+                          <img src={currentPatients[0].profileImage} alt="Patient" />
+                        ) : (
+                          <FaUserInjured />
+                        )}
+                      </div>
+                      <div className="rm-patient-info-m">
+                        <h4>{currentPatients[0].name}</h4>
+                        <p>{currentPatients[0].id} • Admitted: {currentPatients[0].date}</p>
+                        {currentPatients.length > 1 && (
+                          <p style={{color: '#586ff5', fontWeight: 'bold'}}>+ {currentPatients.length - 1} more patient(s)</p>
+                        )}
                       </div>
                     </div>
                   )}
-                </div>
 
-                <div className="rm-card-footer">
-                  {availableBeds > 0 && !['Maintenance', 'Cleaning', 'Working'].includes(room.status) && (
-                    <button className="rm-btn rm-btn-primary" onClick={() => setAdmitRoom(room)}>
+                  {availableBeds > 0 && !['Maintenance', 'Cleaning', 'Working'].includes(room.status) ? (
+                    <button className="rm-action-btn-modern admit" onClick={() => setAdmitRoom(room)}>
                       Admit Patient
                     </button>
-                  )}
-
-                  {['Cleaning', 'Maintenance', 'Working'].includes(room.status) && (
-                    <button className="rm-btn rm-btn-outline" onClick={() => { setEditRoom({...room}); setIsEditRoomOpen(true); }}>
-                      Update Status
+                  ) : room.status === 'Occupied' ? (
+                    <button className="rm-action-btn-modern discharge" onClick={() => {
+                      if(currentPatients.length > 0) {
+                        setDischargeTarget({ room, patient: currentPatients[0] });
+                      }
+                    }}>
+                      Discharge / Vacate
+                    </button>
+                  ) : ['Cleaning', 'Maintenance', 'Working'].includes(room.status) ? (
+                    <button 
+                      className={`rm-action-btn-modern ${getStatusBadgeClass(room.status)}`}
+                      onClick={() => {
+                        if (userRole === 'Admin') {
+                          setEditRoom({...room}); 
+                          setIsEditRoomOpen(true);
+                        }
+                      }}
+                      style={{ cursor: userRole === 'Admin' ? 'pointer' : 'default' }}
+                    >
+                      {room.status === 'Cleaning' ? 'Under Cleaning' : 
+                       room.status === 'Maintenance' ? 'Under Maintenance' : 'Working'}
+                    </button>
+                  ) : (
+                    <button className="rm-action-btn-modern" disabled>
+                      Room Unavailable
                     </button>
                   )}
                 </div>
               </div>
             );
-          })
+            });
+          })()
         )}
       </div>
+
+      {filteredRooms.length > itemsPerPage && (
+        <div className="rm-pagination-container">
+          <div className="rm-pagination-info">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredRooms.length)} of {filteredRooms.length} rooms
+          </div>
+          <div className="rm-pagination-controls">
+            <button 
+              className="rm-page-btn" 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              style={{opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'default' : 'pointer'}}
+            >
+              &lt;
+            </button>
+            
+            {[...Array(Math.ceil(filteredRooms.length / itemsPerPage))].map((_, i) => (
+              <button 
+                key={i + 1} 
+                className={`rm-page-btn ${currentPage === i + 1 ? 'active' : ''}`}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+            
+            <button 
+              className="rm-page-btn" 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredRooms.length / itemsPerPage)))}
+              disabled={currentPage === Math.ceil(filteredRooms.length / itemsPerPage)}
+              style={{opacity: currentPage === Math.ceil(filteredRooms.length / itemsPerPage) ? 0.5 : 1, cursor: currentPage === Math.ceil(filteredRooms.length / itemsPerPage) ? 'default' : 'pointer'}}
+            >
+              &gt;
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add Room Modal */}
       {isAddRoomOpen && (
@@ -655,13 +735,54 @@ const RoomManagement = () => {
                 </div>
 
                 <div className="rm-form-grid" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
-                  <div className="rm-form-group" style={{gridColumn: '1 / -1', marginBottom: 0}}>
-                    <label>Patient Name *</label>
-                    <input type="text" className="rm-form-control" required placeholder="Enter Name" value={admissionData.name} onChange={e => setAdmissionData({...admissionData, name: e.target.value})} />
+                  <div className="rm-form-group" style={{gridColumn: '1 / -1', marginBottom: 0, position: 'relative'}}>
+                    <label>Select Registered Patient (Optional)</label>
+                    <input 
+                      type="text" 
+                      className="rm-form-control" 
+                      placeholder="-- Search by Name or Mobile --" 
+                      value={patientSearchTerm}
+                      onChange={(e) => {
+                        setPatientSearchTerm(e.target.value);
+                        setShowPatientDropdown(true);
+                        if (!e.target.value) {
+                           setAdmissionData({...admissionData, name: '', id: '', phone: ''});
+                        }
+                      }}
+                      onFocus={() => setShowPatientDropdown(true)}
+                    />
+                    {showPatientDropdown && (
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px', maxHeight: '200px', overflowY: 'auto', zIndex: 10, boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                        <div style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', color: '#64748b' }} onClick={() => { setPatientSearchTerm(''); setShowPatientDropdown(false); setAdmissionData({...admissionData, name: '', id: '', phone: ''}); }}>
+                          -- Clear Selection --
+                        </div>
+                        {registeredPatients.filter(p => {
+                          const search = patientSearchTerm.toLowerCase();
+                          return (p.patient_name || '').toLowerCase().includes(search) || (p.identifier || p.emergency_contact || '').toLowerCase().includes(search);
+                        }).map(p => (
+                          <div key={p._id || p.id} style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }} onClick={() => {
+                            setAdmissionData({...admissionData, name: p.patient_name || 'Unknown', id: p.patient_id || p._id || p.id, phone: p.identifier || p.emergency_contact || ''});
+                            setPatientSearchTerm(`${p.patient_name || 'Unknown'} - ${p.identifier || p.emergency_contact || 'No Number'}`);
+                            setShowPatientDropdown(false);
+                          }}>
+                            {p.patient_name || 'Unknown'} - {p.identifier || p.emergency_contact || 'No Number'}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+                  
                   <div className="rm-form-group" style={{gridColumn: '1 / -1', marginBottom: 0}}>
                     <label>Patient ID *</label>
                     <input type="text" className="rm-form-control" required placeholder="e.g. P100X" value={admissionData.id} onChange={e => setAdmissionData({...admissionData, id: e.target.value})} />
+                  </div>
+                  <div className="rm-form-group" style={{marginBottom: 0}}>
+                    <label>Patient Name *</label>
+                    <input type="text" className="rm-form-control" required placeholder="Enter Name" value={admissionData.name} onChange={e => setAdmissionData({...admissionData, name: e.target.value})} />
+                  </div>
+                  <div className="rm-form-group" style={{marginBottom: 0}}>
+                    <label>Phone Number</label>
+                    <input type="text" className="rm-form-control" placeholder="Enter Phone Number" value={admissionData.phone} onChange={e => setAdmissionData({...admissionData, phone: e.target.value})} />
                   </div>
                   <div className="rm-form-group" style={{marginBottom: 0}}>
                     <label>Admission Date *</label>
