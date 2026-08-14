@@ -10,6 +10,9 @@ import SidebarWidget from './SidebarWidget';
 const ReceptionistDashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,13 +21,19 @@ const ReceptionistDashboard = () => {
         const token = sessionStorage.getItem('token');
         const config = { headers: { Authorization: `Bearer ${token}` } };
         
-        const [apptRes, docsRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/emails/all-appointments`, config),
-          axios.get(`${API_BASE_URL}/doctors`, config)
+        const [apptRes, docsRes, patRes, roomsRes, schedRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/emails/all-appointments`, config).catch(() => ({ data: [] })),
+          axios.get(`${API_BASE_URL}/doctors`, config).catch(() => ({ data: [] })),
+          axios.get(`${API_BASE_URL}/auth/patients`, config).catch(() => ({ data: [] })),
+          axios.get(`${API_BASE_URL}/rooms`, config).catch(() => ({ data: [] })),
+          axios.get(`${API_BASE_URL}/schedules`, config).catch(() => ({ data: [] }))
         ]);
         
         setAppointments(apptRes.data || []);
         setDoctors(docsRes.data || []);
+        setPatients(patRes.data || []);
+        setRooms(roomsRes.data || []);
+        setSchedules(schedRes.data || []);
       } catch (error) {
         console.error("Error fetching Receptionist Dashboard data:", error);
       } finally {
@@ -46,7 +55,13 @@ const ReceptionistDashboard = () => {
         {/* Main Content Area */}
         <div className="rd-main">
           <Banner />
-          <StatsGrid appointments={appointments} doctors={doctors} />
+          <StatsGrid 
+            appointments={appointments} 
+            doctors={doctors} 
+            patients={patients} 
+            rooms={rooms} 
+            schedules={schedules} 
+          />
           <AppointmentsTable appointments={appointments} />
         </div>
 

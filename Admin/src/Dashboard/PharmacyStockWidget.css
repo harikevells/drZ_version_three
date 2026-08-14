@@ -1,0 +1,97 @@
+.pharmacy-stock-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.stock-list-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.stock-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.stock-item:last-child {
+  border-bottom: none;
+}
+
+.stock-item-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.stock-icon-bg {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-orange-bg {
+  background-color: #ffedd5;
+}
+
+.icon-orange {
+  color: #ea580c;
+}
+
+.icon-red-bg {
+  background-color: #fee2e2;
+}
+
+.icon-red {
+  color: #ef4444;
+}
+
+.icon-yellow-bg {
+  background-color: #fef9c3;
+}
+
+.icon-yellow {
+  color: #ca8a04;
+}
+
+.stock-icon {
+  font-size: 16px;
+}
+
+.stock-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stock-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+}
+
+.stock-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+  font-weight: 500;
+}
+
+.stock-badge {
+  background-color: #fee2e2;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+}

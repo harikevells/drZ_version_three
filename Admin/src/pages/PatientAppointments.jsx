@@ -4,7 +4,7 @@ import {
   FaEye, FaTimes, FaUserMd, FaShieldAlt, FaUser, FaBriefcase, FaPhone,
   FaEnvelope, FaCalendarAlt, FaFileInvoice, FaUsers, FaWhatsapp,
   FaMobileAlt, FaCalendarDay, FaClock, FaVideo, FaRupeeSign,
-  FaCreditCard, FaFileInvoiceDollar, FaCheckCircle, FaUserTie, FaTags
+  FaCreditCard, FaFileInvoiceDollar, FaCheckCircle, FaUserTie, FaTags, FaTimesCircle
 } from 'react-icons/fa';
 import Pagination from '../components/Pagination';
 import AdminAppointmentCreate from './AdminAppointmentCreate';
@@ -191,6 +191,119 @@ const PatientAppointments = () => {
             </div>
           </div>
 
+          {/* Top 5 Stat Cards */}
+          <div className="pharmacy-stats-wrapper" style={{ marginBottom: '20px', width: '100%' }}>
+            <div className="top-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '15px' }}>
+              
+              {/* Box 1: Today's Appointments */}
+              <div className="top-stat-card" style={{ background: '#ffffff', borderRadius: '12px', padding: '16px', border: '1px solid #eef2f6', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#dcfce7', color: '#15803d' }}>
+                      <FaCalendarDay size={20} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Today's Appointments</span>
+                      <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: '#0f172a' }}>
+                        {appointments.filter(a => {
+                          const today = new Date();
+                          const d = String(today.getDate()).padStart(2, '0');
+                          const m = String(today.getMonth() + 1).padStart(2, '0');
+                          const y = today.getFullYear();
+                          return matchDate(a.appointment_date, `${y}-${m}-${d}`);
+                        }).length}
+                      </h2>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', width: '100%' }}>
+                    <span style={{ color: '#15803d', fontSize: '11px', fontWeight: '500' }}>Scheduled for today</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Box 2: Pending */}
+              <div className="top-stat-card" style={{ background: '#ffffff', borderRadius: '12px', padding: '16px', border: '1px solid #eef2f6', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fef3c7', color: '#b45309' }}>
+                      <FaClock size={20} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Pending</span>
+                      <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: '#0f172a' }}>
+                        {appointments.filter(a => (a.status || 'Pending').toLowerCase() === 'pending').length}
+                      </h2>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', width: '100%' }}>
+                    <span style={{ color: '#b45309', fontSize: '11px', fontWeight: '500' }}>Awaiting confirmation</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Box 3: Approved */}
+              <div className="top-stat-card" style={{ background: '#ffffff', borderRadius: '12px', padding: '16px', border: '1px solid #eef2f6', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e0e7ff', color: '#4338ca' }}>
+                      <FaCheckCircle size={20} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Approved</span>
+                      <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: '#0f172a' }}>
+                        {appointments.filter(a => (a.status || '').toLowerCase() === 'approved').length}
+                      </h2>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', width: '100%' }}>
+                    <span style={{ color: '#4338ca', fontSize: '11px', fontWeight: '500' }}>Approved visits</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Box 4: Completed Appointments */}
+              <div className="top-stat-card" style={{ background: '#ffffff', borderRadius: '12px', padding: '16px', border: '1px solid #eef2f6', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3e8ff', color: '#7e22ce' }}>
+                      <FaCheckCircle size={20} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Completed</span>
+                      <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: '#0f172a' }}>
+                        {appointments.filter(a => (a.status || '').toLowerCase() === 'completed' || (a.status || '').toLowerCase() === 'done').length}
+                      </h2>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', width: '100%' }}>
+                    <span style={{ color: '#7e22ce', fontSize: '11px', fontWeight: '500' }}>Completed appointments</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Box 5: Cancelled */}
+              <div className="top-stat-card" style={{ background: '#ffffff', borderRadius: '12px', padding: '16px', border: '1px solid #eef2f6', boxShadow: '0 4px 14px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fce7f3', color: '#be185d' }}>
+                      <FaTimesCircle size={20} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Cancelled</span>
+                      <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: '#0f172a' }}>
+                        {appointments.filter(a => (a.status || '').toLowerCase() === 'cancelled').length}
+                      </h2>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', width: '100%' }}>
+                    <span style={{ color: '#be185d', fontSize: '11px', fontWeight: '500' }}>Cancelled visits</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
           <div className="table-container">
             {loading ? (
               <p className="loading-text">Loading appointments...</p>
@@ -204,32 +317,50 @@ const PatientAppointments = () => {
                       <th>Doctor Name</th>
                       <th>Appointment Date</th>
                       <th>Appointment Time</th>
+                      <th>Type</th>
                       <th>Status</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedAppointments.length > 0 ? paginatedAppointments.map((appt) => (
-                      <tr key={appt.id || appt._id}>
-                        <td>{appt.booking_id || '0000'}</td>
-                        <td>{appt.patient_name}</td>
-                        <td>{removeTamil(appt.doctor_name)}</td>
-                        <td>{appt.appointment_date ? appt.appointment_date.replace(/\s+/g, '') : ''}</td>
-                        <td>{formatTimeSlot(appt.appointment_time)}</td>
-                        <td>
-                          <span className={`status-badge ${(appt.status || 'Pending').toLowerCase()}`}>
-                            {appt.status || 'Pending'}
-                          </span>
-                        </td>
-                        <td>
-                          <button className="view-btn" onClick={() => handleView(appt)}>
-                            <FaEye />
-                          </button>
-                        </td>
-                      </tr>
-                    )) : (
+                    {paginatedAppointments.length > 0 ? paginatedAppointments.map((appt) => {
+                      const typeStr = (appt.appointment_type || '').toLowerCase();
+                      const isOnline = typeStr.includes('online') || appt.video_call === 'Yes';
+                      
+                      return (
+                        <tr key={appt.id || appt._id}>
+                          <td>{appt.booking_id || '0000'}</td>
+                          <td>{appt.patient_name}</td>
+                          <td>{removeTamil(appt.doctor_name)}</td>
+                          <td>{appt.appointment_date ? appt.appointment_date.replace(/\s+/g, '') : ''}</td>
+                          <td>{formatTimeSlot(appt.appointment_time)}</td>
+                          <td>
+                            <span style={{
+                              padding: '4px 10px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              backgroundColor: isOnline ? '#f3e8ff' : '#e0e7ff',
+                              color: isOnline ? '#7e22ce' : '#4338ca'
+                            }}>
+                              {isOnline ? 'Online' : 'Offline'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`status-badge ${(appt.status || 'Pending').toLowerCase()}`}>
+                              {appt.status || 'Pending'}
+                            </span>
+                          </td>
+                          <td>
+                            <button className="view-btn" onClick={() => handleView(appt)}>
+                              <FaEye />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    }) : (
                       <tr>
-                        <td colSpan="7" className="text-center">No appointments found</td>
+                        <td colSpan="8" className="text-center">No appointments found</td>
                       </tr>
                     )}
                   </tbody>

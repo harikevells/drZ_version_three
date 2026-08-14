@@ -1,68 +1,234 @@
-.stat-cards-container {
+.admin-stat-cards-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
-  margin-bottom: 15px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-.stat-card {
+.admin-stat-card {
+  background: #ffffff;
   border-radius: 16px;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  justify-content: space-between;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.stat-card-header {
+.admin-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.card-doctors {
+  background: #faf8ff;
+  border-color: #ede5fd;
+}
+
+.card-patients {
+  background: #f7fdf9;
+  border-color: #e0f4e6;
+}
+
+.card-pharmacy {
+  background: #fffbf7;
+  border-color: #fde8d7;
+}
+
+.card-beds {
+  background: #f7faff;
+  border-color: #e0ebfd;
+}
+
+.card-appointments {
+  background: #faf8ff;
+  border-color: #ede5fd;
+}
+
+.card-top {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-.stat-color-indicator {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  margin-right: 12px;
+.card-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
 }
 
-.stat-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #555;
+.icon-doctors {
+  background: #ede3ff;
+  color: #6366f1;
 }
 
-.stat-value {
-  font-size: 32px;
-  font-weight: 800;
-  color: #111;
-  margin-bottom: 8px;
-  padding-left: 36px; /* Align with title text */
+.icon-patients {
+  background: #dcfce7;
+  color: #16a34a;
 }
 
-.stat-growth {
+.icon-pharmacy {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+.icon-beds {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.icon-appointments {
+  background: #ede3ff;
+  color: #7c3aed;
+}
+
+.card-header-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.card-title {
   font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.card-big-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.card-substat-single {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-top: 4px;
+}
+
+.substat-label {
+  font-size: 12px;
+  color: #64748b;
   font-weight: 500;
-  padding-left: 36px; /* Align with title text */
+  margin-bottom: 4px;
 }
 
-.stat-growth.link {
-  color: #6a67f3;
-  text-decoration: none;
+.substat-val {
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.stat-growth.link:hover {
-  text-decoration: underline;
+.purple-text {
+  color: #6366f1;
 }
 
-@media (max-width: 1024px) {
-  .stat-cards-container {
+.green-text {
+  color: #16a34a;
+}
+
+.orange-text {
+  color: #ea580c;
+}
+
+.blue-text {
+  color: #2563eb;
+}
+
+.red-text {
+  color: #dc2626;
+}
+
+.card-substat-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-top: 4px;
+  width: 100%;
+}
+
+.substat-half {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.substat-divider {
+  width: 1px;
+  height: 28px;
+  background-color: #cbd5e1;
+  margin: 0 12px;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px dashed rgba(0, 0, 0, 0.06);
+  padding-top: 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6366f1;
+  transition: opacity 0.2s ease;
+}
+
+.card-footer:hover {
+  opacity: 0.85;
+}
+
+.footer-arrow {
+  font-size: 11px;
+  transition: transform 0.2s ease;
+}
+
+.card-footer:hover .footer-arrow {
+  transform: translateX(3px);
+}
+
+.green-link {
+  color: #16a34a !important;
+}
+
+.orange-link {
+  color: #ea580c !important;
+}
+
+.blue-link {
+  color: #2563eb !important;
+}
+
+.purple-link {
+  color: #7c3aed !important;
+}
+
+@media (max-width: 1300px) {
+  .admin-stat-cards-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-stat-cards-row {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 576px) {
-  .stat-cards-container {
+  .admin-stat-cards-row {
     grid-template-columns: 1fr;
   }
 }

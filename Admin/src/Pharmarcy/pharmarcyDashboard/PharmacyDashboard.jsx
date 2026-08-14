@@ -131,6 +131,8 @@ const PharmacyDashboard = () => {
 
       let todaysSalesTotal = 0;
       let todaysSalesCount = 0;
+      let totalSalesAmount = 0;
+      let totalSalesCount = 0;
       const dateSalesMap = {};
 
       billings.forEach((bill) => {
@@ -147,6 +149,9 @@ const PharmacyDashboard = () => {
           ? parseFloat(bill.totalMedicineAmount)
           : Math.max(0, totalPayable - consultFee);
 
+        totalSalesAmount += medicineAmt;
+        totalSalesCount++;
+
         if (isToday) {
           todaysSalesTotal += medicineAmt;
           todaysSalesCount++;
@@ -158,21 +163,16 @@ const PharmacyDashboard = () => {
         }
       });
 
-      // Today's Profit = medicine sales total for today (no consult fee included)
-      const todaysProfitTotal = Math.round(todaysSalesTotal);
-
-      const calcGrowth = (val) => val > 0 ? `+${((val % 15) + 5).toFixed(1)}%` : '+0%';
-
       setStatsData({
         totalMedicines: totalMeds,
         availableStock: totalStockCount,
         lowStockAlert: lowStockCount,
         outOfStock: outOfStockCount,
         expiredMedicines: expiredCount,
-        todaysSales: todaysSalesTotal,
-        todaysProfit: todaysProfitTotal,
-        salesGrowth: calcGrowth(todaysSalesTotal),
-        profitGrowth: calcGrowth(todaysProfitTotal)
+        totalSalesAmount: totalSalesAmount,
+        totalSalesCount: totalSalesCount,
+        todaysSalesTotal: todaysSalesTotal,
+        todaysSalesCount: todaysSalesCount
       });
 
       setStockStatusData({

@@ -1,0 +1,103 @@
+.bed-availability-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.bed-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.bed-cat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.bed-cat-item:hover {
+  opacity: 0.85;
+}
+
+.bed-cat-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 140px;
+}
+
+.bed-icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.bed-cat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.bed-cat-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+  white-space: nowrap;
+}
+
+.bed-cat-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.bed-cat-center {
+  flex-grow: 1;
+  max-width: 120px;
+  padding: 0 8px;
+}
+
+.bed-progress-bg {
+  width: 100%;
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.bed-progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.bed-cat-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.available-green-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #16a34a;
+  white-space: nowrap;
+}
+
+.cat-arrow {
+  font-size: 11px;
+  color: #64748b;
+}

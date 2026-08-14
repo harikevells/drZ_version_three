@@ -1,0 +1,111 @@
+.admin-table-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 24px;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.table-card-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.dashboard-table-wrapper {
+  overflow-x: auto;
+}
+
+.dashboard-appt-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.dashboard-appt-table thead tr {
+  background-color: #c7d2fe;
+}
+
+.dashboard-appt-table thead th {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  text-align: left;
+  border: none;
+}
+
+.dashboard-appt-table thead th:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.dashboard-appt-table thead th:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.dashboard-appt-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.dashboard-appt-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.dashboard-appt-table tbody td {
+  padding: 16px;
+  font-size: 14px;
+  color: #475569;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.time-col {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.patient-col {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.doc-col {
+  font-weight: 500;
+  color: #475569;
+}
+
+.type-col {
+  font-weight: 500;
+  color: #475569;
+}
+
+.mode-col {
+  font-weight: 500;
+  color: #475569;
+}
+
+.status-col {
+  font-weight: 500;
+}
+
+.status-text {
+  color: #334155;
+  font-weight: 600;
+}
+
+.status-text.completed {
+  color: #475569;
+}
+
+.status-text.pending {
+  color: #ea580c;
+}
+
+.status-text.upcoming {
+  color: #2563eb;
+}

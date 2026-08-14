@@ -10,10 +10,10 @@ const PharmacyStatCards = ({ stats, selectedDate, onDateChange }) => {
     lowStockAlert = 0,
     outOfStock = 0,
     expiredMedicines = 0,
-    todaysSales = 0,
-    todaysProfit = 0,
-    salesGrowth = '+0%',
-    profitGrowth = '+0%'
+    totalSalesAmount = 0,
+    totalSalesCount = 0,
+    todaysSalesTotal = 0,
+    todaysSalesCount = 0
   } = stats || {};
 
   return (
@@ -96,16 +96,16 @@ const PharmacyStatCards = ({ stats, selectedDate, onDateChange }) => {
 
       {/* Middle 3 Financial Stat Cards */}
       <div className="middle-stats-grid">
-        {/* Card 1: Today's Sales */}
+        {/* Card 1: Total Medicine Sales */}
         <div className="financial-stat-card">
           <div className="financial-icon-box icon-cart-green">
             <FaShoppingCart size={22} />
           </div>
           <div className="financial-content">
-            <span className="financial-label">Total's Profit</span>
-            <h2 className="financial-value">₹ {todaysSales.toLocaleString('en-IN')}</h2>
+            <span className="financial-label">Total Medicine Sales</span>
+            <h2 className="financial-value">₹ {totalSalesAmount.toLocaleString('en-IN')}</h2>
             <div className="trend-badge trend-green">
-              <span>{salesGrowth} vs yesterday ↗</span>
+              <span>{totalSalesCount} bills total</span>
             </div>
           </div>
         </div>
@@ -127,16 +127,16 @@ const PharmacyStatCards = ({ stats, selectedDate, onDateChange }) => {
           </div>
         </div>
 
-        {/* Card 3: Today's Profit */}
+        {/* Card 3: Today Medicine Sales */}
         <div className="financial-stat-card">
           <div className="financial-icon-box icon-purple">
             <FaRupeeSign size={22} />
           </div>
           <div className="financial-content">
-            <span className="financial-label">Today's Profit</span>
-            <h2 className="financial-value">₹ {todaysProfit.toLocaleString('en-IN')}</h2>
+            <span className="financial-label">Today Medicine Sales</span>
+            <h2 className="financial-value">₹ {todaysSalesTotal.toLocaleString('en-IN')}</h2>
             <div className="trend-badge trend-purple">
-              <span>{profitGrowth} vs yesterday ↗</span>
+              <span>{todaysSalesCount} bills today</span>
             </div>
           </div>
         </div>

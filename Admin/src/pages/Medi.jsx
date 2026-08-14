@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
 import Pagination from '../components/Pagination';
 import './DoctorManagement.css'; // Importing DoctorManagement CSS to match exact design
 import './Medi.css';
-import '../Pharmarcy/PharmarcyDashBoard/PharmacyStatCards.css';
+import '../Pharmarcy/pharmarcyDashboard/PharmacyStatCards.css';
 
 const Medi = () => {
   const [medicines, setMedicines] = useState([]);
