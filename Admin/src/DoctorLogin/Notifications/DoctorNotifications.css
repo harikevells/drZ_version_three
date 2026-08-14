@@ -1,0 +1,137 @@
+.doc-notif-container {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 30px;
+}
+
+.doc-notif-card {
+  /* background: #ffffff; */
+  border-radius: 16px;
+  /* box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); */
+  width: 100%;
+  /* max-width: 800px; */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.doc-notif-header {
+  padding: 20px 24px;
+  background: #F8FAFC;
+  border-bottom: 1px solid #E2E8F0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.doc-notif-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.doc-notif-title-row h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.doc-notif-badge {
+  background: #EF4444;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.doc-mark-all-btn {
+  background: transparent;
+  border: 1px solid #CBD5E1;
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.doc-mark-all-btn:hover {
+  background: #F1F5F9;
+  color: #1E293B;
+}
+
+.doc-notif-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+}
+
+.doc-notif-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #94A3B8;
+  font-size: 15px;
+}
+
+.doc-notif-item {
+  padding: 20px 24px;
+  border-bottom: 1px solid #F1F5F9;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.doc-notif-item:hover {
+  background: #F8FAFC;
+}
+
+.doc-notif-item.unread {
+  background: #EFF6FF;
+}
+.doc-notif-item.unread:hover {
+  background: #DBEAFE;
+}
+
+.doc-notif-item-content {
+  flex: 1;
+  padding-right: 20px;
+}
+
+.doc-notif-item-title {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.doc-notif-item.unread .doc-notif-item-title {
+  color: #2563EB;
+}
+
+.doc-notif-item-message {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.doc-notif-item-time {
+  font-size: 12px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.doc-notif-unread-dot {
+  margin-top: 5px;
+}

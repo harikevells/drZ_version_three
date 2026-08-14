@@ -35,14 +35,26 @@ const Login = () => {
       sessionStorage.setItem('role', response.data.user.role || 'Admin');
       sessionStorage.setItem('userName', response.data.user.userName || 'Admin');
       sessionStorage.setItem('loginTimestamp', new Date().getTime().toString());
-      
+
       if (response.data.user.role === 'Pharmacy') {
         navigate('/pharmacy-dashboard');
       } else {
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Invalid username or password');
+      // Fallback for doctor login
+      try {
+        const docResponse = await axios.post(`${API_BASE_URL}/auth/doctor/login`, { email, password });
+        sessionStorage.setItem('token', docResponse.data.token);
+        sessionStorage.setItem('doctorToken', docResponse.data.token);
+        sessionStorage.setItem('doctorData', JSON.stringify(docResponse.data.user));
+        sessionStorage.setItem('userName', docResponse.data.user.doctorName || 'Doctor');
+        sessionStorage.setItem('loginTimestamp', new Date().getTime().toString());
+        sessionStorage.setItem('role', 'Doctor');
+        navigate('/doctor-dashboard');
+      } catch (docErr) {
+        setError(err.response?.data?.error || 'Invalid username or password');
+      }
     }
   };
 
@@ -82,7 +94,7 @@ const Login = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="login-right">
         <div className="login-card">
           <div className="shield-logo-wrapper">
@@ -90,29 +102,29 @@ const Login = () => {
               <FaShieldAlt size={28} color="#ffffff" />
             </div>
           </div>
-          
+
           <h2 className="login-title">Welcome Back!</h2>
           <p className="login-subtitle">Login to your DrZ Admin account</p>
-          
+
           {error && <p className="error-message">{error}</p>}
-          
+
           <form onSubmit={handleLogin}>
             <div className="input-group">
               <FiMail className="input-icon-left" size={18} color="#9ca3af" />
-              <input 
-                type="text" 
-                placeholder="admin@drz.com" 
+              <input
+                type="text"
+                placeholder="admin@drz.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
-            
+
             <div className="input-group password-group">
               <FiLock className="input-icon-left" size={18} color="#9ca3af" />
-              <input 
-                type={showPassword ? "text" : "password"} 
-                placeholder="••••••••••••" 
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -121,8 +133,8 @@ const Login = () => {
                 {showPassword ? <FaEye color="#9ca3af" /> : <FaEyeSlash color="#9ca3af" />}
               </span>
             </div>
-            
-            <div style={{justifyContent:'space-between'}} className="form-actions">
+
+            <div style={{ justifyContent: 'space-between' }} className="form-actions">
               <label className="remember-me">
                 <input type="checkbox" defaultChecked /> Remember Me
               </label>
@@ -130,24 +142,24 @@ const Login = () => {
                 Forgot Password?
               </a>
             </div>
-            
+
             <button type="submit" className="login-btn">
               <FiLock size={16} />
               <span>Login</span>
             </button>
-            
+
             <div className="divider-container">
               <span className="divider-line"></span>
               <span className="divider-text">OR</span>
               <span className="divider-line"></span>
             </div>
-            
+
             <button type="button" className="google-btn">
               <FcGoogle size={20} />
               <span>Login with Google</span>
             </button>
           </form>
-          
+
           <p className="login-footer">© 2025 DrZ. All rights reserved.</p>
         </div>
       </div>

@@ -9,6 +9,15 @@ import Notification from './pages/Notification';
 import MedicalCamp from './pages/MedicalCamp';
 import Dashboard from './Dashboard/Dashboard';
 import Medi from './pages/Medi';
+// Doctor Web Portal
+import DoctorDashboard from './DoctorLogin/Dashboard/DoctorDashboard';
+import DoctorAppointments from './DoctorLogin/Appointments/DoctorAppointments';
+import DoctorPrescriptions from './DoctorLogin/Prescriptions/DoctorPrescriptions';
+import DoctorVideoCall from './DoctorLogin/VideoCall/DoctorVideoCall';
+import DoctorChat from './DoctorLogin/Chat/DoctorChat';
+import DoctorNotifications from './DoctorLogin/Notifications/DoctorNotifications';
+import DoctorMedicalCamp from './DoctorLogin/MedicalCamp/DoctorMedicalCamp';
+import DoctorProfile from './DoctorLogin/Profile/DoctorProfile';
 import MedicineTime from './pages/MedicineTime';
 import MedicineIntake from './pages/MedicineIntake';
 import PatientList from './pages/PatientList';
@@ -20,6 +29,7 @@ import PurchaseMedicine from './Pharmarcy/PurchaseMedicine';
 import BillingMedicine from './Pharmarcy/BillingMedicine';
 import ReceptionistDashboard from './Receptionist/ReceptionistDashboard/ReceptionistDashboard';
 import RoomManagement from './pages/RoomManagement';
+
 
 const ProtectedRoute = ({ element }) => {
   const token = sessionStorage.getItem('token');
@@ -56,6 +66,8 @@ const PublicRoute = ({ element }) => {
         return <Navigate to="/pharmacy-dashboard" replace />;
       } else if (role === 'Receptionist') {
         return <Navigate to="/receptionist-dashboard" replace />;
+      } else if (role === 'Doctor') {
+        return <Navigate to="/doctor-dashboard" replace />;
       }
       return <Navigate to="/dashboard" replace />;
     }
@@ -89,6 +101,16 @@ function App() {
           <Route path="medicine-intake" element={<MedicineIntake />} />
           <Route path="pharmarcy-creation" element={<PharmarcyCreattion />} />
           <Route path="room-management" element={<RoomManagement />} />
+
+          {/* Doctor Web Portal Routes */}
+          <Route path="doctor-dashboard" element={<DoctorDashboard />} />
+          <Route path="doctor-appointments" element={<DoctorAppointments />} />
+          <Route path="doctor-prescriptions" element={<DoctorPrescriptions />} />
+          <Route path="doctor-videocall" element={<DoctorVideoCall />} />
+          <Route path="doctor-chat" element={<DoctorChat />} />
+          <Route path="doctor-notifications" element={<DoctorNotifications />} />
+          <Route path="doctor-medical-camp" element={<DoctorMedicalCamp />} />
+          <Route path="doctor-profile" element={<DoctorProfile />} />
         </Route>
       </Routes>
     </Router>

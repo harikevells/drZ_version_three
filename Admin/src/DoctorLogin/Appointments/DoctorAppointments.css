@@ -1,0 +1,221 @@
+.doc-appts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Header (Tabs and Filters) */
+.doc-appts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.doc-appts-tabs {
+  display: flex;
+  background: #F1F5F9;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.doc-tab-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.doc-tab-btn:hover {
+  color: #334155;
+}
+
+.doc-tab-btn.active {
+  background: #ffffff;
+  color: #6B7AFF;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.doc-appts-filters {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.doc-date-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-date-filter label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.doc-date-filter input {
+  padding: 6px 10px;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #334155;
+  outline: none;
+}
+
+.doc-date-filter input:focus {
+  border-color: #6B7AFF;
+}
+
+.doc-clear-filter-btn {
+  padding: 7px 14px;
+  background: #FEE2E2;
+  color: #DC2626;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.doc-clear-filter-btn:hover {
+  background: #FECACA;
+}
+
+/* Appointments List */
+.doc-appts-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.doc-appt-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.doc-appt-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 15px;
+  border-bottom: 1px dashed #E2E8F0;
+}
+
+.doc-appt-patient-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.doc-appt-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  background: #EEF2FF;
+  color: #6B7AFF;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.doc-appt-patient-name {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.doc-appt-booking-id {
+  margin: 0;
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.doc-appt-card-middle {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.doc-appt-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.doc-appt-type {
+  background: #F1F5F9;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.doc-appt-card-bottom {
+  margin-top: 5px;
+}
+
+.doc-appt-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.doc-btn {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.doc-btn:hover {
+  opacity: 0.9;
+}
+
+.doc-btn-approve { background: #10B981; }
+.doc-btn-reschedule { background: #3B82F6; }
+.doc-btn-cancel { background: #EF4444; }
+.doc-btn-complete { background: #10B981; }
+.doc-btn-video { background: #8B5CF6; }
+.doc-btn-rx { background: #4871F7; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .doc-appts-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .doc-appts-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -75,9 +75,18 @@ const Layout = () => {
 
   const fetchUnreadCount = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/notifications/admin/admin`);
-      const unread = res.data.filter(n => !n.isRead).length;
-      setUnreadCount(unread);
+      if (userRole === 'Doctor') {
+        const docName = sessionStorage.getItem('userName');
+        if (docName) {
+          const res = await axios.get(`${API_BASE_URL}/notifications/doctor/${encodeURIComponent(docName)}`);
+          const unread = res.data.filter(n => !n.isRead).length;
+          setUnreadCount(unread);
+        }
+      } else {
+        const res = await axios.get(`${API_BASE_URL}/notifications/admin/admin`);
+        const unread = res.data.filter(n => !n.isRead).length;
+        setUnreadCount(unread);
+      }
     } catch (error) {
       console.error("Error fetching notification count:", error);
     }
@@ -133,6 +142,46 @@ const Layout = () => {
               <NavLink to="/room-management" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                 <FaBed className="nav-icon" />
                 <span>Admission</span>
+              </NavLink>
+              
+              <div className="support-card">
+                <div className="support-card-content">
+                  <h4>Need Help?</h4>
+                  <p>We're here to help you 24/7</p>
+                  <button className="support-btn">Contact Support</button>
+                </div>
+                <img src={doctorImage} alt="Support" className="support-card-img" />
+              </div>
+            </>
+          ) : userRole === 'Doctor' ? (
+            <>
+              <NavLink to="/doctor-dashboard" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                <FaTachometerAlt className="nav-icon" />
+                <span>Dashboard</span>
+              </NavLink>
+              <NavLink to="/doctor-appointments" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                <FaUserInjured className="nav-icon" />
+                <span>Appointments</span>
+              </NavLink>
+              <NavLink to="/doctor-prescriptions" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                <FaPills className="nav-icon" />
+                <span>Prescriptions</span>
+              </NavLink>
+              <NavLink to="/doctor-videocall" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                <FaCalendarCheck className="nav-icon" />
+                <span>Video Call</span>
+              </NavLink>
+              <NavLink to="/doctor-notifications" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                <FaBell className="nav-icon" />
+                <span>Notifications</span>
+              </NavLink>
+              <NavLink to="/doctor-medical-camp" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                <FaBell className="nav-icon" />
+                <span>Push Message</span>
+              </NavLink>
+              <NavLink to="/doctor-profile" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                <FaUserMd className="nav-icon" />
+                <span>Profile</span>
               </NavLink>
               
               <div className="support-card">
@@ -287,7 +336,7 @@ const Layout = () => {
                 <button
                   className="icon-btn"
                   style={{ position: 'relative', width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', color: '#1e293b' }}
-                  onClick={() => navigate('/notifications')}
+                  onClick={() => navigate(userRole === 'Doctor' ? '/doctor-notifications' : '/notifications')}
                 >
                   <FaBell size={16} />
                   {unreadCount > 0 && (
